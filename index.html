@@ -445,9 +445,28 @@
 <div id="app-header">
   <h1>What's the Plan?</h1>
   <p id="today-date"></p>
+  <p id="sync-status" style="font-size:11px;height:16px;margin-top:2px;transition:color 0.3s;"></p>
 </div>
 
+<!-- Auth screen -->
+<div id="auth-screen" style="position:fixed;inset:0;z-index:9000;background:radial-gradient(ellipse at 20% 20%,#CDB4DB55 0%,transparent 50%),radial-gradient(ellipse at 80% 80%,#BDE0FE44 0%,transparent 50%),#f0e8f5;align-items:center;justify-content:center;padding:24px;display:none;">
+  <div style="background:rgba(255,255,255,0.9);backdrop-filter:blur(12px);border-radius:24px;padding:36px 32px;max-width:380px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,0.12);text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px;">🗓</div>
+    <h2 style="font-size:22px;font-weight:600;letter-spacing:-0.5px;margin-bottom:8px;">What's the Plan?</h2>
+    <p style="font-size:13px;color:#8b7fa8;margin-bottom:28px;line-height:1.5;">Enter your email and we'll send you a magic link — no password needed. Your data syncs across all your devices.</p>
+    <div id="auth-form">
+      <input id="auth-email" type="email" placeholder="your@email.com" style="width:100%;padding:12px 16px;border-radius:12px;border:1.5px solid #e0d8ec;font-size:15px;font-family:inherit;outline:none;margin-bottom:12px;color:#3a3350;">
+      <button id="auth-btn" onclick="sendMagicLink()" style="width:100%;padding:13px;border-radius:12px;border:none;background:#CDB4DB;color:#3a3350;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;">Send magic link ✨</button>
+      <p id="auth-msg" style="font-size:12px;color:#8b7fa8;margin-top:12px;min-height:18px;"></p>
+    </div>
+  </div>
+</div>
+
+<div id="panel-grid-wrapper">
 <div class="panel-grid" id="panel-grid"></div>
+</div>
+
+</div><!-- /panel-grid-wrapper -->
 
 <!-- Floating block editor -->
 <div id="block-editor">
@@ -490,6 +509,13 @@
 
 <footer>What's the Plan? &middot; One week at a time</footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ─── Supabase config ──────────────────────────────────────────────────────────
+const SUPA_URL = "https://suiyhscqthatoxxblugc.supabase.co";
+const SUPA_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1aXloc2NxdGhhdG94eGJsdWdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0OTk2MDEsImV4cCI6MjA4ODA3NTYwMX0.NdmLPj2ceLVoRuL_fJLkBbtJbFYvcex-lN045XMLfpk";
+const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
+</script>
 <script>
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -516,13 +542,97 @@ const TIME_COL_W = 56;
 const STATUS_CYCLE = ["unpaid", "pending", "paid"];
 const STATUS_ICON  = { unpaid: "○", pending: "◑", paid: "✓" };
 
-// ─── localStorage helpers ────────────────────────────────────────────────────
+// ─── localStorage helpers (used as local cache) ───────────────────────────────
 
 function ls(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
 }
 function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
+// ─── Supabase sync helpers ────────────────────────────────────────────────────
+
+let _userId = null;
+let _syncDebounce = {};
+
+// Write to Supabase with debounce (300ms) to avoid hammering on rapid edits
+function syncToCloud(table, payload) {
+  if (!_userId) return;
+  clearTimeout(_syncDebounce[table]);
+  _syncDebounce[table] = setTimeout(async () => {
+    try {
+      await supa.from(table).upsert({ user_id: _userId, ...payload }, { onConflict: "user_id" });
+      showSyncStatus("saved");
+    } catch (e) {
+      console.warn("[sync] failed:", table, e);
+      showSyncStatus("error");
+    }
+  }, 300);
+}
+
+function syncBlocksToCloud() {
+  if (!_userId) return;
+  clearTimeout(_syncDebounce["blocks"]);
+  _syncDebounce["blocks"] = setTimeout(async () => {
+    try {
+      const entries = Object.entries(S.blocksByWeek);
+      for (const [week_key, dayMap] of entries) {
+        for (const day of DAYS) {
+          const blocks = dayMap[day] || [];
+          await supa.from("blocks_by_week").upsert(
+            { user_id: _userId, week_key, day, blocks },
+            { onConflict: "user_id,week_key,day" }
+          );
+        }
+      }
+      showSyncStatus("saved");
+    } catch (e) {
+      console.warn("[sync] blocks failed:", e);
+      showSyncStatus("error");
+    }
+  }, 400);
+}
+
+function syncNotesToCloud() {
+  if (!_userId) return;
+  clearTimeout(_syncDebounce["notes"]);
+  _syncDebounce["notes"] = setTimeout(async () => {
+    try {
+      const entries = Object.entries(S.notesByWeek);
+      for (const [week_key, notes] of entries) {
+        await supa.from("notes_by_week").upsert(
+          { user_id: _userId, week_key, notes },
+          { onConflict: "user_id,week_key" }
+        );
+      }
+      showSyncStatus("saved");
+    } catch (e) {
+      console.warn("[sync] notes failed:", e);
+      showSyncStatus("error");
+    }
+  }, 400);
+}
+
+// Show a subtle sync indicator in the header
+function showSyncStatus(status) {
+  const el = document.getElementById("sync-status");
+  if (!el) return;
+  if (status === "saved") {
+    el.textContent = "✓ synced";
+    el.style.color = "#3a7a55";
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => { el.textContent = ""; }, 2500);
+  } else if (status === "saving") {
+    el.textContent = "syncing…";
+    el.style.color = "#8b7fa8";
+  } else if (status === "error") {
+    el.textContent = "⚠ sync error";
+    el.style.color = "#c0516b";
+  } else if (status === "offline") {
+    el.textContent = "offline";
+    el.style.color = "#8b7fa8";
+  }
+}
 
 // ─── Auto-prune weeks older than 14 days ─────────────────────────────────────
 
@@ -566,6 +676,7 @@ function saveCurrentWeekBlocks(dayMap) {
   const key = getWeekKey(S.weekOffset);
   S.blocksByWeek[key] = dayMap;
   lsSave("mc-blocksByWeek", S.blocksByWeek);
+  syncBlocksToCloud();
 }
 
 // ─── Default financials ───────────────────────────────────────────────────────
@@ -586,23 +697,23 @@ const S = {
   settings:      { startHour:4, endHour:23, stepMinutes:30, showLabels:true, ...ls("mc-settings", {}) },
   blocksByWeek:  pruneOldWeeks(rawBlocksByWeek),
   weekOffset:    0,
-  priorities: [
+  priorities:    ls("mc-priorities", [
     { id:1, text:"Complete quarterly review draft", color:C.lavender },
     { id:2, text:"Schedule dentist appointment",    color:C.skyBlue  },
     { id:3, text:"Reply to Sarah's email",          color:C.mint     },
-  ],
+  ]),
   newPriority: "",
-  financials: ls("mc-financials", DEFAULT_FINANCIALS).map(f => ({ status:"unpaid", ...f })),
+  financials:    ls("mc-financials", DEFAULT_FINANCIALS).map(f => ({ status:"unpaid", ...f })),
   editingFin:      null,
   editingFinLabel: null,
-  notesByWeek:  ls("mc-notesByWeek", {}),  // { weekKey: [{id,text,color,ts}] }
-  notepadDraft: "",   // live textarea content (not persisted between reloads)
+  notesByWeek:  ls("mc-notesByWeek", {}),
+  notepadDraft: "",
 };
 
-// Save pruned version back immediately
+// Save pruned blocks back immediately
 lsSave("mc-blocksByWeek", S.blocksByWeek);
 
-// ─── Migration: old mc-blocks → blocksByWeek ──────────────────────────────────
+// ─── Migration: old mc-blocks → blocksByWeek (runs once, local only) ─────────
 
 (function migrateBlocks() {
   const legacy = ls("mc-blocks", null);
@@ -616,7 +727,127 @@ lsSave("mc-blocksByWeek", S.blocksByWeek);
   }
 })();
 
-// ─── Time Slot Helpers ────────────────────────────────────────────────────────
+// ─── Auth helpers ─────────────────────────────────────────────────────────────
+
+async function sendMagicLink() {
+  const email = document.getElementById("auth-email").value.trim();
+  const msg   = document.getElementById("auth-msg");
+  const btn   = document.getElementById("auth-btn");
+  if (!email) { msg.textContent = "Please enter your email."; return; }
+  btn.disabled = true; btn.textContent = "Sending…";
+  const { error } = await supa.auth.signInWithOtp({
+    email,
+    options: { emailRedirectTo: window.location.href }
+  });
+  if (error) {
+    msg.style.color = "#c0516b";
+    msg.textContent = error.message;
+    btn.disabled = false; btn.textContent = "Send magic link ✨";
+  } else {
+    msg.style.color = "#3a7a55";
+    msg.textContent = "✓ Check your email — tap the link to sign in!";
+    btn.textContent = "Sent!";
+  }
+}
+
+// Enter key submits auth form
+document.getElementById("auth-email").addEventListener("keydown", e => {
+  if (e.key === "Enter") sendMagicLink();
+});
+
+// ─── Load cloud data into S ───────────────────────────────────────────────────
+
+async function loadCloudData(userId) {
+  _userId = userId;
+  showSyncStatus("saving");
+
+  try {
+    // Blocks
+    const { data: blockRows } = await supa.from("blocks_by_week")
+      .select("week_key,day,blocks").eq("user_id", userId);
+    if (blockRows && blockRows.length > 0) {
+      const cloud = {};
+      blockRows.forEach(r => {
+        if (!cloud[r.week_key]) cloud[r.week_key] = {};
+        cloud[r.week_key][r.day] = r.blocks || [];
+      });
+      // Merge: cloud wins, but keep any local weeks cloud doesn't have
+      Object.assign(S.blocksByWeek, cloud);
+      S.blocksByWeek = pruneOldWeeks(S.blocksByWeek);
+      lsSave("mc-blocksByWeek", S.blocksByWeek);
+    }
+
+    // Notes
+    const { data: noteRows } = await supa.from("notes_by_week")
+      .select("week_key,notes").eq("user_id", userId);
+    if (noteRows && noteRows.length > 0) {
+      noteRows.forEach(r => { S.notesByWeek[r.week_key] = r.notes || []; });
+      lsSave("mc-notesByWeek", S.notesByWeek);
+    }
+
+    // Priorities
+    const { data: priRow } = await supa.from("priorities")
+      .select("items").eq("user_id", userId).maybeSingle();
+    if (priRow?.items?.length > 0) {
+      S.priorities = priRow.items;
+      lsSave("mc-priorities", S.priorities);
+    } else if (S.priorities.length > 0) {
+      // Push local data up to cloud on first login
+      syncToCloud("priorities", { items: S.priorities });
+    }
+
+    // Financials
+    const { data: finRow } = await supa.from("financials")
+      .select("items").eq("user_id", userId).maybeSingle();
+    if (finRow?.items?.length > 0) {
+      S.financials = finRow.items.map(f => ({ status:"unpaid", ...f }));
+      lsSave("mc-financials", S.financials);
+    } else if (S.financials.length > 0) {
+      syncToCloud("financials", { items: S.financials });
+    }
+
+    // Settings
+    const { data: setRow } = await supa.from("settings")
+      .select("data").eq("user_id", userId).maybeSingle();
+    if (setRow?.data && Object.keys(setRow.data).length > 0) {
+      S.settings = { ...S.settings, ...setRow.data };
+      lsSave("mc-settings", S.settings);
+    } else {
+      syncToCloud("settings", { data: S.settings });
+    }
+
+    // Push any local blocks to cloud that cloud doesn't have yet
+    syncBlocksToCloud();
+    syncNotesToCloud();
+
+    showSyncStatus("saved");
+  } catch (e) {
+    console.warn("[cloud load] error:", e);
+    showSyncStatus("error");
+  }
+}
+
+// ─── Add sign-out button to header ───────────────────────────────────────────
+
+function addSignOutButton() {
+  const hdr = document.getElementById("app-header");
+  if (document.getElementById("signout-btn")) return;
+  const soBtn = document.createElement("button");
+  soBtn.id = "signout-btn";
+  soBtn.textContent = "Sign out";
+  soBtn.style.cssText = "position:absolute;top:16px;right:16px;padding:6px 12px;border-radius:20px;border:1.5px solid #e0d8ec;background:transparent;font-size:11px;cursor:pointer;font-family:inherit;color:#8b7fa8;";
+  soBtn.onclick = async () => {
+    await supa.auth.signOut();
+    location.reload();
+  };
+  hdr.style.position = "relative";
+  hdr.appendChild(soBtn);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+document.getElementById("today-date").textContent =
+  new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
 
 function getSlots() {
   const { startHour, endHour, stepMinutes } = S.settings;
@@ -757,12 +988,12 @@ function buildScheduler() {
 
   const labelsBtn = el("button", "pill-btn" + (S.settings.showLabels ? " active" : ""));
   labelsBtn.textContent = `Labels ${S.settings.showLabels ? "on" : "off"}`;
-  labelsBtn.onclick = () => { S.settings.showLabels = !S.settings.showLabels; lsSave("mc-settings", S.settings); rerenderSchedulerOnly(); };
+  labelsBtn.onclick = () => { S.settings.showLabels = !S.settings.showLabels; lsSave("mc-settings", S.settings); syncToCloud("settings",{data:S.settings}); rerenderSchedulerOnly(); };
   ctrl.appendChild(labelsBtn);
 
   const stepBtn = el("button", "pill-btn" + (S.settings.stepMinutes === 15 ? " active" : ""));
   stepBtn.textContent = `${S.settings.stepMinutes}m`;
-  stepBtn.onclick = () => { S.settings.stepMinutes = S.settings.stepMinutes === 30 ? 15 : 30; lsSave("mc-settings", S.settings); rerenderSchedulerOnly(); };
+  stepBtn.onclick = () => { S.settings.stepMinutes = S.settings.stepMinutes === 30 ? 15 : 30; lsSave("mc-settings", S.settings); syncToCloud("settings",{data:S.settings}); rerenderSchedulerOnly(); };
   ctrl.appendChild(stepBtn);
 
   CATEGORIES.forEach(cat => {
@@ -1262,7 +1493,7 @@ function buildPriorityPanel() {
     const item = div("priority-item", { background: p.color + "33", border: `1.5px solid ${p.color}66` });
     const num  = div("priority-num",  { background: p.color }); num.textContent = i + 1;
     const txt  = span("priority-text", p.text);
-    const del  = btn("priority-del", "\u00d7", () => { S.priorities = S.priorities.filter(x => x.id !== p.id); renderAll(); });
+    const del  = btn("priority-del", "\u00d7", () => { S.priorities = S.priorities.filter(x => x.id !== p.id); lsSave("mc-priorities", S.priorities); syncToCloud("priorities", { items: S.priorities }); renderAll(); });
     item.appendChild(num); item.appendChild(txt); item.appendChild(del); list.appendChild(item);
   });
   if (S.priorities.length === 0) list.appendChild(div("priority-empty", {}, "No priorities set \u00b7 Add up to 5 below"));
@@ -1288,6 +1519,8 @@ function addPriority() {
   const palette = [C.lavender, C.skyBlue, C.mint, C.yellow, C.hotPink];
   S.priorities.push({ id: Date.now(), text, color: palette[S.priorities.length % palette.length] });
   S.newPriority = "";
+  lsSave("mc-priorities", S.priorities);
+  syncToCloud("priorities", { items: S.priorities });
   renderAll();
 }
 
@@ -1310,8 +1543,8 @@ function buildFinancialPanel() {
 
     if (S.editingFinLabel === f.id) {
       const inp = el("input", "fin-label-input"); inp.value = f.label;
-      inp.onblur = ev => { f.label = ev.target.value||f.label; S.editingFinLabel=null; lsSave("mc-financials",S.financials); renderAll(); };
-      inp.onkeydown = ev => { if(ev.key==="Enter"){f.label=ev.target.value||f.label;S.editingFinLabel=null;lsSave("mc-financials",S.financials);renderAll();} if(ev.key==="Escape"){S.editingFinLabel=null;renderAll();} };
+      inp.onblur = ev => { f.label = ev.target.value||f.label; S.editingFinLabel=null; lsSave("mc-financials",S.financials); syncToCloud("financials",{items:S.financials}); renderAll(); };
+      inp.onkeydown = ev => { if(ev.key==="Enter"){f.label=ev.target.value||f.label;S.editingFinLabel=null;lsSave("mc-financials",S.financials);syncToCloud("financials",{items:S.financials});renderAll();} if(ev.key==="Escape"){S.editingFinLabel=null;renderAll();} };
       row.appendChild(inp); setTimeout(()=>inp.focus(),0);
     } else {
       const lbl = span("fin-label", f.label, { fontWeight: i===0?"500":"400" }); lbl.title="Tap to edit label";
@@ -1320,15 +1553,15 @@ function buildFinancialPanel() {
 
     if (S.editingFin === f.id) {
       const inp = el("input","fin-input"); inp.value = f.value;
-      inp.onblur = ev=>{f.value=ev.target.value;S.editingFin=null;lsSave("mc-financials",S.financials);renderAll();};
-      inp.onkeydown = ev=>{if(ev.key==="Enter"){f.value=ev.target.value;S.editingFin=null;lsSave("mc-financials",S.financials);renderAll();}if(ev.key==="Escape"){S.editingFin=null;renderAll();}};
+      inp.onblur = ev=>{f.value=ev.target.value;S.editingFin=null;lsSave("mc-financials",S.financials);syncToCloud("financials",{items:S.financials});renderAll();};
+      inp.onkeydown = ev=>{if(ev.key==="Enter"){f.value=ev.target.value;S.editingFin=null;lsSave("mc-financials",S.financials);syncToCloud("financials",{items:S.financials});renderAll();}if(ev.key==="Escape"){S.editingFin=null;renderAll();}};
       row.appendChild(inp); setTimeout(()=>inp.focus(),0);
     } else {
       const val = span("fin-value","$"+f.value); val.onclick=()=>{S.editingFin=f.id;S.editingFinLabel=null;renderAll();}; row.appendChild(val);
     }
 
     const delBtn = el("button","fin-del-btn"); delBtn.textContent="\u00d7"; delBtn.title="Remove row";
-    delBtn.onclick=()=>{S.financials=S.financials.filter(x=>x.id!==f.id);lsSave("mc-financials",S.financials);renderAll();};
+    delBtn.onclick=()=>{S.financials=S.financials.filter(x=>x.id!==f.id);lsSave("mc-financials",S.financials);syncToCloud("financials",{items:S.financials});renderAll();};
     row.appendChild(delBtn); panel.appendChild(row);
   });
 
@@ -1341,14 +1574,16 @@ function buildFinancialPanel() {
   divRow.appendChild(span("fin-remaining","$"+remaining.toFixed(0),{color:remaining>=0?"#5a9e72":"#c0516b"}));
   panel.appendChild(divRow);
 
-  const addRow = btn("fin-add-btn","+ Add row",()=>{S.financials.push({id:Date.now(),label:"New item",value:"0",status:"unpaid"});lsSave("mc-financials",S.financials);renderAll();});
+  const addRow = btn("fin-add-btn","+ Add row",()=>{S.financials.push({id:Date.now(),label:"New item",value:"0",status:"unpaid"});lsSave("mc-financials",S.financials);syncToCloud("financials",{items:S.financials});renderAll();});
   panel.appendChild(addRow);
   return panel;
 }
 
 function cycleFinStatus(fin) {
   fin.status = STATUS_CYCLE[(STATUS_CYCLE.indexOf(fin.status||"unpaid")+1)%STATUS_CYCLE.length];
-  lsSave("mc-financials",S.financials); renderAll();
+  lsSave("mc-financials",S.financials);
+  syncToCloud("financials", { items: S.financials });
+  renderAll();
 }
 
 // ─── Panel: Weekly Notepad ────────────────────────────────────────────────────
@@ -1369,6 +1604,7 @@ function getCurrentNotes() {
 function saveCurrentNotes(notes) {
   S.notesByWeek[getWeekKey(S.weekOffset)] = notes;
   lsSave("mc-notesByWeek", S.notesByWeek);
+  syncNotesToCloud();
 }
 
 // ─── Sticky Note Editor ───────────────────────────────────────────────────────
@@ -1548,6 +1784,40 @@ function renderAll() {
   grid.appendChild(buildNotepadPanel());
 }
 
+// ─── Auth init (runs after all functions are defined) ────────────────────────
+
+document.getElementById("today-date").textContent =
+  new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
+
+(async () => {
+  const { data: { session } } = await supa.auth.getSession();
+
+  if (session?.user) {
+    document.getElementById("auth-screen").style.display = "none";
+    await loadCloudData(session.user.id);
+    addSignOutButton();
+    renderAll();
+  } else {
+    document.getElementById("auth-screen").style.display = "flex";
+  }
+
+  supa.auth.onAuthStateChange(async (event, session) => {
+    if (event === "SIGNED_IN" && session?.user) {
+      document.getElementById("auth-screen").style.display = "none";
+      document.getElementById("panel-grid-wrapper").style.display = "";
+      document.getElementById("app-header").style.display = "";
+      document.querySelector("footer").style.display = "";
+      await loadCloudData(session.user.id);
+      addSignOutButton();
+      renderAll();
+    }
+    if (event === "SIGNED_OUT") {
+      _userId = null;
+      location.reload();
+    }
+  });
+})();
+
 // ─── PWA: manifest + service worker ──────────────────────────────────────────
 
 (function initPWA() {
@@ -1618,12 +1888,8 @@ self.addEventListener("fetch", e => {
   }
 })();
 
-// ─── Init ─────────────────────────────────────────────────────────────────────
+// ─── Init is handled by the async auth block above ───────────────────────────
 
-document.getElementById("today-date").textContent =
-  new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
-
-renderAll();
 </script>
 </body>
 </html>

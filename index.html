@@ -348,6 +348,102 @@
 
   footer { text-align: center; margin-top: 32px; color: var(--muted); font-size: 11px; opacity: 0.7; }
 
+  /* ── Focus Timer Panel ── */
+  .focus-ring-wrap { display:flex; justify-content:center; margin:4px 0 14px; position:relative; }
+  #focus-ring-svg { transform:rotate(-90deg); display:block; }
+  .focus-ring-bg   { fill:none; stroke:#e0d8ec; stroke-width:9; }
+  .focus-ring-prog { fill:none; stroke-width:9; stroke-linecap:round; transition:stroke-dashoffset 0.55s ease, stroke 0.4s ease; }
+  .focus-time-inner { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; }
+  .focus-time-display { font-size:32px; font-weight:600; letter-spacing:-1.5px; line-height:1; font-variant-numeric:tabular-nums; }
+  .focus-mode-badge { font-size:9px; font-weight:700; letter-spacing:2px; padding:3px 10px; border-radius:20px; margin-top:5px; transition:all 0.3s; }
+  .focus-session-dots { display:flex; justify-content:center; gap:7px; margin-bottom:12px; }
+  .focus-session-dot { width:9px; height:9px; border-radius:50%; background:#e0d8ec; transition:background 0.35s, transform 0.2s; }
+  .focus-session-dot.filled { background:var(--lavender); transform:scale(1.15); }
+  .focus-task-label { font-size:11px; color:var(--muted); margin-bottom:6px; font-weight:500; }
+  .focus-task-input { width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid #e0d8ec; font-size:13px; font-family:inherit; color:var(--dark); outline:none; transition:border-color 0.15s; background:white; }
+  .focus-task-input:focus { border-color:var(--lavender); }
+  .focus-task-input::placeholder { color:#b8aed0; }
+  .focus-btn-row { display:flex; gap:8px; margin-top:12px; }
+  .focus-play-btn { flex:1; padding:11px; border-radius:10px; border:none; background:var(--lavender); color:var(--dark); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .focus-play-btn:hover { filter:brightness(0.93); }
+  .focus-play-btn.break-mode { background:var(--mint); }
+  .focus-reset-btn { padding:11px 14px; border-radius:10px; border:1.5px solid #e0d8ec; background:transparent; color:var(--muted); font-size:13px; cursor:pointer; font-family:inherit; transition:all 0.15s; }
+  .focus-reset-btn:hover { border-color:var(--lavender); color:var(--dark); }
+  .focus-settings-row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; margin-top:10px; }
+  .focus-time-pill { padding:4px 10px; border-radius:20px; font-size:10px; cursor:pointer; border:1.5px solid #e0d8ec; background:transparent; font-family:inherit; color:var(--dark); transition:all 0.12s; }
+  .focus-time-pill.active { border-color:var(--lavender); background:#CDB4DB33; font-weight:600; }
+  .focus-hyperfocus-warn {
+    display:none; align-items:center; gap:8px; padding:10px 14px;
+    border-radius:10px; background:#FFAFCC22; border:1.5px solid var(--hotPink);
+    margin-top:10px; font-size:12px; color:var(--dark); line-height:1.4;
+    animation: pulseWarn 2.2s ease-in-out infinite;
+  }
+  .focus-hyperfocus-warn.show { display:flex; }
+  @keyframes pulseWarn {
+    0%,100% { border-color:var(--hotPink); box-shadow:none; }
+    50%      { border-color:#ff7aad; box-shadow:0 0 10px #FFAFCC55; }
+  }
+  .focus-priorities-hint { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .focus-pri-chip { padding:4px 10px; border-radius:20px; font-size:10px; cursor:pointer; border:1.5px solid #e0d8ec; background:transparent; font-family:inherit; color:var(--dark); transition:all 0.12s; max-width:160px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .focus-pri-chip:hover { border-color:var(--lavender); background:#CDB4DB22; }
+
+  /* ── Break Prompt Modal ── */
+  #break-prompt { display:none; position:fixed; inset:0; z-index:5000; background:rgba(58,51,80,0.4); backdrop-filter:blur(4px); align-items:center; justify-content:center; padding:24px; }
+  #break-prompt.open { display:flex; }
+  .break-prompt-card { background:white; border-radius:24px; padding:32px 28px; max-width:320px; width:100%; text-align:center; box-shadow:0 16px 48px rgba(0,0,0,0.2); animation:modalPop 0.2s ease; }
+  .break-prompt-emoji { font-size:52px; margin-bottom:10px; line-height:1; }
+  .break-prompt-title { font-size:20px; font-weight:600; margin-bottom:8px; }
+  .break-prompt-sub   { font-size:13px; color:var(--muted); margin-bottom:24px; line-height:1.55; }
+  .break-prompt-btns  { display:flex; gap:8px; flex-direction:column; }
+  .break-start-btn { padding:13px; border-radius:12px; border:none; background:var(--mint); color:var(--dark); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; transition:filter 0.15s; }
+  .break-start-btn:hover { filter:brightness(0.93); }
+  .break-skip-btn  { padding:11px; border-radius:12px; border:1.5px solid #e0d8ec; background:transparent; color:var(--muted); font-size:12px; cursor:pointer; font-family:inherit; }
+
+  /* ── Brain Dump Floating Button ── */
+  #brain-dump-btn {
+    position:fixed; bottom:calc(24px + var(--safe-bottom)); right:20px; z-index:1500;
+    width:52px; height:52px; border-radius:50%; border:none;
+    background:linear-gradient(135deg, #CDB4DB 0%, #FFAFCC 100%);
+    color:white; font-size:20px; cursor:pointer;
+    box-shadow:0 4px 18px rgba(205,180,219,0.55);
+    display:flex; align-items:center; justify-content:center;
+    transition:all 0.2s; -webkit-tap-highlight-color:transparent;
+  }
+  #brain-dump-btn:hover { transform:scale(1.1); box-shadow:0 6px 24px rgba(205,180,219,0.7); }
+  #brain-dump-btn .bd-badge {
+    position:absolute; top:-3px; right:-3px; min-width:18px; height:18px;
+    border-radius:9px; padding:0 4px; background:var(--hotPink); color:white;
+    font-size:10px; font-weight:700; display:none; align-items:center; justify-content:center;
+    border:2px solid white;
+  }
+
+  /* ── Brain Dump Overlay ── */
+  #brain-dump-overlay { position:fixed; inset:0; z-index:4000; background:rgba(58,51,80,0.35); backdrop-filter:blur(3px); display:none; align-items:flex-end; justify-content:center; }
+  #brain-dump-overlay.open { display:flex; }
+  .brain-dump-sheet { background:white; border-radius:24px 24px 0 0; padding:22px 20px calc(16px + var(--safe-bottom)); width:100%; max-width:600px; max-height:72vh; display:flex; flex-direction:column; gap:10px; box-shadow:0 -4px 32px rgba(0,0,0,0.14); animation:sheetUp 0.22s ease; }
+  @keyframes sheetUp { from{transform:translateY(50px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+  .bd-header { display:flex; justify-content:space-between; align-items:flex-start; }
+  .bd-title { font-size:16px; font-weight:600; }
+  .bd-sub   { font-size:11px; color:var(--muted); margin-top:2px; line-height:1.4; }
+  .bd-close-x { border:none; background:transparent; font-size:22px; cursor:pointer; color:var(--muted); line-height:1; padding:0 4px; font-family:inherit; }
+  .brain-dump-input-row { display:flex; gap:7px; }
+  .brain-dump-input { flex:1; padding:11px 14px; border-radius:10px; border:1.5px solid #e0d8ec; font-size:14px; font-family:inherit; color:var(--dark); outline:none; transition:border-color 0.15s; }
+  .brain-dump-input:focus { border-color:var(--lavender); }
+  .brain-dump-add-btn { padding:11px 16px; border-radius:10px; border:none; background:var(--lavender); color:var(--dark); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; }
+  .brain-dump-list { overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:6px; min-height:40px; }
+  .brain-dump-item { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:10px; background:#f5f0fa; font-size:13px; animation:fadeInItem 0.15s ease; }
+  @keyframes fadeInItem { from{opacity:0;transform:translateY(5px);} to{opacity:1;transform:translateY(0);} }
+  .bd-item-text { flex:1; line-height:1.4; word-break:break-word; }
+  .bd-to-priority { padding:3px 9px; border-radius:20px; border:1.5px solid var(--lavender); background:transparent; font-size:10px; cursor:pointer; color:var(--muted); font-family:inherit; white-space:nowrap; flex-shrink:0; }
+  .bd-to-priority:hover { background:#CDB4DB33; color:var(--dark); }
+  .bd-item-del { border:none; background:transparent; cursor:pointer; color:var(--muted); font-size:18px; opacity:0.35; padding:2px 4px; line-height:1; font-family:inherit; flex-shrink:0; }
+  .bd-item-del:hover { opacity:0.8; }
+  .bd-empty { text-align:center; color:var(--muted); font-size:13px; padding:16px; }
+  .bd-footer { display:flex; justify-content:space-between; align-items:center; padding-top:2px; }
+  .bd-clear-btn { padding:7px 14px; border-radius:20px; border:1.5px solid #e0d8ec; background:transparent; color:var(--muted); font-size:12px; cursor:pointer; font-family:inherit; }
+  .bd-note-btn  { padding:7px 14px; border-radius:20px; border:none; background:var(--cornflower); color:white; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .bd-count-badge { font-size:11px; color:var(--muted); }
+
   /* ── Print hint toast ── */
   #print-hint {
     display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
@@ -490,6 +586,7 @@
     <button class="btn-secondary" id="editor-delete" style="display:none">Delete</button>
     <button class="btn-secondary" id="editor-cancel">Cancel</button>
   </div>
+  <button id="editor-focus-btn" style="display:none;width:100%;padding:9px;border-radius:8px;border:1.5px dashed var(--lavender);background:transparent;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;margin-top:-4px;">🎯 Start Focus Session for this block</button>
 </div>
 
 <!-- Sticky note modal -->
@@ -511,7 +608,48 @@
     </div>
   </div>
 </div>
-<div id="print-hint">📄 Use "Save as PDF" → landscape in the print dialog</div>
+<div id="break-prompt">
+  <div class="break-prompt-card">
+    <div class="break-prompt-emoji" id="break-prompt-emoji">🎉</div>
+    <div class="break-prompt-title" id="break-prompt-title">Session complete!</div>
+    <div class="break-prompt-sub" id="break-prompt-sub">Great work. Your brain needs a rest to consolidate what you just did.</div>
+    <div class="break-prompt-btns">
+      <button class="break-start-btn" id="break-start-btn">☕ Take a break</button>
+      <button class="break-skip-btn" id="break-skip-btn">Skip (not recommended)</button>
+    </div>
+  </div>
+</div>
+
+<!-- Brain Dump overlay -->
+<div id="brain-dump-overlay">
+  <div class="brain-dump-sheet">
+    <div class="bd-header">
+      <div>
+        <div class="bd-title">🧠 Brain Dump</div>
+        <div class="bd-sub">Park distracting thoughts here so you can refocus.<br>They'll be waiting when you're done.</div>
+      </div>
+      <button class="bd-close-x" id="bd-close-x">×</button>
+    </div>
+    <div class="brain-dump-input-row">
+      <input class="brain-dump-input" id="bd-input" type="text" placeholder="What's pulling your attention away?">
+      <button class="brain-dump-add-btn" id="bd-add-btn">Dump</button>
+    </div>
+    <div class="brain-dump-list" id="bd-list"></div>
+    <div class="bd-footer">
+      <span class="bd-count-badge" id="bd-count"></span>
+      <div style="display:flex;gap:6px;">
+        <button class="bd-clear-btn" id="bd-clear-btn">Clear all</button>
+        <button class="bd-note-btn" id="bd-to-note-btn">📌 Send to Notes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Brain Dump floating button -->
+<button id="brain-dump-btn" title="Brain Dump — park a distracting thought">
+  🧠
+  <span class="bd-badge" id="bd-badge"></span>
+</button>
 
 <footer>What's the Plan? &middot; One week at a time</footer>
 
@@ -714,6 +852,19 @@ const S = {
   editingFinLabel: null,
   notesByWeek:  ls("mc-notesByWeek", {}),
   notepadDraft: "",
+  focusTimer: {
+    mode:       "idle",    // "idle" | "work" | "break"
+    workMins:   25,
+    breakMins:  5,
+    secondsLeft: 25 * 60,
+    sessionsDone: 0,
+    skippedBreaks: 0,
+    task:       ls("mc-focusTask", ""),
+    intervalId: null,
+    isPaused:   false,
+    wasBreakDue: false,    // true when work finished, waiting for break prompt response
+  },
+  brainDump: ls("mc-brainDump", []),
 };
 
 // Save pruned blocks back immediately
@@ -1463,6 +1614,21 @@ function openEditorPanel(x, y, mode) {
 
   document.getElementById("editor-save").style.background = editor.color;
   setTimeout(() => { const n = document.getElementById("editor-note"); if (n) n.focus(); }, 50);
+
+  // "Start Focus" button — only show in edit mode
+  const focusBtn = document.getElementById("editor-focus-btn");
+  if (focusBtn) {
+    focusBtn.style.display = mode === "edit" ? "" : "none";
+    focusBtn.onclick = () => {
+      const label = editor.block ? `${editor.block.category}: ${editor.block.note || formatSlot(editor.block.start) + " – " + formatSlot(editor.block.end)}` : "";
+      S.focusTimer.task = label; lsSave("mc-focusTask", label);
+      // If timer is idle, auto-start it
+      if (S.focusTimer.mode === "idle") { S.focusTimer.mode = "work"; S.focusTimer.isPaused = false; S.focusTimer.secondsLeft = S.focusTimer.workMins * 60; startInterval(); }
+      closeEditor(); renderAll();
+      // Scroll to focus panel
+      setTimeout(() => { const fp = document.querySelector(".focus-play-btn"); if (fp) fp.closest(".panel")?.scrollIntoView({ behavior:"smooth", block:"nearest" }); }, 100);
+    };
+  }
 }
 
 document.getElementById("editor-save").onclick = () => {
@@ -1801,12 +1967,360 @@ function buildNotepadPanel() {
   return panel;
 }
 
-// ─── Main Render ──────────────────────────────────────────────────────────────
+// ─── Panel: Focus Timer ───────────────────────────────────────────────────────
+
+const FOCUS_RING_R    = 52;
+const FOCUS_RING_CIRC = +(2 * Math.PI * FOCUS_RING_R).toFixed(2); // ≈ 326.73
+
+function buildFocusPanel() {
+  const ft = S.focusTimer;
+  const panel = div("panel panel-full");
+  panel.appendChild(div("panel-accent", { background: C.hotPink }));
+
+  const h2 = document.createElement("h2"); h2.textContent = "Focus Timer";
+  panel.appendChild(h2);
+  const sub = div("sub"); sub.textContent = "Pomodoro-style sessions \u00b7 Work hard, rest on purpose"; panel.appendChild(sub);
+
+  // ── SVG Ring ──
+  const ringWrap = div("focus-ring-wrap");
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("id", "focus-ring-svg"); svg.setAttribute("width","130"); svg.setAttribute("height","130"); svg.setAttribute("viewBox","0 0 120 120");
+
+  const bg = document.createElementNS(svgNS, "circle");
+  bg.setAttribute("cx","60"); bg.setAttribute("cy","60"); bg.setAttribute("r", String(FOCUS_RING_R)); bg.setAttribute("class","focus-ring-bg");
+  svg.appendChild(bg);
+
+  const prog = document.createElementNS(svgNS, "circle");
+  prog.setAttribute("cx","60"); prog.setAttribute("cy","60"); prog.setAttribute("r", String(FOCUS_RING_R));
+  prog.setAttribute("class","focus-ring-prog"); prog.id = "focus-ring-progress";
+  const total = (ft.mode === "break" ? ft.breakMins : ft.workMins) * 60;
+  const pct   = ft.secondsLeft / total;
+  prog.style.strokeDasharray  = String(FOCUS_RING_CIRC);
+  prog.style.strokeDashoffset = String(FOCUS_RING_CIRC * (1 - pct));
+  prog.style.stroke = ft.mode === "break" ? C.mint : ft.mode === "work" ? C.lavender : "#e0d8ec";
+  svg.appendChild(prog);
+  ringWrap.appendChild(svg);
+
+  // Time + badge (absolutely positioned inside ring)
+  const inner = div("focus-time-inner");
+  const mins = Math.floor(ft.secondsLeft / 60);
+  const secs = ft.secondsLeft % 60;
+  const timeDisp = span("focus-time-display", `${String(mins).padStart(2,"0")}:${String(secs).padStart(2,"0")}`);
+  timeDisp.id = "focus-time-display";
+
+  const modeColors = { idle: { bg:"#f5f0fa", color:C.muted }, work: { bg:C.lavender+"44", color:C.dark }, break: { bg:C.mint+"55", color:"#3a7a55" } };
+  const mc = modeColors[ft.mode];
+  const badge = span("focus-mode-badge", ft.mode === "idle" ? "READY" : ft.mode === "work" ? "FOCUS" : "BREAK");
+  badge.id = "focus-mode-badge"; badge.style.background = mc.bg; badge.style.color = mc.color;
+  inner.appendChild(timeDisp); inner.appendChild(badge);
+  ringWrap.appendChild(inner);
+  panel.appendChild(ringWrap);
+
+  // ── Session dots (4 per cycle) ──
+  const dotsRow = div("focus-session-dots"); dotsRow.id = "focus-session-dots";
+  for (let i = 0; i < 4; i++) {
+    const d = div("focus-session-dot" + (i < (ft.sessionsDone % 4) ? " filled" : "")); dotsRow.appendChild(d);
+  }
+  const cycleSpan = span("", `Cycle ${Math.floor(ft.sessionsDone / 4) + 1}`, { fontSize:"10px", color:C.muted, marginLeft:"8px" });
+  dotsRow.appendChild(cycleSpan);
+  panel.appendChild(dotsRow);
+
+  // ── "Focusing on" input ──
+  const taskLbl = div("focus-task-label"); taskLbl.textContent = "Focusing on…";
+  panel.appendChild(taskLbl);
+  const taskInp = el("input","focus-task-input");
+  taskInp.id = "focus-task-input"; taskInp.type = "text"; taskInp.placeholder = "What's the one thing right now?";
+  taskInp.value = ft.task;
+  taskInp.oninput = e => { ft.task = e.target.value; lsSave("mc-focusTask", ft.task); };
+  panel.appendChild(taskInp);
+
+  // ── Priority quick-fill chips ──
+  if (S.priorities.length > 0) {
+    const hintRow = div("focus-priorities-hint");
+    S.priorities.slice(0,4).forEach(p => {
+      const chip = el("button","focus-pri-chip"); chip.textContent = p.text; chip.title = p.text;
+      chip.onclick = () => { ft.task = p.text; lsSave("mc-focusTask", ft.task); const inp = document.getElementById("focus-task-input"); if (inp) inp.value = ft.task; };
+      hintRow.appendChild(chip);
+    });
+    panel.appendChild(hintRow);
+  }
+
+  // ── Play/Reset buttons ──
+  const btnRow = div("focus-btn-row");
+  const playBtn = el("button","focus-play-btn" + (ft.mode === "break" ? " break-mode" : ""));
+  playBtn.id = "focus-play-btn";
+  playBtn.textContent = ft.mode === "idle" ? "▶  Start Focus" : ft.isPaused ? "▶  Resume" : "⏸  Pause";
+  playBtn.onclick = () => toggleFocusTimer();
+  const resetBtn = el("button","focus-reset-btn"); resetBtn.textContent = "↺  Reset";
+  resetBtn.onclick = () => resetFocusTimer();
+  btnRow.appendChild(playBtn); btnRow.appendChild(resetBtn);
+  panel.appendChild(btnRow);
+
+  // ── Work duration pills ──
+  const settingsRow = div("focus-settings-row");
+  const workLabel = span("", "Work:", { fontSize:"10px", color:C.muted, alignSelf:"center" }); settingsRow.appendChild(workLabel);
+  [15,25,45].forEach(m => {
+    const p = el("button","focus-time-pill" + (ft.workMins === m ? " active" : ""));
+    p.textContent = m + "m"; p.onclick = () => { if (ft.mode !== "idle") return; ft.workMins = m; ft.secondsLeft = m*60; lsSave("mc-settings",S.settings); updateFocusTimerDisplay(); rerenderFocusSettings(); };
+    settingsRow.appendChild(p);
+  });
+  const breakLabel = span("", "Break:", { fontSize:"10px", color:C.muted, marginLeft:"8px", alignSelf:"center" }); settingsRow.appendChild(breakLabel);
+  [5,10].forEach(m => {
+    const p = el("button","focus-time-pill" + (ft.breakMins === m ? " active" : ""));
+    p.textContent = m + "m"; p.onclick = () => { if (ft.mode !== "idle") return; ft.breakMins = m; lsSave("mc-settings",S.settings); rerenderFocusSettings(); };
+    settingsRow.appendChild(p);
+  });
+  settingsRow.id = "focus-settings-row";
+  panel.appendChild(settingsRow);
+
+  // ── Hyperfocus warning ──
+  const warn = div("focus-hyperfocus-warn");
+  warn.id = "focus-hyperfocus-warn";
+  if (ft.skippedBreaks >= 2) warn.classList.add("show");
+  warn.innerHTML = `⚠️ <span style="flex:1">You've skipped <strong>${ft.skippedBreaks}</strong> breaks. Your brain needs rest to lock in memory — take 5 minutes, it's part of the work.</span>`;
+  panel.appendChild(warn);
+
+  return panel;
+}
+
+// ─── Focus Timer Logic ────────────────────────────────────────────────────────
+
+function toggleFocusTimer() {
+  const ft = S.focusTimer;
+  if (ft.mode === "idle") {
+    // Start work session
+    ft.mode = "work"; ft.isPaused = false;
+    ft.secondsLeft = ft.workMins * 60;
+    startInterval();
+  } else if (!ft.isPaused) {
+    // Pause
+    ft.isPaused = true; clearInterval(ft.intervalId); ft.intervalId = null;
+  } else {
+    // Resume
+    ft.isPaused = false; startInterval();
+  }
+  updateFocusTimerDisplay();
+}
+
+function startInterval() {
+  const ft = S.focusTimer;
+  clearInterval(ft.intervalId);
+  ft.intervalId = setInterval(() => {
+    if (ft.secondsLeft > 0) {
+      ft.secondsLeft--;
+      updateFocusTimerDisplay();
+    } else {
+      clearInterval(ft.intervalId); ft.intervalId = null;
+      onTimerComplete();
+    }
+  }, 1000);
+}
+
+function onTimerComplete() {
+  const ft = S.focusTimer;
+  if (ft.mode === "work") {
+    ft.sessionsDone++;
+    playBeep([880, 1100, 880], [0.08, 0.08, 0.12]);
+    // Show break prompt
+    const prompt = document.getElementById("break-prompt");
+    const isLong = ft.sessionsDone % 4 === 0;
+    document.getElementById("break-prompt-emoji").textContent  = ft.sessionsDone % 4 === 0 ? "🏆" : "🎉";
+    document.getElementById("break-prompt-title").textContent  = ft.sessionsDone % 4 === 0 ? "4 sessions done! Long break time." : `Session ${ft.sessionsDone} complete!`;
+    document.getElementById("break-prompt-sub").textContent    = isLong
+      ? "Amazing focus run. Take 15–20 minutes — walk, stretch, hydrate."
+      : "Your brain needs rest to lock in what you just did. 5 minutes.";
+    document.getElementById("break-start-btn").textContent     = isLong ? "🚶 Take a long break (15m)" : "☕ Take a 5-min break";
+    if (prompt) prompt.classList.add("open");
+    ft.mode = "idle"; ft.wasBreakDue = true;
+    updateFocusTimerDisplay();
+  } else if (ft.mode === "break") {
+    // Break over → start next work session automatically
+    playBeep([660, 880], [0.1, 0.15]);
+    ft.mode = "work"; ft.isPaused = false; ft.secondsLeft = ft.workMins * 60;
+    startInterval(); updateFocusTimerDisplay();
+  }
+}
+
+function resetFocusTimer() {
+  const ft = S.focusTimer;
+  clearInterval(ft.intervalId); ft.intervalId = null;
+  ft.mode = "idle"; ft.isPaused = false; ft.secondsLeft = ft.workMins * 60;
+  ft.wasBreakDue = false;
+  updateFocusTimerDisplay();
+}
+
+function updateFocusTimerDisplay() {
+  const ft = S.focusTimer;
+  const mins = Math.floor(ft.secondsLeft / 60);
+  const secs = ft.secondsLeft % 60;
+  const timeStr = `${String(mins).padStart(2,"0")}:${String(secs).padStart(2,"0")}`;
+
+  const timeEl = document.getElementById("focus-time-display");
+  if (timeEl) timeEl.textContent = timeStr;
+
+  const ring = document.getElementById("focus-ring-progress");
+  if (ring) {
+    const total = (ft.mode === "break" ? ft.breakMins : ft.workMins) * 60;
+    const pct   = ft.secondsLeft / total;
+    ring.style.strokeDashoffset = String(FOCUS_RING_CIRC * (1 - pct));
+    ring.style.stroke = ft.mode === "break" ? C.mint : ft.mode === "work" ? C.lavender : "#e0d8ec";
+  }
+
+  const badge = document.getElementById("focus-mode-badge");
+  if (badge) {
+    badge.textContent = ft.mode === "idle" ? "READY" : ft.mode === "work" ? "FOCUS" : "BREAK";
+    badge.style.background = ft.mode === "break" ? C.mint+"55" : ft.mode === "work" ? C.lavender+"44" : "#f5f0fa";
+    badge.style.color      = ft.mode === "break" ? "#3a7a55" : C.dark;
+  }
+
+  const playBtn = document.getElementById("focus-play-btn");
+  if (playBtn) {
+    playBtn.textContent  = ft.mode === "idle" ? "▶  Start Focus" : ft.isPaused ? "▶  Resume" : "⏸  Pause";
+    playBtn.className    = "focus-play-btn" + (ft.mode === "break" ? " break-mode" : "");
+  }
+
+  const dotsEl = document.getElementById("focus-session-dots");
+  if (dotsEl) {
+    const filled = ft.sessionsDone % 4;
+    dotsEl.querySelectorAll(".focus-session-dot").forEach((d,i) => d.className = "focus-session-dot" + (i < filled ? " filled" : ""));
+  }
+
+  const warnEl = document.getElementById("focus-hyperfocus-warn");
+  if (warnEl) {
+    warnEl.className = "focus-hyperfocus-warn" + (ft.skippedBreaks >= 2 ? " show" : "");
+    if (ft.skippedBreaks >= 2) warnEl.innerHTML = `⚠️ <span style="flex:1">You've skipped <strong>${ft.skippedBreaks}</strong> breaks. Skipping rest hurts focus — take 5 minutes, it's part of the work.</span>`;
+  }
+}
+
+function rerenderFocusSettings() {
+  const ft = S.focusTimer;
+  const row = document.getElementById("focus-settings-row");
+  if (!row) return;
+  row.querySelectorAll(".focus-time-pill").forEach(p => {
+    const m = parseInt(p.textContent);
+    p.className = "focus-time-pill" + ((ft.workMins === m || ft.breakMins === m) ? " active" : "");
+  });
+}
+
+// Break prompt button wiring
+document.getElementById("break-start-btn").onclick = () => {
+  const ft = S.focusTimer;
+  const isLong = ft.sessionsDone % 4 === 0;
+  ft.mode = "break"; ft.isPaused = false;
+  ft.secondsLeft = isLong ? 15*60 : ft.breakMins*60;
+  ft.skippedBreaks = 0; ft.wasBreakDue = false;
+  document.getElementById("break-prompt").classList.remove("open");
+  startInterval(); updateFocusTimerDisplay();
+};
+document.getElementById("break-skip-btn").onclick = () => {
+  const ft = S.focusTimer;
+  ft.skippedBreaks++; ft.mode = "idle"; ft.wasBreakDue = false;
+  ft.secondsLeft = ft.workMins * 60;
+  document.getElementById("break-prompt").classList.remove("open");
+  updateFocusTimerDisplay();
+};
+
+// ─── Audio Beep (Web Audio API) ───────────────────────────────────────────────
+
+function playBeep(freqs, durations) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    let t = ctx.currentTime;
+    freqs.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.type = "sine"; osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.25, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + (durations[i] || 0.1));
+      osc.start(t); osc.stop(t + (durations[i] || 0.1));
+      t += (durations[i] || 0.1) + 0.04;
+    });
+  } catch(e) {}
+}
+
+// ─── Brain Dump ───────────────────────────────────────────────────────────────
+
+function openBrainDump() {
+  document.getElementById("brain-dump-overlay").classList.add("open");
+  renderBrainDumpList();
+  setTimeout(() => document.getElementById("bd-input").focus(), 100);
+}
+function closeBrainDump() {
+  document.getElementById("brain-dump-overlay").classList.remove("open");
+}
+
+function addBrainDumpItem() {
+  const inp  = document.getElementById("bd-input");
+  const text = inp.value.trim();
+  if (!text) return;
+  S.brainDump.push({ id: Date.now(), text });
+  lsSave("mc-brainDump", S.brainDump);
+  inp.value = ""; inp.focus();
+  renderBrainDumpList();
+  updateBrainDumpBadge();
+}
+
+function renderBrainDumpList() {
+  const list = document.getElementById("bd-list");
+  const countEl = document.getElementById("bd-count");
+  if (!list) return;
+  list.innerHTML = "";
+  if (S.brainDump.length === 0) {
+    list.innerHTML = `<div class="bd-empty">Nothing dumped yet. Park any distracting thought here 🧠</div>`;
+  } else {
+    S.brainDump.forEach(item => {
+      const row = div("brain-dump-item");
+      const txt = span("bd-item-text", item.text);
+      const toPri = el("button","bd-to-priority"); toPri.textContent = "+ Priority";
+      toPri.onclick = () => {
+        if (S.priorities.length >= 5) { alert("Priority stack is full (5 max)"); return; }
+        const palette = [C.lavender,C.skyBlue,C.mint,C.yellow,C.hotPink];
+        S.priorities.push({ id:Date.now(), text:item.text, color:palette[S.priorities.length%5] });
+        lsSave("mc-priorities", S.priorities); syncToCloud("priorities",{items:S.priorities});
+        S.brainDump = S.brainDump.filter(b => b.id !== item.id); lsSave("mc-brainDump",S.brainDump);
+        renderBrainDumpList(); updateBrainDumpBadge(); renderAll();
+      };
+      const del = el("button","bd-item-del"); del.textContent = "×";
+      del.onclick = () => { S.brainDump = S.brainDump.filter(b=>b.id!==item.id); lsSave("mc-brainDump",S.brainDump); renderBrainDumpList(); updateBrainDumpBadge(); };
+      row.appendChild(txt); row.appendChild(toPri); row.appendChild(del); list.appendChild(row);
+    });
+  }
+  if (countEl) countEl.textContent = S.brainDump.length > 0 ? `${S.brainDump.length} item${S.brainDump.length>1?"s":""}` : "";
+}
+
+function updateBrainDumpBadge() {
+  const badge = document.getElementById("bd-badge");
+  if (!badge) return;
+  if (S.brainDump.length > 0) { badge.textContent = S.brainDump.length; badge.style.display = "flex"; }
+  else { badge.style.display = "none"; }
+}
+
+// Wire up brain dump controls
+document.getElementById("brain-dump-btn").onclick = openBrainDump;
+document.getElementById("bd-close-x").onclick     = closeBrainDump;
+document.getElementById("bd-add-btn").onclick      = addBrainDumpItem;
+document.getElementById("bd-input").addEventListener("keydown", e => { if (e.key === "Enter") addBrainDumpItem(); });
+document.getElementById("brain-dump-overlay").addEventListener("click", e => { if (e.target === document.getElementById("brain-dump-overlay")) closeBrainDump(); });
+document.getElementById("bd-clear-btn").onclick = () => { if (!confirm("Clear all dumped items?")) return; S.brainDump=[]; lsSave("mc-brainDump",S.brainDump); renderBrainDumpList(); updateBrainDumpBadge(); };
+document.getElementById("bd-to-note-btn").onclick = () => {
+  if (S.brainDump.length === 0) return;
+  const text = S.brainDump.map((b,i) => `${i+1}. ${b.text}`).join("\n");
+  const notes = getCurrentNotes();
+  const colorIdx = notes.length % STICKY_COLORS.length;
+  saveCurrentNotes([...notes, { id:Date.now(), text, color:STICKY_COLORS[colorIdx], ts:new Date().toLocaleString("en-US",{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}) }]);
+  S.brainDump = []; lsSave("mc-brainDump",S.brainDump); closeBrainDump(); updateBrainDumpBadge(); renderAll();
+};
+
+// Init badge on load
+updateBrainDumpBadge();
 
 function renderAll() {
   const grid = document.getElementById("panel-grid");
   grid.innerHTML = "";
   grid.appendChild(buildScheduler());
+  grid.appendChild(buildFocusPanel());
   grid.appendChild(buildPriorityPanel());
   grid.appendChild(buildFinancialPanel());
   grid.appendChild(buildNotepadPanel());

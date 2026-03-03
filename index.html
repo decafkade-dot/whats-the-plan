@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- PWA / Add to Home Screen -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="What's the Plan?">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f0e8f5">
+<title>What's the Plan?</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --lavender:   #CDB4DB;
+    --blushPink:  #FFC8DD;
+    --hotPink:    #FFAFCC;
+    --skyBlue:    #BDE0FE;
+    --cornflower: #A2D2FF;
+    --mint:       #CDFAA7;
+    --yellow:     #FDEF81;
+    --dark:       #3a3350;
+    --muted:      #8b7fa8;
+    --card:       rgba(255,255,255,0.72);
+    --row-h:      28px;
+    --time-col:   56px;
+    --header-h:   38px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background:
+      radial-gradient(ellipse at 20% 20%, #CDB4DB55 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, #BDE0FE44 0%, transparent 50%),
+      radial-gradient(ellipse at 60% 10%, #FFC8DD33 0%, transparent 40%),
+      #f0e8f5;
+    min-height: 100vh;
+    color: var(--dark);
+    padding: 16px 16px calc(48px + var(--safe-bottom));
+    /* Prevent overscroll bounce showing white on iOS */
+    overscroll-behavior: none;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-thumb { background: var(--lavender); border-radius: 4px; }
+
+  #app-header { text-align: center; margin-bottom: 24px; padding-top: 8px; }
+  #app-header h1 { font-size: clamp(22px,4vw,30px); font-weight: 600; letter-spacing: -0.5px; }
+  #app-header p  { font-size: 13px; color: var(--muted); margin-top: 6px; font-weight: 300; }
+
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .panel {
+    background: var(--card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .panel-full { grid-column: 1 / -1; }
+  .panel-accent { position: absolute; top: 0; left: 0; right: 0; height: 4px; border-radius: 20px 20px 0 0; }
+  .panel h2 { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+  .panel .sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+
+  .pill-btn {
+    padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    cursor: pointer; font-family: inherit; color: var(--dark); transition: all 0.15s;
+    background: transparent; border: 1.5px solid #e0d8ec;
+    /* Bigger tap target on mobile */
+    min-height: 32px; display: inline-flex; align-items: center;
+  }
+  .pill-btn.active { border-color: var(--lavender); background: #CDB4DB44; }
+
+  /* ── Scheduler ── */
+  .sched-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  .sched-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+
+  /* Week nav */
+  .week-nav-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .week-nav-btn {
+    width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid #e0d8ec;
+    background: transparent; cursor: pointer; font-family: inherit; font-size: 16px;
+    color: var(--dark); display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s; flex-shrink: 0; -webkit-tap-highlight-color: transparent;
+  }
+  .week-nav-btn:hover, .week-nav-btn:active { border-color: var(--lavender); background: #CDB4DB22; }
+  .week-label-text { font-size: 12px; font-weight: 500; color: var(--muted); min-width: 120px; text-align: center; }
+
+  /* Category hours pills */
+  .cat-hours-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; min-height: 22px; }
+  .cat-hour-pill { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 500; border: 1px solid; }
+
+  /* Export / copy btns */
+  .export-pdf-btn, .copy-week-btn {
+    padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    cursor: pointer; font-family: inherit; color: var(--dark); transition: all 0.15s;
+    background: transparent; border: 1.5px solid #e0d8ec;
+    min-height: 32px; display: inline-flex; align-items: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .export-pdf-btn:hover, .export-pdf-btn:active { border-color: var(--cornflower); background: #A2D2FF22; }
+  .copy-week-btn:hover, .copy-week-btn:active { border-color: var(--lavender); background: #CDB4DB22; }
+  .copy-week-btn:disabled { opacity: 0.38; cursor: default; pointer-events: none; }
+
+  .sched-scroll {
+    overflow-x: auto; overflow-y: auto;
+    max-height: 500px;
+    border-radius: 12px;
+    border: 1px solid #CDB4DB44;
+    position: relative;
+    user-select: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sched-inner { display: flex; min-width: 560px; }
+
+  .time-col { width: var(--time-col); flex-shrink: 0; position: sticky; left: 0; z-index: 4; background: white; }
+  .time-corner { height: var(--header-h); position: sticky; top: 0; z-index: 5; background: white; border-bottom: 1.5px solid #CDB4DB55; border-right: 1px solid #CDB4DB33; }
+  .time-cell { height: var(--row-h); font-size: 10px; text-align: right; padding-right: 8px; display: flex; align-items: center; justify-content: flex-end; border-right: 1px solid #CDB4DB33; color: transparent; }
+  .time-cell.hour { color: var(--dark); font-weight: 500; background: #faf7fd; border-top: 1px solid #CDB4DB66; }
+  .time-cell.half { border-top: 1px solid #CDB4DB18; }
+
+  .days-wrap { flex: 1; display: flex; }
+  .day-col    { flex: 1; min-width: 72px; display: flex; flex-direction: column; }
+  .day-header {
+    height: var(--header-h); position: sticky; top: 0; z-index: 3; background: white;
+    border-bottom: 1.5px solid #CDB4DB55; border-right: 1px solid #CDB4DB18;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 400; color: var(--muted); cursor: default;
+  }
+  .day-header.today { background: #CDB4DB33; font-weight: 600; color: var(--dark); }
+  .today-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--hotPink); margin-top: 3px; }
+  .day-body { position: relative; cursor: crosshair; touch-action: none; }
+  .grid-row { height: var(--row-h); border-right: 1px solid #CDB4DB14; pointer-events: none; }
+  .grid-row.hour { border-top: 1px solid #CDB4DB55; }
+  .grid-row.half { border-top: 1px solid #CDB4DB14; }
+  .day-col.today .grid-row { background: #CDB4DB08; }
+
+  .block-chip {
+    position: absolute; left: 2px; right: 2px; border-radius: 7px; border-width: 1px; border-style: solid;
+    padding: 3px 6px 10px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; gap: 1px; z-index: 2; transition: filter 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .block-chip:hover { filter: brightness(0.96); }
+  .block-chip .chip-label  { font-size: 9px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
+  .block-chip .chip-time   { font-size: 8px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .block-chip .chip-note   { font-size: 8px; opacity: 0.65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .block-chip .note-dot    { position: absolute; top: 4px; right: 4px; width: 4px; height: 4px; border-radius: 50%; opacity: 0.5; }
+  .block-chip .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; cursor: ns-resize; border-radius: 0 0 7px 7px; display: flex; align-items: center; justify-content: center; }
+  .block-chip .resize-pip { width: 18px; height: 2px; border-radius: 1px; opacity: 0.55; }
+
+  .drag-ghost { position: absolute; left: 2px; right: 2px; background: #CDB4DB44; border: 1.5px dashed #CDB4DB; border-radius: 7px; pointer-events: none; z-index: 10; }
+
+  /* ── Floating block editor ── */
+  #block-editor {
+    position: fixed; z-index: 2000;
+    background: white; border-radius: 14px;
+    padding: 16px; width: 260px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    display: none; flex-direction: column; gap: 12px;
+    font-size: 13px;
+  }
+  #block-editor.open { display: flex; }
+  #block-editor h3 { font-size: 13px; font-weight: 600; }
+  #block-editor .field-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  #block-editor .cat-pills { display: flex; flex-wrap: wrap; gap: 4px; }
+  #block-editor .cat-btn { padding: 6px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; border: 1.5px solid #e0d8ec; background: transparent; font-family: inherit; color: var(--dark); transition: all 0.12s; min-height: 32px; }
+  #block-editor .cat-btn.selected { font-weight: 600; }
+  #block-editor textarea { width: 100%; padding: 8px 10px; border-radius: 8px; border: 1.5px solid #e0d8ec; font-size: 12px; font-family: inherit; color: var(--dark); resize: none; outline: none; line-height: 1.4; }
+  #block-editor textarea:focus { border-color: var(--lavender); }
+  .editor-actions { display: flex; gap: 6px; }
+  .btn-save { flex: 1; padding: 10px; border-radius: 8px; border: none; color: white; font-weight: 600; font-size: 12px; cursor: pointer; font-family: inherit; }
+  .btn-secondary { padding: 10px 12px; border-radius: 8px; border: 1px solid #e0d8ec; background: transparent; color: var(--muted); font-size: 12px; cursor: pointer; font-family: inherit; }
+
+  /* Mobile: editor becomes bottom sheet */
+  @media (max-width: 600px) {
+    #block-editor {
+      width: 100% !important; left: 0 !important; right: 0 !important;
+      bottom: 0 !important; top: auto !important;
+      border-radius: 20px 20px 0 0 !important;
+      padding-bottom: calc(16px + var(--safe-bottom));
+      box-shadow: 0 -4px 32px rgba(0,0,0,0.15);
+    }
+  }
+
+  /* ── Priority Stack ── */
+  .priority-item { display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; margin-bottom: 8px; }
+  .priority-num  { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--dark); flex-shrink: 0; }
+  .priority-text { flex: 1; font-size: 14px; line-height: 1.3; }
+  .priority-del  { border: none; background: transparent; cursor: pointer; color: var(--muted); font-size: 18px; opacity: 0.4; padding: 4px; line-height: 1; font-family: inherit; min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center; }
+  .priority-empty { padding: 20px; text-align: center; color: var(--muted); font-size: 13px; background: #f5f0fa; border-radius: 12px; }
+  .priority-add-row { display: flex; gap: 8px; }
+  .priority-input { flex: 1; padding: 12px 14px; border-radius: 10px; border: 1.5px solid #FFAFCC55; background: white; font-size: 14px; outline: none; font-family: inherit; color: var(--dark); }
+  .priority-add-btn { padding: 12px 16px; border-radius: 10px; border: none; background: var(--hotPink); color: white; cursor: pointer; font-weight: 600; font-size: 18px; line-height: 1; font-family: inherit; min-width: 44px; }
+  .priority-full { padding: 10px 14px; border-radius: 10px; background: #FDEF8144; font-size: 12px; color: var(--muted); text-align: center; }
+
+  /* ── Financial ── */
+  .fin-row { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 10px; margin-bottom: 6px; }
+  .fin-label { font-size: 13px; color: var(--muted); flex: 1; min-width: 0; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fin-label:hover { color: var(--dark); }
+  .fin-value { font-size: 14px; font-weight: 500; cursor: pointer; padding: 4px 8px; border-radius: 6px; color: var(--dark); transition: background 0.15s; white-space: nowrap; }
+  .fin-value:hover, .fin-value:active { background: #CDFAA744; }
+  .fin-input { width: 90px; text-align: right; padding: 4px 8px; border-radius: 6px; border: 1.5px solid var(--mint); font-size: 13px; font-family: inherit; background: white; outline: none; }
+  .fin-label-input { flex: 1; padding: 4px 8px; border-radius: 6px; border: 1.5px solid var(--lavender); font-size: 13px; font-family: inherit; background: white; outline: none; min-width: 0; }
+  .fin-divider { border-top: 1.5px dashed var(--mint); padding-top: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .fin-remaining { font-size: 18px; font-weight: 600; }
+  .fin-add-btn { width: 100%; padding: 10px; border-radius: 10px; border: 1.5px dashed var(--mint); background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; font-family: inherit; }
+  .fin-status-btn {
+    width: 32px; height: 32px; border-radius: 6px; border: 1.5px solid #e0d8ec;
+    background: transparent; cursor: pointer; font-family: inherit; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: all 0.15s; line-height: 1; -webkit-tap-highlight-color: transparent;
+  }
+  .fin-status-btn[data-status="unpaid"]  { color: var(--muted); border-color: #e0d8ec; }
+  .fin-status-btn[data-status="pending"] { color: #b89600; border-color: var(--yellow); background: #FDEF8133; }
+  .fin-status-btn[data-status="paid"]    { color: #3a7a55; border-color: var(--mint);   background: #CDFAA733; }
+  .fin-del-btn { border: none; background: transparent; cursor: pointer; color: var(--muted); font-size: 16px; opacity: 0.3; padding: 4px; line-height: 1; font-family: inherit; flex-shrink: 0; min-width: 32px; min-height: 32px; display: flex; align-items: center; justify-content: center; }
+  .fin-del-btn:hover, .fin-del-btn:active { opacity: 0.7; }
+
+  /* ── Weekly Notepad ── */
+  .notepad-textarea {
+    width: 100%; padding: 14px 16px; border-radius: 14px;
+    border: 1.5px solid #A2D2FF55; background: white;
+    font-size: 14px; outline: none; font-family: inherit;
+    color: var(--dark); resize: none; line-height: 1.6;
+    min-height: 100px;
+    transition: border-color 0.15s;
+  }
+  .notepad-textarea:focus { border-color: var(--cornflower); }
+  .notepad-row { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 8px; margin-bottom: 20px; }
+  .notepad-char-count { font-size: 11px; color: var(--muted); }
+  .notepad-pin-btn {
+    padding: 9px 18px; border-radius: 10px; border: none;
+    background: var(--cornflower); color: white;
+    cursor: pointer; font-weight: 600; font-size: 13px;
+    font-family: inherit; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .notepad-pin-btn:disabled { opacity: 0.4; cursor: default; }
+  .notepad-pin-btn:not(:disabled):hover { filter: brightness(0.93); }
+
+  /* Sticky notes grid */
+  .sticky-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .sticky-note {
+    position: relative;
+    padding: 14px 14px 20px;
+    border-radius: 4px 14px 14px 14px;
+    font-size: 13px; line-height: 1.5;
+    color: var(--dark);
+    word-break: break-word;
+    /* paper curl shadow */
+    box-shadow: 2px 3px 10px rgba(0,0,0,0.10), 0 1px 2px rgba(0,0,0,0.06);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .sticky-note:hover { transform: rotate(0deg) scale(1.02); box-shadow: 4px 6px 18px rgba(0,0,0,0.13); }
+  /* Folded corner effect */
+  .sticky-note::before {
+    content: "";
+    position: absolute; top: 0; left: 0;
+    width: 18px; height: 18px;
+    background: rgba(0,0,0,0.08);
+    border-radius: 0 0 8px 0;
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+  }
+  .sticky-ts   { font-size: 10px; opacity: 0.55; margin-bottom: 6px; }
+  .sticky-text { white-space: pre-wrap; }
+  .sticky-del  {
+    position: absolute; top: 6px; right: 8px;
+    border: none; background: transparent; cursor: pointer;
+    font-size: 15px; opacity: 0; color: var(--dark);
+    transition: opacity 0.15s; line-height: 1; font-family: inherit;
+    min-width: 24px; min-height: 24px;
+  }
+  .sticky-note:hover .sticky-del { opacity: 0.4; }
+  .sticky-del:hover { opacity: 1 !important; }
+  .sticky-empty { font-size: 13px; color: var(--muted); text-align: center; padding: 16px; background: #f5f0fa; border-radius: 12px; }
+  /* pencil edit hint on card */
+  .sticky-note .sticky-edit-hint {
+    position: absolute; bottom: 6px; right: 10px;
+    font-size: 10px; opacity: 0; color: var(--dark);
+    transition: opacity 0.15s; pointer-events: none;
+  }
+  .sticky-note:hover .sticky-edit-hint { opacity: 0.4; }
+
+  /* ── Sticky note modal overlay ── */
+  #sticky-modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(58,51,80,0.35); backdrop-filter: blur(3px);
+    z-index: 3000; align-items: center; justify-content: center;
+    padding: 16px;
+  }
+  #sticky-modal-backdrop.open { display: flex; }
+
+  #sticky-modal {
+    background: white; border-radius: 20px;
+    padding: 24px; width: 100%; max-width: 420px;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+    display: flex; flex-direction: column; gap: 16px;
+    font-size: 13px; position: relative;
+    animation: modalPop 0.18s ease;
+  }
+  @keyframes modalPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+  }
+  #sticky-modal h3 { font-size: 15px; font-weight: 600; margin: 0; }
+  #sticky-modal .field-label { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  #sticky-modal textarea {
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1.5px solid #e0d8ec; font-size: 13px;
+    font-family: inherit; color: var(--dark);
+    resize: vertical; outline: none; line-height: 1.5;
+    min-height: 90px;
+  }
+  #sticky-modal textarea:focus { border-color: var(--cornflower); }
+  .sticky-color-swatches { display: flex; gap: 10px; }
+  .sticky-swatch {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 3px solid transparent; cursor: pointer;
+    transition: transform 0.12s, border-color 0.12s;
+    flex-shrink: 0;
+  }
+  .sticky-swatch:hover  { transform: scale(1.15); }
+  .sticky-swatch.active { border-color: var(--dark) !important; transform: scale(1.12); }
+  .sticky-modal-actions { display: flex; gap: 8px; }
+  .sticky-modal-actions .btn-save { flex: 1; padding: 10px; border-radius: 10px; border: none; color: white; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; }
+  .sticky-modal-actions .btn-secondary { padding: 10px 14px; border-radius: 10px; border: 1px solid #e0d8ec; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; font-family: inherit; }
+  @media (max-width: 480px) {
+    #sticky-modal { padding: 20px 16px; max-width: 100%; border-radius: 20px; }
+  }
+
+  footer { text-align: center; margin-top: 32px; color: var(--muted); font-size: 11px; opacity: 0.7; }
+
+  /* ── Print hint toast ── */
+  #print-hint {
+    display: none; position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    background: var(--dark); color: white; padding: 10px 20px; border-radius: 10px;
+    font-size: 12px; z-index: 9999; pointer-events: none; white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  }
+
+  /* ── Print styles – Landscape, full color ── */
+  @page { size: A4 landscape; margin: 8mm 10mm; }
+
+  @media print {
+    /* Force print colors for all elements */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    body.printing-scheduler {
+      background: white !important;
+      padding: 0 !important;
+    }
+    body.printing-scheduler footer,
+    body.printing-scheduler #block-editor,
+    body.printing-scheduler #print-hint,
+    body.printing-scheduler #app-header { display: none !important; }
+
+    body.printing-scheduler .panel-grid { display: block !important; }
+    body.printing-scheduler .panel:not(.sched-panel) { display: none !important; }
+    body.printing-scheduler .sched-panel {
+      box-shadow: none !important; border-radius: 0 !important;
+      padding: 6px 0 0 !important; overflow: visible !important; background: white !important;
+    }
+
+    /* Print header: show title + week label at top */
+    body.printing-scheduler .print-title-bar { display: flex !important; }
+
+    body.printing-scheduler .sched-scroll {
+      overflow: visible !important; max-height: none !important; border: none !important;
+    }
+    body.printing-scheduler .sched-inner { min-width: unset !important; width: 100% !important; }
+    body.printing-scheduler .days-wrap { flex: 1 !important; }
+    body.printing-scheduler .day-col   { flex: 1 !important; min-width: 0 !important; }
+
+    /* Remove sticky so grid prints fully */
+    body.printing-scheduler .time-col,
+    body.printing-scheduler .time-corner,
+    body.printing-scheduler .day-header { position: relative !important; }
+
+    /* Block chips: preserve background colors */
+    body.printing-scheduler .block-chip {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Hide interactive controls; keep labels + cat hours */
+    body.printing-scheduler .week-nav-btn,
+    body.printing-scheduler .export-pdf-btn,
+    body.printing-scheduler .copy-week-btn,
+    body.printing-scheduler .pill-btn,
+    body.printing-scheduler .legend-item { display: none !important; }
+
+    body.printing-scheduler .sched-header { margin-bottom: 6px !important; }
+    body.printing-scheduler .panel-accent { display: none !important; }
+    body.printing-scheduler .resize-handle { display: none !important; }
+  }
+
+  /* Print title bar (hidden on screen) */
+  .print-title-bar {
+    display: none;
+    justify-content: space-between; align-items: baseline;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1.5px solid #CDB4DB66;
+  }
+  .print-title-bar .ptb-title { font-size: 16px; font-weight: 600; }
+  .print-title-bar .ptb-week  { font-size: 12px; color: var(--muted); }
+
+  /* ── Mobile responsive tweaks ── */
+  @media (max-width: 480px) {
+    body { padding: 10px 10px calc(40px + var(--safe-bottom)); }
+    .panel { padding: 18px 14px; }
+    .sched-controls { gap: 6px; }
+    .legend-item { display: none; } /* hide legend on tiny screens, colors speak for themselves */
+    .week-label-text { min-width: 90px; font-size: 11px; }
+    .sched-scroll { max-height: 60vh; }
+    .dump-textarea { font-size: 16px; } /* prevents iOS zoom on focus */
+    .priority-input { font-size: 16px; }
+    .fin-label-input, .fin-input { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app-header">
+  <h1>What's the Plan?</h1>
+  <p id="today-date"></p>
+</div>
+
+<div class="panel-grid" id="panel-grid"></div>
+
+<!-- Floating block editor -->
+<div id="block-editor">
+  <h3 id="editor-title">New Block</h3>
+  <div>
+    <div class="field-label">Category</div>
+    <div class="cat-pills" id="cat-pills"></div>
+  </div>
+  <div>
+    <div class="field-label">Note (optional)</div>
+    <textarea id="editor-note" rows="2" placeholder="Add a note..."></textarea>
+  </div>
+  <div class="editor-actions">
+    <button class="btn-save" id="editor-save">Save</button>
+    <button class="btn-secondary" id="editor-delete" style="display:none">Delete</button>
+    <button class="btn-secondary" id="editor-cancel">Cancel</button>
+  </div>
+</div>
+
+<!-- Sticky note modal -->
+<div id="sticky-modal-backdrop">
+  <div id="sticky-modal">
+    <h3>Edit Note</h3>
+    <div>
+      <div class="field-label">Color</div>
+      <div class="sticky-color-swatches" id="sticky-swatches"></div>
+    </div>
+    <div>
+      <div class="field-label">Note text</div>
+      <textarea id="sticky-modal-text" rows="5" placeholder="What's on your mind?"></textarea>
+    </div>
+    <div class="sticky-modal-actions">
+      <button class="btn-save" id="sticky-modal-save">Save</button>
+      <button class="btn-secondary" id="sticky-modal-delete">Delete</button>
+      <button class="btn-secondary" id="sticky-modal-cancel">Cancel</button>
+    </div>
+  </div>
+</div>
+<div id="print-hint">📄 Use "Save as PDF" → landscape in the print dialog</div>
+
+<footer>What's the Plan? &middot; One week at a time</footer>
+
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const C = {
+  lavender:  "#CDB4DB", blushPink: "#FFC8DD", hotPink:  "#FFAFCC",
+  skyBlue:   "#BDE0FE", cornflower:"#A2D2FF", mint:     "#CDFAA7",
+  yellow:    "#FDEF81", dark:      "#3a3350", muted:    "#8b7fa8",
+};
+
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+
+const CATEGORIES = [
+  { label: "Academic", bg: C.lavender  },
+  { label: "Work",     bg: C.skyBlue   },
+  { label: "Home",     bg: C.mint      },
+  { label: "Social",   bg: C.yellow    },
+  { label: "Fitness",  bg: C.hotPink   },
+];
+
+const ROW_H      = 28;
+const HEADER_H   = 38;
+const TIME_COL_W = 56;
+
+const STATUS_CYCLE = ["unpaid", "pending", "paid"];
+const STATUS_ICON  = { unpaid: "○", pending: "◑", paid: "✓" };
+
+// ─── localStorage helpers ────────────────────────────────────────────────────
+
+function ls(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+
+// ─── Auto-prune weeks older than 14 days ─────────────────────────────────────
+
+function pruneOldWeeks(blocksByWeek) {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 14);
+  cutoff.setHours(0, 0, 0, 0);
+  const pruned = {};
+  Object.keys(blocksByWeek).forEach(key => {
+    const [y, m, d] = key.split('-').map(Number);
+    const weekDate = new Date(y, m - 1, d);
+    if (weekDate >= cutoff) pruned[key] = blocksByWeek[key];
+  });
+  return pruned;
+}
+
+// ─── Week key helpers ─────────────────────────────────────────────────────────
+
+function getWeekKey(offset) {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  const dow = d.getDay();
+  const toMon = dow === 0 ? -6 : 1 - dow;
+  d.setDate(d.getDate() + toMon + (offset || 0) * 7);
+  return d.toISOString().slice(0, 10);
+}
+
+function getWeekLabel(weekKey) {
+  const [y, m, d] = weekKey.split('-').map(Number);
+  const monday = new Date(y, m - 1, d);
+  const sunday = new Date(y, m - 1, d + 6);
+  const fmt = dt => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return `${fmt(monday)} \u2013 ${fmt(sunday)}`;
+}
+
+function getCurrentWeekBlocks() {
+  return S.blocksByWeek[getWeekKey(S.weekOffset)] || {};
+}
+
+function saveCurrentWeekBlocks(dayMap) {
+  const key = getWeekKey(S.weekOffset);
+  S.blocksByWeek[key] = dayMap;
+  lsSave("mc-blocksByWeek", S.blocksByWeek);
+}
+
+// ─── Default financials ───────────────────────────────────────────────────────
+
+const DEFAULT_FINANCIALS = [
+  { id:1, label:"Monthly Income",   value:"4,200", status:"paid"    },
+  { id:2, label:"Rent",             value:"1,350", status:"paid"    },
+  { id:3, label:"Subscriptions",    value:"87",    status:"pending" },
+  { id:4, label:"Groceries (est.)", value:"320",   status:"unpaid"  },
+  { id:5, label:"Savings Goal",     value:"500",   status:"unpaid"  },
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+
+const rawBlocksByWeek = ls("mc-blocksByWeek", {});
+
+const S = {
+  settings:      { startHour:4, endHour:23, stepMinutes:30, showLabels:true, ...ls("mc-settings", {}) },
+  blocksByWeek:  pruneOldWeeks(rawBlocksByWeek),
+  weekOffset:    0,
+  priorities: [
+    { id:1, text:"Complete quarterly review draft", color:C.lavender },
+    { id:2, text:"Schedule dentist appointment",    color:C.skyBlue  },
+    { id:3, text:"Reply to Sarah's email",          color:C.mint     },
+  ],
+  newPriority: "",
+  financials: ls("mc-financials", DEFAULT_FINANCIALS).map(f => ({ status:"unpaid", ...f })),
+  editingFin:      null,
+  editingFinLabel: null,
+  notesByWeek:  ls("mc-notesByWeek", {}),  // { weekKey: [{id,text,color,ts}] }
+  notepadDraft: "",   // live textarea content (not persisted between reloads)
+};
+
+// Save pruned version back immediately
+lsSave("mc-blocksByWeek", S.blocksByWeek);
+
+// ─── Migration: old mc-blocks → blocksByWeek ──────────────────────────────────
+
+(function migrateBlocks() {
+  const legacy = ls("mc-blocks", null);
+  if (!legacy) return;
+  const hasData = DAYS.some(d => legacy[d] && legacy[d].length > 0);
+  if (!hasData) return;
+  const key = getWeekKey(0);
+  if (!S.blocksByWeek[key] || !DAYS.some(d => (S.blocksByWeek[key][d] || []).length > 0)) {
+    S.blocksByWeek[key] = legacy;
+    lsSave("mc-blocksByWeek", S.blocksByWeek);
+  }
+})();
+
+// ─── Time Slot Helpers ────────────────────────────────────────────────────────
+
+function getSlots() {
+  const { startHour, endHour, stepMinutes } = S.settings;
+  const slots = [];
+  for (let h = startHour; h <= endHour; h++) {
+    for (let m = 0; m < 60; m += stepMinutes) {
+      if (h === endHour && m > 0) break;
+      slots.push(`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`);
+    }
+  }
+  return slots;
+}
+
+function formatSlot(slot) {
+  const [h, m] = slot.split(":").map(Number);
+  const ampm = h < 12 ? "AM" : "PM";
+  const h12  = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,"0")} ${ampm}`;
+}
+
+function rangesOverlap(as, ae, bs, be) { return as < be && ae > bs; }
+
+function hasOverlap(dayBlocks, newS, newE, slots, excludeId=null) {
+  return dayBlocks.filter(b => b.id !== excludeId).some(b => {
+    const bS = slots.indexOf(b.start);
+    const bE = slots.indexOf(b.end);
+    if (bS < 0 || bE <= bS) return false;
+    return rangesOverlap(newS, newE, bS, bE);
+  });
+}
+
+// ─── Category Hours ───────────────────────────────────────────────────────────
+
+function computeCategoryHours(weekBlocks, slots, stepMinutes) {
+  const minutes = {};
+  CATEGORIES.forEach(c => { minutes[c.label] = 0; });
+  DAYS.forEach(day => {
+    (weekBlocks[day] || []).forEach(block => {
+      const si = slots.indexOf(block.start);
+      const ei = slots.indexOf(block.end);
+      if (si < 0 || ei <= si) return;
+      minutes[block.category] = (minutes[block.category] || 0) + (ei - si) * stepMinutes;
+    });
+  });
+  const result = {};
+  Object.keys(minutes).forEach(k => { result[k] = Math.round(minutes[k] / 60 * 10) / 10; });
+  return result;
+}
+
+// ─── Drag State ───────────────────────────────────────────────────────────────
+
+const drag = {
+  active: false, isResize: false, day: null,
+  startIdx: 0, currentIdx: 0,
+  bodyTop: 0, scrollEl: null, scrollTopAtStart: 0,
+  block: null, justFinished: false,
+  lastClientX: 0, lastClientY: 0,
+};
+
+// ─── Editor State ─────────────────────────────────────────────────────────────
+
+const editor = {
+  mode: "create", day: null,
+  startSlot: null, endSlot: null,
+  block: null, category: "Academic", color: C.lavender, note: "",
+};
+
+// ─── Render helpers ───────────────────────────────────────────────────────────
+
+function el(tag, cls, style, ...children) {
+  const d = document.createElement(tag);
+  if (cls)   d.className = cls;
+  if (style) Object.assign(d.style, style);
+  children.forEach(c => c && d.appendChild(typeof c === "string" ? document.createTextNode(c) : c));
+  return d;
+}
+function div(cls, style, ...children) { return el("div", cls, style, ...children); }
+function span(cls, txt, style)        { const s = el("span", cls, style); s.textContent = txt; return s; }
+function btn(cls, txt, onClick)       { const b = el("button", cls); b.textContent = txt; b.onclick = onClick; return b; }
+
+// ─── Panel: Weekly Time Map ────────────────────────────────────────────────────
+
+function buildCatHoursPills(container) {
+  container.innerHTML = "";
+  const slots = getSlots();
+  const weekBlocks = getCurrentWeekBlocks();
+  const hours = computeCategoryHours(weekBlocks, slots, S.settings.stepMinutes);
+  let anyNonZero = false;
+  CATEGORIES.forEach(cat => {
+    const h = hours[cat.label] || 0;
+    if (h === 0) return;
+    anyNonZero = true;
+    const pill = div("cat-hour-pill");
+    pill.style.background  = cat.bg + "44";
+    pill.style.borderColor = cat.bg;
+    pill.style.color       = C.dark;
+    const dot = div("legend-dot", { background: cat.bg, width:"8px", height:"8px", flexShrink:"0" });
+    pill.appendChild(dot);
+    pill.appendChild(document.createTextNode(`${cat.label} ${h}h`));
+    container.appendChild(pill);
+  });
+  if (!anyNonZero) container.appendChild(span("", "No blocks this week", { fontSize:"10px", color:C.muted }));
+}
+
+function buildScheduler() {
+  const slots = getSlots();
+  const panel = div("panel panel-full sched-panel");
+  panel.appendChild(div("panel-accent", { background: C.lavender }));
+
+  // Print-only title bar
+  const ptb = div("print-title-bar");
+  ptb.appendChild(span("ptb-title", "What's the Plan?"));
+  ptb.appendChild(span("ptb-week", getWeekLabel(getWeekKey(S.weekOffset))));
+  panel.appendChild(ptb);
+
+  // ── Header ──
+  const hdr = div("sched-header");
+
+  const hdrLeft = div("", { marginBottom:"0" });
+  const h2 = document.createElement("h2"); h2.textContent = "Weekly Time Map";
+  const subP = div("sub", { marginBottom:"0" }); subP.textContent = "Drag to create a block \u00b7 Tap a block to edit";
+  hdrLeft.appendChild(h2); hdrLeft.appendChild(subP);
+
+  const hdrRight = div("", { display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px" });
+
+  // Week nav row
+  const weekNavRow = div("week-nav-row");
+  const prevBtn = el("button", "week-nav-btn"); prevBtn.textContent = "‹";
+  prevBtn.onclick = () => { S.weekOffset--; rerenderSchedulerOnly(); };
+  const weekLabelSpan = span("week-label-text", getWeekLabel(getWeekKey(S.weekOffset)));
+  weekLabelSpan.id = "sched-week-label";
+  const nextBtn = el("button", "week-nav-btn"); nextBtn.textContent = "›";
+  nextBtn.onclick = () => { S.weekOffset++; rerenderSchedulerOnly(); };
+  weekNavRow.appendChild(prevBtn); weekNavRow.appendChild(weekLabelSpan); weekNavRow.appendChild(nextBtn);
+
+  // Controls row
+  const ctrl = div("sched-controls");
+
+  const labelsBtn = el("button", "pill-btn" + (S.settings.showLabels ? " active" : ""));
+  labelsBtn.textContent = `Labels ${S.settings.showLabels ? "on" : "off"}`;
+  labelsBtn.onclick = () => { S.settings.showLabels = !S.settings.showLabels; lsSave("mc-settings", S.settings); rerenderSchedulerOnly(); };
+  ctrl.appendChild(labelsBtn);
+
+  const stepBtn = el("button", "pill-btn" + (S.settings.stepMinutes === 15 ? " active" : ""));
+  stepBtn.textContent = `${S.settings.stepMinutes}m`;
+  stepBtn.onclick = () => { S.settings.stepMinutes = S.settings.stepMinutes === 30 ? 15 : 30; lsSave("mc-settings", S.settings); rerenderSchedulerOnly(); };
+  ctrl.appendChild(stepBtn);
+
+  CATEGORIES.forEach(cat => {
+    const item = div("legend-item");
+    item.appendChild(div("legend-dot", { background: cat.bg }));
+    item.appendChild(span("", cat.label));
+    ctrl.appendChild(item);
+  });
+
+  const exportBtn = el("button", "export-pdf-btn"); exportBtn.textContent = "Export PDF"; exportBtn.onclick = exportToPDF;
+  ctrl.appendChild(exportBtn);
+
+  // Copy prev week button
+  const prevWeekKey   = getWeekKey(S.weekOffset - 1);
+  const prevHasBlocks = DAYS.some(d => ((S.blocksByWeek[prevWeekKey] || {})[d] || []).length > 0);
+  const copyBtn = el("button", "copy-week-btn");
+  copyBtn.id = "copy-week-btn";
+  copyBtn.textContent = "\u2191 Copy prev week";
+  copyBtn.disabled = !prevHasBlocks;
+  copyBtn.title = prevHasBlocks ? `Copy all blocks from ${getWeekLabel(prevWeekKey)}` : "No blocks in the previous week";
+  copyBtn.onclick = copyFromPrevWeek;
+  ctrl.appendChild(copyBtn);
+
+  hdrRight.appendChild(weekNavRow); hdrRight.appendChild(ctrl);
+  hdr.appendChild(hdrLeft); hdr.appendChild(hdrRight);
+  panel.appendChild(hdr);
+
+  // Cat hours
+  const catHoursRow = div("cat-hours-row"); catHoursRow.id = "sched-cat-hours";
+  buildCatHoursPills(catHoursRow);
+  panel.appendChild(catHoursRow);
+
+  // Scroll container
+  const scrl = div("sched-scroll"); scrl.id = "sched-scroll";
+  const inner = div("sched-inner");
+
+  // Time-labels column
+  const timeCol = div("time-col"); timeCol.appendChild(div("time-corner"));
+  slots.forEach(slot => {
+    const isHour = slot.endsWith(":00");
+    const cell = div("time-cell " + (isHour ? "hour" : "half"));
+    if (isHour) cell.textContent = slot;
+    timeCol.appendChild(cell);
+  });
+  inner.appendChild(timeCol);
+
+  const today    = new Date().getDay();
+  const todayIdx = today === 0 ? 6 : today - 1;
+  const daysWrap = div("days-wrap");
+
+  DAYS.forEach((day, di) => {
+    const isToday = S.weekOffset === 0 && di === todayIdx;
+    const col = div("day-col" + (isToday ? " today" : "")); col.id = "col-" + day;
+
+    const hd = div("day-header" + (isToday ? " today" : "")); hd.id = "header-" + day;
+    hd.textContent = day;
+    if (isToday) hd.appendChild(div("today-dot"));
+    col.appendChild(hd);
+
+    const body = div("day-body"); body.id = "body-" + day;
+    body.style.height = (slots.length * ROW_H) + "px";
+
+    slots.forEach(slot => {
+      body.appendChild(div("grid-row " + (slot.endsWith(":00") ? "hour" : "half")));
+    });
+
+    const ghost = div("drag-ghost"); ghost.id = "ghost-" + day; ghost.style.display = "none";
+    body.appendChild(ghost);
+
+    renderBlocksIntoBody(body, day, slots);
+
+    // Mouse events
+    body.addEventListener("mousedown", e => onBodyMouseDown(e, day, scrl));
+    // Touch events
+    body.addEventListener("touchstart", e => onBodyTouchStart(e, day, scrl), { passive: false });
+
+    col.appendChild(body);
+    daysWrap.appendChild(col);
+  });
+
+  inner.appendChild(daysWrap);
+  scrl.appendChild(inner);
+  panel.appendChild(scrl);
+  return panel;
+}
+
+function renderBlocksIntoBody(body, day, slots) {
+  body.querySelectorAll(".block-chip").forEach(c => c.remove());
+  const dayBlocks = (getCurrentWeekBlocks()[day] || []);
+
+  dayBlocks.forEach(block => {
+    const si = slots.indexOf(block.start);
+    const ei = slots.indexOf(block.end);
+    if (si < 0 || ei <= si) return;
+
+    const chip = div("block-chip");
+    chip.style.cssText = `top:${si*ROW_H+1}px;height:${(ei-si)*ROW_H-2}px;background:${block.color}bb;border-color:${block.color};color:${C.dark};`;
+
+    if (S.settings.showLabels) {
+      const lbl = div("chip-label"); lbl.textContent = block.category; chip.appendChild(lbl);
+      const ts  = div("chip-time");  ts.textContent  = formatSlot(block.start) + " \u2013 " + formatSlot(block.end); chip.appendChild(ts);
+      if (block.note) { const ns = div("chip-note"); ns.textContent = block.note; ns.title = block.note; chip.appendChild(ns); }
+    } else if (block.note) {
+      const dot = div("note-dot"); dot.style.background = C.dark; chip.appendChild(dot);
+    }
+
+    const handle = div("resize-handle"); handle.style.background = block.color + "44";
+    const pip = div("resize-pip"); pip.style.background = block.color;
+    handle.appendChild(pip); chip.appendChild(handle);
+
+    chip.addEventListener("click", e => { e.stopPropagation(); openEditorForEdit(block, day, e); });
+    handle.addEventListener("mousedown", e => { e.stopPropagation(); e.preventDefault(); onResizeMouseDown(e, block, day, document.getElementById("sched-scroll")); });
+    handle.addEventListener("touchstart", e => { e.stopPropagation(); e.preventDefault(); onResizeTouchStart(e, block, day, document.getElementById("sched-scroll")); }, { passive: false });
+
+    body.appendChild(chip);
+  });
+}
+
+function rerenderSchedulerOnly() {
+  const slots    = getSlots();
+  const today    = new Date().getDay();
+  const todayIdx = today === 0 ? 6 : today - 1;
+
+  const wl = document.getElementById("sched-week-label");
+  if (wl) wl.textContent = getWeekLabel(getWeekKey(S.weekOffset));
+
+  const ptbWeek = document.querySelector(".ptb-week");
+  if (ptbWeek) ptbWeek.textContent = getWeekLabel(getWeekKey(S.weekOffset));
+
+  const ch = document.getElementById("sched-cat-hours");
+  if (ch) buildCatHoursPills(ch);
+
+  DAYS.forEach((day, di) => {
+    const body = document.getElementById("body-" + day);
+    if (!body) return;
+    body.querySelectorAll(".grid-row").forEach(r => r.remove());
+    body.style.height = (slots.length * ROW_H) + "px";
+    slots.forEach(slot => body.insertBefore(div("grid-row " + (slot.endsWith(":00") ? "hour" : "half")), body.firstChild));
+    renderBlocksIntoBody(body, day, slots);
+
+    const isToday = S.weekOffset === 0 && di === todayIdx;
+    const col = document.getElementById("col-" + day);
+    if (col) col.className = "day-col" + (isToday ? " today" : "");
+    const hdr = document.getElementById("header-" + day);
+    if (hdr) {
+      hdr.className = "day-header" + (isToday ? " today" : "");
+      const existingDot = hdr.querySelector(".today-dot");
+      if (isToday && !existingDot) hdr.appendChild(div("today-dot"));
+      else if (!isToday && existingDot) existingDot.remove();
+    }
+  });
+
+  const timeCol = document.querySelector(".time-col");
+  if (timeCol) {
+    timeCol.querySelectorAll(".time-cell").forEach(c => c.remove());
+    slots.forEach(slot => {
+      const cell = div("time-cell " + (slot.endsWith(":00") ? "hour" : "half"));
+      if (slot.endsWith(":00")) cell.textContent = slot;
+      timeCol.appendChild(cell);
+    });
+  }
+
+  const labelsBtn = document.querySelector(".sched-controls .pill-btn:first-child");
+  const stepBtn   = document.querySelector(".sched-controls .pill-btn:nth-child(2)");
+  if (labelsBtn) { labelsBtn.textContent = `Labels ${S.settings.showLabels ? "on" : "off"}`; labelsBtn.className = "pill-btn" + (S.settings.showLabels ? " active" : ""); }
+  if (stepBtn)   { stepBtn.textContent   = `${S.settings.stepMinutes}m`; stepBtn.className = "pill-btn" + (S.settings.stepMinutes === 15 ? " active" : ""); }
+
+  // Update copy-prev-week button state
+  const cb = document.getElementById("copy-week-btn");
+  if (cb) {
+    const pvk = getWeekKey(S.weekOffset - 1);
+    const ph  = DAYS.some(d => ((S.blocksByWeek[pvk] || {})[d] || []).length > 0);
+    cb.disabled = !ph;
+    cb.title = ph ? `Copy all blocks from ${getWeekLabel(pvk)}` : "No blocks in the previous week";
+  }
+}
+
+// ─── Export to PDF (landscape) ────────────────────────────────────────────────
+
+function exportToPDF() {
+  const hint = document.getElementById("print-hint");
+  hint.style.display = "block";
+  document.body.classList.add("printing-scheduler");
+  setTimeout(() => {
+    window.print();
+    document.body.classList.remove("printing-scheduler");
+    setTimeout(() => { hint.style.display = "none"; }, 600);
+  }, 120);
+}
+
+// ─── Copy from Previous Week ──────────────────────────────────────────────────
+
+function copyFromPrevWeek() {
+  const prevKey    = getWeekKey(S.weekOffset - 1);
+  const prevBlocks = S.blocksByWeek[prevKey] || {};
+  if (!DAYS.some(d => (prevBlocks[d] || []).length > 0)) return;
+
+  const currBlocks = getCurrentWeekBlocks();
+  const currHas    = DAYS.some(d => (currBlocks[d] || []).length > 0);
+
+  if (currHas && !confirm(`This week already has blocks.\n\nOK = merge (overlapping blocks skipped)\nCancel = do nothing`)) return;
+
+  const merged = { ...currBlocks };
+  DAYS.forEach(day => {
+    const incoming = (prevBlocks[day] || []).map(b => ({ ...b, id: Date.now() + Math.random() }));
+    if (!incoming.length) return;
+    if (!merged[day] || merged[day].length === 0) { merged[day] = incoming; return; }
+    const slots = getSlots();
+    const kept = incoming.filter(b => {
+      const si = slots.indexOf(b.start), ei = slots.indexOf(b.end);
+      return si >= 0 && ei > si && !hasOverlap(merged[day], si, ei, slots);
+    });
+    merged[day] = [...merged[day], ...kept];
+  });
+
+  saveCurrentWeekBlocks(merged);
+  rerenderSchedulerOnly();
+}
+
+// ─── Drag: Mouse (Create) ─────────────────────────────────────────────────────
+
+function onBodyMouseDown(e, day, scrollEl) {
+  if (e.button !== 0) return;
+  if (e.target.closest(".block-chip")) return;
+  e.preventDefault();
+
+  const body = document.getElementById("body-" + day);
+  const rect = body.getBoundingClientRect();
+  const slots = getSlots();
+  const si = Math.max(0, Math.min(slots.length - 2, Math.floor((e.clientY - rect.top) / ROW_H)));
+
+  drag.active = true; drag.isResize = false; drag.day = day;
+  drag.startIdx = si; drag.currentIdx = si;
+  drag.bodyTop = rect.top; drag.scrollEl = scrollEl;
+  drag.scrollTopAtStart = scrollEl.scrollTop;
+  drag.justFinished = false;
+  drag.lastClientX = e.clientX; drag.lastClientY = e.clientY;
+  updateGhost(day, si, si + 1);
+}
+
+function onResizeMouseDown(e, block, day, scrollEl) {
+  const slots = getSlots();
+  const si = slots.indexOf(block.start), ei = slots.indexOf(block.end);
+  if (si < 0 || ei < 0) return;
+  const rect = document.getElementById("body-" + day).getBoundingClientRect();
+
+  drag.active = true; drag.isResize = true; drag.day = day;
+  drag.startIdx = si; drag.currentIdx = ei;
+  drag.bodyTop = rect.top; drag.scrollEl = scrollEl;
+  drag.scrollTopAtStart = scrollEl.scrollTop;
+  drag.block = block; drag.justFinished = false;
+  drag.lastClientX = e.clientX; drag.lastClientY = e.clientY;
+  updateGhost(day, si, ei);
+}
+
+document.addEventListener("mousemove", e => {
+  drag.lastClientX = e.clientX; drag.lastClientY = e.clientY;
+  if (!drag.active) return;
+  updateDragPosition(e.clientX, e.clientY);
+});
+
+document.addEventListener("mouseup", e => {
+  if (!drag.active) return;
+  drag.lastClientX = e.clientX; drag.lastClientY = e.clientY;
+  finishDrag();
+});
+
+// ─── Drag: Touch (Create + Resize) ───────────────────────────────────────────
+
+function onBodyTouchStart(e, day, scrollEl) {
+  if (e.target.closest(".block-chip")) return;
+  // Only single-finger drag
+  if (e.touches.length !== 1) return;
+  e.preventDefault(); // prevent scroll while creating block
+
+  const t = e.touches[0];
+  const body = document.getElementById("body-" + day);
+  const rect = body.getBoundingClientRect();
+  const slots = getSlots();
+  const si = Math.max(0, Math.min(slots.length - 2, Math.floor((t.clientY - rect.top) / ROW_H)));
+
+  drag.active = true; drag.isResize = false; drag.day = day;
+  drag.startIdx = si; drag.currentIdx = si;
+  drag.bodyTop = rect.top; drag.scrollEl = scrollEl;
+  drag.scrollTopAtStart = scrollEl.scrollTop;
+  drag.justFinished = false;
+  drag.lastClientX = t.clientX; drag.lastClientY = t.clientY;
+  updateGhost(day, si, si + 1);
+}
+
+function onResizeTouchStart(e, block, day, scrollEl) {
+  if (e.touches.length !== 1) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  const slots = getSlots();
+  const si = slots.indexOf(block.start), ei = slots.indexOf(block.end);
+  if (si < 0 || ei < 0) return;
+  const rect = document.getElementById("body-" + day).getBoundingClientRect();
+
+  drag.active = true; drag.isResize = true; drag.day = day;
+  drag.startIdx = si; drag.currentIdx = ei;
+  drag.bodyTop = rect.top; drag.scrollEl = scrollEl;
+  drag.scrollTopAtStart = scrollEl.scrollTop;
+  drag.block = block; drag.justFinished = false;
+  drag.lastClientX = t.clientX; drag.lastClientY = t.clientY;
+  updateGhost(day, si, ei);
+}
+
+document.addEventListener("touchmove", e => {
+  if (!drag.active || e.touches.length !== 1) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  drag.lastClientX = t.clientX; drag.lastClientY = t.clientY;
+  updateDragPosition(t.clientX, t.clientY);
+}, { passive: false });
+
+document.addEventListener("touchend", e => {
+  if (!drag.active) return;
+  const t = e.changedTouches[0];
+  if (t) { drag.lastClientX = t.clientX; drag.lastClientY = t.clientY; }
+  finishDrag();
+});
+
+// ─── Drag: shared position update + finish ────────────────────────────────────
+
+function updateDragPosition(clientX, clientY) {
+  const scrollDelta = drag.scrollEl ? drag.scrollEl.scrollTop - drag.scrollTopAtStart : 0;
+  const offsetY = clientY - drag.bodyTop + scrollDelta;
+  const rawIdx  = Math.floor(offsetY / ROW_H);
+  const slots   = getSlots();
+
+  if (drag.isResize) {
+    const newEi = Math.max(drag.startIdx + 1, Math.min(slots.length - 1, rawIdx + 1));
+    if (newEi !== drag.currentIdx) { drag.currentIdx = newEi; updateGhost(drag.day, drag.startIdx, newEi); }
+  } else {
+    const newIdx = Math.max(drag.startIdx, Math.min(slots.length - 2, rawIdx));
+    if (newIdx !== drag.currentIdx) { drag.currentIdx = newIdx; updateGhost(drag.day, drag.startIdx, newIdx + 1); }
+  }
+}
+
+function finishDrag() {
+  const slots    = getSlots();
+  const day      = drag.day;
+  const isResize = drag.isResize;
+  const cx = drag.lastClientX, cy = drag.lastClientY;
+
+  clearGhost(day);
+  drag.active = false;
+
+  const weekBlocks = getCurrentWeekBlocks();
+
+  if (isResize) {
+    const newEi = drag.currentIdx;
+    if (newEi <= drag.startIdx) return;
+    const newEnd = slots[newEi];
+    if (!newEnd) return;
+    const existing = weekBlocks[day] || [];
+    if (!hasOverlap(existing, drag.startIdx, newEi, slots, drag.block.id)) {
+      saveCurrentWeekBlocks({ ...weekBlocks, [day]: existing.map(b => b.id === drag.block.id ? { ...b, end: newEnd } : b) });
+      rerenderSchedulerOnly();
+    }
+  } else {
+    const si = drag.startIdx, ei = drag.currentIdx + 1;
+    if (ei > slots.length - 1) { console.warn("[drag] ei out of bounds:", { si, ei }); return; }
+    const start = slots[si], end = slots[ei];
+    if (!start || !end || si >= ei) { console.warn("[drag] invalid range:", { si, ei, start, end }); return; }
+
+    const existing = weekBlocks[day] || [];
+    if (hasOverlap(existing, si, ei, slots)) return;
+
+    drag.justFinished = true;
+    setTimeout(() => { drag.justFinished = false; }, 300);
+
+    editor.mode = "create"; editor.day = day;
+    editor.startSlot = start; editor.endSlot = end;
+    editor.block = null; editor.category = "Academic"; editor.color = C.lavender; editor.note = "";
+
+    const x = Math.min(cx + 14, window.innerWidth  - 276);
+    const y = Math.max(8,       Math.min(cy - 80,  window.innerHeight - 380));
+    openEditorPanel(x, y, "create");
+  }
+}
+
+function updateGhost(day, si, ei) {
+  const ghost = document.getElementById("ghost-" + day);
+  if (!ghost) return;
+  ghost.style.display = "block";
+  ghost.style.top     = (si * ROW_H) + "px";
+  ghost.style.height  = ((ei - si) * ROW_H) + "px";
+}
+
+function clearGhost(day) {
+  const ghost = document.getElementById("ghost-" + (day || drag.day));
+  if (ghost) ghost.style.display = "none";
+}
+
+// ─── Editor Panel ─────────────────────────────────────────────────────────────
+
+function openEditorForEdit(block, day, e) {
+  editor.mode = "edit"; editor.day = day; editor.block = block;
+  editor.startSlot = block.start; editor.endSlot = block.end;
+  editor.category = block.category; editor.color = block.color; editor.note = block.note || "";
+
+  const rect = e.currentTarget.getBoundingClientRect();
+  const x = Math.min(rect.right + 10, window.innerWidth  - 276);
+  const y = Math.max(8,               Math.min(rect.top,   window.innerHeight - 380));
+  openEditorPanel(x, y, "edit");
+}
+
+function openEditorPanel(x, y, mode) {
+  const edEl = document.getElementById("block-editor");
+  edEl.style.left = x + "px"; edEl.style.top = y + "px";
+  edEl.className = "open";
+
+  document.getElementById("editor-title").textContent = mode === "create" ? "New Block" : "Edit Block";
+  document.getElementById("editor-note").value = editor.note;
+  document.getElementById("editor-delete").style.display = mode === "edit" ? "" : "none";
+  edEl.style.border = `1.5px solid ${editor.color}66`;
+
+  const pills = document.getElementById("cat-pills"); pills.innerHTML = "";
+  CATEGORIES.forEach(cat => {
+    const b = el("button", "cat-btn" + (cat.label === editor.category ? " selected" : ""));
+    b.textContent = cat.label;
+    if (cat.label === editor.category) { b.style.borderColor = cat.bg; b.style.background = cat.bg + "55"; }
+    b.onclick = () => {
+      editor.category = cat.label; editor.color = cat.bg;
+      edEl.style.border = `1.5px solid ${cat.bg}66`;
+      document.getElementById("editor-save").style.background = cat.bg;
+      pills.querySelectorAll(".cat-btn").forEach(pb => {
+        const isSel = pb.textContent === cat.label;
+        pb.className = "cat-btn" + (isSel ? " selected" : "");
+        pb.style.borderColor = isSel ? cat.bg : "#e0d8ec";
+        pb.style.background  = isSel ? cat.bg + "55" : "transparent";
+        pb.style.fontWeight  = isSel ? "600" : "400";
+      });
+    };
+    pills.appendChild(b);
+  });
+
+  document.getElementById("editor-save").style.background = editor.color;
+  setTimeout(() => { const n = document.getElementById("editor-note"); if (n) n.focus(); }, 50);
+}
+
+document.getElementById("editor-save").onclick = () => {
+  editor.note = document.getElementById("editor-note").value.trim();
+  const slots = getSlots();
+  const si = slots.indexOf(editor.startSlot), ei = slots.indexOf(editor.endSlot);
+  const weekBlocks = getCurrentWeekBlocks();
+
+  if (editor.mode === "create") {
+    if (si < 0 || ei <= si) { console.warn("[editor] invalid slots:", { si, ei }); closeEditor(); return; }
+    const existing = weekBlocks[editor.day] || [];
+    if (!hasOverlap(existing, si, ei, slots)) {
+      saveCurrentWeekBlocks({ ...weekBlocks, [editor.day]: [...existing, { id:Date.now(), start:editor.startSlot, end:editor.endSlot, category:editor.category, color:editor.color, note:editor.note }] });
+      rerenderSchedulerOnly();
+    }
+  } else {
+    saveCurrentWeekBlocks({ ...weekBlocks, [editor.day]: (weekBlocks[editor.day]||[]).map(b => b.id === editor.block.id ? { ...b, category:editor.category, color:editor.color, note:editor.note } : b) });
+    rerenderSchedulerOnly();
+  }
+  closeEditor();
+};
+
+document.getElementById("editor-delete").onclick = () => {
+  if (editor.mode !== "edit") return;
+  const wb = getCurrentWeekBlocks();
+  saveCurrentWeekBlocks({ ...wb, [editor.day]: (wb[editor.day]||[]).filter(b => b.id !== editor.block.id) });
+  rerenderSchedulerOnly(); closeEditor();
+};
+
+document.getElementById("editor-cancel").onclick = closeEditor;
+function closeEditor() { document.getElementById("block-editor").className = ""; }
+
+// Single outside-click handler for the block editor only
+document.addEventListener("click", e => {
+  if (drag.justFinished) return;
+  const ed = document.getElementById("block-editor");
+  if (ed.classList.contains("open") && !ed.contains(e.target)) closeEditor();
+});
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  const ed = document.getElementById("block-editor");
+  if (ed.classList.contains("open")) closeEditor();
+  closeStickyModal();
+});
+
+// ─── Panel: Priority Stack ────────────────────────────────────────────────────
+
+function buildPriorityPanel() {
+  const panel = div("panel"); panel.appendChild(div("panel-accent", { background: C.hotPink }));
+  const h2 = document.createElement("h2"); h2.textContent = "Priority Stack"; panel.appendChild(h2);
+  const sub = div("sub"); sub.innerHTML = `${S.priorities.length}/5 active &middot; Only what matters this week`; panel.appendChild(sub);
+
+  const list = div();
+  S.priorities.forEach((p, i) => {
+    const item = div("priority-item", { background: p.color + "33", border: `1.5px solid ${p.color}66` });
+    const num  = div("priority-num",  { background: p.color }); num.textContent = i + 1;
+    const txt  = span("priority-text", p.text);
+    const del  = btn("priority-del", "\u00d7", () => { S.priorities = S.priorities.filter(x => x.id !== p.id); renderAll(); });
+    item.appendChild(num); item.appendChild(txt); item.appendChild(del); list.appendChild(item);
+  });
+  if (S.priorities.length === 0) list.appendChild(div("priority-empty", {}, "No priorities set \u00b7 Add up to 5 below"));
+  panel.appendChild(list);
+
+  if (S.priorities.length < 5) {
+    const row = div("priority-add-row");
+    const input = el("input", "priority-input");
+    input.type = "text"; input.placeholder = "Add a priority..."; input.value = S.newPriority;
+    input.oninput = e => { S.newPriority = e.target.value; };
+    input.onkeydown = e => { if (e.key === "Enter") addPriority(); };
+    row.appendChild(input); row.appendChild(btn("priority-add-btn", "+", addPriority));
+    panel.appendChild(row);
+  } else {
+    const full = div("priority-full"); full.innerHTML = "Stack is full &middot; Complete one before adding more"; panel.appendChild(full);
+  }
+  return panel;
+}
+
+function addPriority() {
+  const text = S.newPriority.trim();
+  if (!text || S.priorities.length >= 5) return;
+  const palette = [C.lavender, C.skyBlue, C.mint, C.yellow, C.hotPink];
+  S.priorities.push({ id: Date.now(), text, color: palette[S.priorities.length % palette.length] });
+  S.newPriority = "";
+  renderAll();
+}
+
+// ─── Panel: Financial Snapshot ────────────────────────────────────────────────
+
+function buildFinancialPanel() {
+  const panel = div("panel"); panel.appendChild(div("panel-accent", { background: C.mint }));
+  const h2 = document.createElement("h2"); h2.textContent = "Financial Snapshot"; panel.appendChild(h2);
+  const sub = div("sub"); sub.innerHTML = "Click label or value to edit &middot; Monthly view"; panel.appendChild(sub);
+
+  S.financials.forEach((f, i) => {
+    const row = div("fin-row", { background: i === 0 ? C.mint+"44" : "#f5f0fa", border: i === 0 ? `1.5px solid ${C.mint}` : "1.5px solid transparent" });
+
+    const statusBtn = el("button", "fin-status-btn");
+    statusBtn.textContent = STATUS_ICON[f.status || "unpaid"];
+    statusBtn.setAttribute("data-status", f.status || "unpaid");
+    statusBtn.title = `Status: ${f.status||"unpaid"} — tap to cycle`;
+    statusBtn.onclick = e => { e.stopPropagation(); cycleFinStatus(f); };
+    row.appendChild(statusBtn);
+
+    if (S.editingFinLabel === f.id) {
+      const inp = el("input", "fin-label-input"); inp.value = f.label;
+      inp.onblur = ev => { f.label = ev.target.value||f.label; S.editingFinLabel=null; lsSave("mc-financials",S.financials); renderAll(); };
+      inp.onkeydown = ev => { if(ev.key==="Enter"){f.label=ev.target.value||f.label;S.editingFinLabel=null;lsSave("mc-financials",S.financials);renderAll();} if(ev.key==="Escape"){S.editingFinLabel=null;renderAll();} };
+      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
+    } else {
+      const lbl = span("fin-label", f.label, { fontWeight: i===0?"500":"400" }); lbl.title="Tap to edit label";
+      lbl.onclick = ()=>{S.editingFinLabel=f.id;S.editingFin=null;renderAll();}; row.appendChild(lbl);
+    }
+
+    if (S.editingFin === f.id) {
+      const inp = el("input","fin-input"); inp.value = f.value;
+      inp.onblur = ev=>{f.value=ev.target.value;S.editingFin=null;lsSave("mc-financials",S.financials);renderAll();};
+      inp.onkeydown = ev=>{if(ev.key==="Enter"){f.value=ev.target.value;S.editingFin=null;lsSave("mc-financials",S.financials);renderAll();}if(ev.key==="Escape"){S.editingFin=null;renderAll();}};
+      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
+    } else {
+      const val = span("fin-value","$"+f.value); val.onclick=()=>{S.editingFin=f.id;S.editingFinLabel=null;renderAll();}; row.appendChild(val);
+    }
+
+    const delBtn = el("button","fin-del-btn"); delBtn.textContent="\u00d7"; delBtn.title="Remove row";
+    delBtn.onclick=()=>{S.financials=S.financials.filter(x=>x.id!==f.id);lsSave("mc-financials",S.financials);renderAll();};
+    row.appendChild(delBtn); panel.appendChild(row);
+  });
+
+  const expenses = S.financials.slice(1).filter(f=>f.label!=="Savings Goal").reduce((s,f)=>s+(parseFloat(f.value.replace(/,/g,""))||0),0);
+  const income   = parseFloat((S.financials[0]?.value||"0").replace(/,/g,""))||0;
+  const remaining = income - expenses;
+
+  const divRow = div("fin-divider");
+  divRow.appendChild(span("","Remaining",{fontSize:"13px",color:C.muted}));
+  divRow.appendChild(span("fin-remaining","$"+remaining.toFixed(0),{color:remaining>=0?"#5a9e72":"#c0516b"}));
+  panel.appendChild(divRow);
+
+  const addRow = btn("fin-add-btn","+ Add row",()=>{S.financials.push({id:Date.now(),label:"New item",value:"0",status:"unpaid"});lsSave("mc-financials",S.financials);renderAll();});
+  panel.appendChild(addRow);
+  return panel;
+}
+
+function cycleFinStatus(fin) {
+  fin.status = STATUS_CYCLE[(STATUS_CYCLE.indexOf(fin.status||"unpaid")+1)%STATUS_CYCLE.length];
+  lsSave("mc-financials",S.financials); renderAll();
+}
+
+// ─── Panel: Weekly Notepad ────────────────────────────────────────────────────
+
+// Rotate slightly per note for a natural sticky feel
+const STICKY_ROTATIONS = ["rotate(-1.2deg)","rotate(0.8deg)","rotate(-0.5deg)","rotate(1.5deg)","rotate(-0.3deg)","rotate(1deg)"];
+// Three colors only, all from the existing app palette
+const STICKY_COLORS = [
+  { bg: C.yellow,    border: "#e8d44d" },  // yellow
+  { bg: C.mint,      border: "#8fd46a" },  // mint
+  { bg: C.blushPink, border: "#f093b0" },  // blush pink
+];
+
+function getCurrentNotes() {
+  return S.notesByWeek[getWeekKey(S.weekOffset)] || [];
+}
+
+function saveCurrentNotes(notes) {
+  S.notesByWeek[getWeekKey(S.weekOffset)] = notes;
+  lsSave("mc-notesByWeek", S.notesByWeek);
+}
+
+// ─── Sticky Note Editor ───────────────────────────────────────────────────────
+
+// ─── Sticky Note Modal ────────────────────────────────────────────────────────
+
+const stickyModal = { note: null, color: null };
+
+function openStickyModal(note) {
+  stickyModal.note  = note;
+  stickyModal.color = note.color || STICKY_COLORS[0];
+
+  document.getElementById("sticky-modal-text").value = note.text;
+
+  // Update modal save button color to match note
+  document.getElementById("sticky-modal-save").style.background = stickyModal.color.bg;
+  document.getElementById("sticky-modal-save").style.color = C.dark;
+
+  // Build swatches
+  const swatches = document.getElementById("sticky-swatches");
+  swatches.innerHTML = "";
+  STICKY_COLORS.forEach((c, idx) => {
+    const isActive = c.bg === stickyModal.color.bg;
+    const sw = document.createElement("button");
+    sw.className = "sticky-swatch" + (isActive ? " active" : "");
+    sw.style.background  = c.bg;
+    sw.style.borderColor = isActive ? C.dark : "transparent";
+    sw.dataset.idx = idx;
+    sw.addEventListener("click", () => {
+      stickyModal.color = STICKY_COLORS[idx];
+      document.getElementById("sticky-modal-save").style.background = c.bg;
+      swatches.querySelectorAll(".sticky-swatch").forEach(s => {
+        const sel = parseInt(s.dataset.idx) === idx;
+        s.classList.toggle("active", sel);
+        s.style.borderColor = sel ? C.dark : "transparent";
+      });
+    });
+    swatches.appendChild(sw);
+  });
+
+  document.getElementById("sticky-modal-backdrop").classList.add("open");
+  setTimeout(() => document.getElementById("sticky-modal-text").focus(), 80);
+}
+
+function closeStickyModal() {
+  document.getElementById("sticky-modal-backdrop").classList.remove("open");
+}
+
+document.getElementById("sticky-modal-save").addEventListener("click", () => {
+  const text = document.getElementById("sticky-modal-text").value.trim();
+  if (!text) { closeStickyModal(); return; }
+  saveCurrentNotes(getCurrentNotes().map(n =>
+    n.id === stickyModal.note.id ? { ...n, text, color: stickyModal.color } : n
+  ));
+  closeStickyModal();
+  renderAll();
+});
+
+document.getElementById("sticky-modal-delete").addEventListener("click", () => {
+  saveCurrentNotes(getCurrentNotes().filter(n => n.id !== stickyModal.note.id));
+  closeStickyModal();
+  renderAll();
+});
+
+document.getElementById("sticky-modal-cancel").addEventListener("click", closeStickyModal);
+
+// Clicking the backdrop (outside the modal card) closes it
+document.getElementById("sticky-modal-backdrop").addEventListener("click", e => {
+  if (e.target === document.getElementById("sticky-modal-backdrop")) closeStickyModal();
+});
+
+function buildNotepadPanel() {
+  const panel = div("panel panel-full");
+  panel.appendChild(div("panel-accent", { background: C.cornflower }));
+
+  const h2 = document.createElement("h2"); h2.textContent = "Weekly Notes";
+  panel.appendChild(h2);
+  const sub = div("sub");
+  sub.innerHTML = `Jot anything for ${getWeekLabel(getWeekKey(S.weekOffset))} &middot; Pin to save as a sticky note`;
+  panel.appendChild(sub);
+
+  // ── Textarea ──
+  const ta = el("textarea", "notepad-textarea");
+  ta.placeholder = "Type a thought, reminder, or anything on your mind…";
+  ta.rows = 4;
+  ta.value = S.notepadDraft;
+
+  const charCount = span("notepad-char-count", "");
+  const updateCount = () => { charCount.textContent = ta.value.length > 0 ? `${ta.value.length} chars` : ""; };
+  updateCount();
+
+  const pinBtn = btn("notepad-pin-btn", "📌 Pin note", () => {
+    const text = ta.value.trim();
+    if (!text) return;
+    const notes = getCurrentNotes();
+    const colorIdx = notes.length % STICKY_COLORS.length;
+    saveCurrentNotes([...notes, {
+      id:    Date.now(),
+      text,
+      color: STICKY_COLORS[colorIdx],
+      ts:    new Date().toLocaleString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
+    }]);
+    S.notepadDraft = "";
+    renderAll();
+  });
+  pinBtn.disabled = !S.notepadDraft.trim();
+
+  ta.oninput = e => {
+    S.notepadDraft = e.target.value;
+    pinBtn.disabled = !S.notepadDraft.trim();
+    updateCount();
+  };
+  ta.onkeydown = e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) pinBtn.click(); };
+
+  panel.appendChild(ta);
+
+  const row = div("notepad-row");
+  row.appendChild(charCount);
+  row.appendChild(pinBtn);
+  panel.appendChild(row);
+
+  // ── Sticky notes grid ──
+  const notes = getCurrentNotes();
+  if (notes.length === 0) {
+    const empty = div("sticky-empty");
+    empty.textContent = "No pinned notes this week — type something above and hit 📌 Pin note";
+    panel.appendChild(empty);
+  } else {
+    const grid = div("sticky-grid");
+    notes.forEach((note, i) => {
+      const c = note.color || STICKY_COLORS[i % STICKY_COLORS.length];
+      const card = div("sticky-note");
+      card.style.background   = c.bg;
+      card.style.borderBottom = `3px solid ${c.border}`;
+      card.style.transform    = STICKY_ROTATIONS[i % STICKY_ROTATIONS.length];
+      card.style.cursor       = "pointer";
+      card.title              = "Click to edit";
+
+      const ts  = div("sticky-ts");   ts.textContent  = note.ts;
+      // Show truncated preview; full text visible inside modal
+      const preview = note.text.length > 120 ? note.text.slice(0, 117) + "…" : note.text;
+      const txt = div("sticky-text"); txt.textContent = preview;
+
+      const hint = div("sticky-edit-hint"); hint.textContent = "✏ edit";
+
+      // Quick-delete × still available on hover
+      const del = el("button", "sticky-del"); del.textContent = "×"; del.title = "Delete";
+      del.addEventListener("click", e => {
+        e.stopPropagation();
+        saveCurrentNotes(getCurrentNotes().filter(n => n.id !== note.id));
+        renderAll();
+      });
+
+      // Click anywhere on card → open modal
+      card.addEventListener("click", () => openStickyModal(note));
+
+      card.appendChild(del);
+      card.appendChild(ts);
+      card.appendChild(txt);
+      card.appendChild(hint);
+      grid.appendChild(card);
+    });
+    panel.appendChild(grid);
+  }
+
+  return panel;
+}
+
+// ─── Main Render ──────────────────────────────────────────────────────────────
+
+function renderAll() {
+  const grid = document.getElementById("panel-grid");
+  grid.innerHTML = "";
+  grid.appendChild(buildScheduler());
+  grid.appendChild(buildPriorityPanel());
+  grid.appendChild(buildFinancialPanel());
+  grid.appendChild(buildNotepadPanel());
+}
+
+// ─── PWA: manifest + service worker ──────────────────────────────────────────
+
+(function initPWA() {
+  // Inline SVG icon as data URL (purple calendar)
+  const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#CDB4DB"/><rect x="96" y="160" width="320" height="260" rx="24" fill="white"/><rect x="96" y="130" width="320" height="80" rx="24" fill="#3a3350"/><rect x="96" y="170" width="320" height="40" fill="#3a3350"/><rect x="160" y="96" width="28" height="72" rx="14" fill="#FFAFCC"/><rect x="324" y="96" width="28" height="72" rx="14" fill="#FFAFCC"/><rect x="130" y="280" width="56" height="56" rx="10" fill="#CDB4DB"/><rect x="228" y="280" width="56" height="56" rx="10" fill="#BDE0FE"/><rect x="326" y="280" width="56" height="56" rx="10" fill="#CDFAA7"/></svg>`;
+  const iconUrl = "data:image/svg+xml;base64," + btoa(iconSvg);
+
+  // Add apple-touch-icon
+  const appleIcon = document.createElement("link");
+  appleIcon.rel = "apple-touch-icon"; appleIcon.href = iconUrl;
+  document.head.appendChild(appleIcon);
+
+  // Inject manifest via blob
+  const manifest = {
+    name: "What's the Plan?",
+    short_name: "Plan?",
+    description: "Your weekly mission control — schedule, priorities, finances.",
+    start_url: "./",
+    display: "standalone",
+    background_color: "#f0e8f5",
+    theme_color: "#f0e8f5",
+    orientation: "any",
+    icons: [
+      { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+    ]
+  };
+  const mBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+  const mUrl  = URL.createObjectURL(mBlob);
+  const mLink = document.createElement("link");
+  mLink.rel = "manifest"; mLink.href = mUrl;
+  document.head.appendChild(mLink);
+
+  // Register service worker (caches this page for offline use)
+  if ("serviceWorker" in navigator) {
+    const swCode = `
+const CACHE = "whats-the-plan-v1";
+const FONTS  = "https://fonts.googleapis.com";
+
+self.addEventListener("install", e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll([self.location.pathname || "/"]).catch(()=>{}))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+  self.clients.claim();
+});
+
+self.addEventListener("fetch", e => {
+  if (e.request.method !== "GET") return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      const fresh = fetch(e.request).then(res => {
+        if (res.ok && !e.request.url.startsWith("chrome-extension")) {
+          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        }
+        return res;
+      }).catch(()=>cached);
+      return cached || fresh;
+    })
+  );
+});`;
+    const swBlob = new Blob([swCode], { type: "text/javascript" });
+    const swUrl  = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swUrl, { type: "classic" }).catch(()=>{});
+  }
+})();
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+document.getElementById("today-date").textContent =
+  new Date().toLocaleDateString("en-US", { weekday:"long", month:"long", day:"numeric" });
+
+renderAll();
+</script>
+</body>
+</html>

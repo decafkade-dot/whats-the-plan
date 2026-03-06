@@ -394,6 +394,43 @@
     #sticky-modal { padding: 20px 16px; max-width: 100%; border-radius: 20px; }
   }
 
+  /* ── Meal Tracker ── */
+  .meal-grid {
+    display: grid;
+    grid-template-columns: 28px repeat(7, 1fr);
+    gap: 4px;
+    align-items: center;
+  }
+  .meal-day-label {
+    font-size: 9px; font-weight: 600; text-align: center;
+    color: var(--muted); letter-spacing: 0.3px;
+  }
+  .meal-row-icon {
+    width: 22px; height: 22px; display: flex; align-items: center;
+    justify-content: center; font-size: 14px; border-radius: 6px;
+    background: #f5f0fa;
+  }
+  .meal-cell {
+    width: 100%; aspect-ratio: 1;
+    border-radius: 8px; border: 1.5px solid #e0d8ec;
+    background: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; transition: all 0.12s;
+    -webkit-tap-highlight-color: transparent;
+    position: relative; overflow: hidden;
+  }
+  .meal-cell:hover { border-color: var(--lavender); background: #f5f0fa; }
+  .meal-cell.checked {
+    border-color: transparent;
+    background: var(--mint);
+  }
+  .meal-cell.checked::after {
+    content: "✓";
+    font-size: 11px; font-weight: 700;
+    color: #3a7a55;
+  }
+  .meal-cell:not(.checked) .meal-icon { font-size: 12px; opacity: 0.28; }
+
   /* ── Debt Remaining Panel ── */
   .debt-total-row { display:flex; align-items:baseline; gap:8px; margin:8px 0 14px; }
   .debt-total-amt { font-size:32px; font-weight:600; letter-spacing:-1px; color:#c0516b; }
@@ -663,7 +700,7 @@
   <span class="bd-badge" id="bd-badge"></span>
 </button>
 
-<footer>What's the Plan? &middot; One week at a time</footer>
+
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
@@ -879,6 +916,7 @@ const S = {
   brainDump: ls("mc-brainDump", []),
   debts:     ls("mc-debts", []),
   editingDebt: null,
+  meals:     ls("mc-meals", {}),
 };
 
 // Save pruned blocks back immediately
@@ -2716,6 +2754,67 @@ function buildDebtPanel() {
   return panel;
 }
 
+// ─── Panel: Meal Tracker ──────────────────────────────────────────────────────
+
+const MEALS = [
+  { key: "b", icon: "🥞" },   // breakfast
+  { key: "l", icon: "🥪" },   // lunch
+  { key: "d", icon: "🍝" },   // dinner
+];
+const MEAL_DAYS = ["M","T","W","T","F","S","S"];
+
+function getMealKey(weekKey, dayIdx, mealKey) {
+  return `${weekKey}-${dayIdx}-${mealKey}`;
+}
+
+function buildMealPanel() {
+  const panel = div("panel");
+  panel.appendChild(div("panel-accent", { background: C.yellow }));
+
+  const h2 = document.createElement("h2"); h2.textContent = "Meals"; panel.appendChild(h2);
+  const sub = div("sub"); sub.textContent = "This week · tap to mark eaten"; panel.appendChild(sub);
+
+  const weekKey = getWeekKey(S.weekOffset);
+  const grid = div("meal-grid");
+
+  // Top-left corner spacer
+  grid.appendChild(div(""));
+
+  // Day labels row
+  MEAL_DAYS.forEach(d => {
+    const lbl = div("meal-day-label"); lbl.textContent = d; grid.appendChild(lbl);
+  });
+
+  // One row per meal
+  MEALS.forEach(meal => {
+    // Row icon
+    const rowIcon = div("meal-row-icon"); rowIcon.textContent = meal.icon;
+    grid.appendChild(rowIcon);
+
+    // 7 day cells
+    for (let di = 0; di < 7; di++) {
+      const cellKey = getMealKey(weekKey, di, meal.key);
+      const isChecked = !!S.meals[cellKey];
+      const cell = div("meal-cell" + (isChecked ? " checked" : ""));
+      if (!isChecked) {
+        const ico = div("meal-icon"); ico.textContent = meal.icon; cell.appendChild(ico);
+      }
+      cell.onclick = () => {
+        if (S.meals[cellKey]) { delete S.meals[cellKey]; }
+        else { S.meals[cellKey] = 1; }
+        lsSave("mc-meals", S.meals);
+        // Re-render just this cell to avoid a full renderAll on a tiny toggle
+        cell.className = "meal-cell" + (S.meals[cellKey] ? " checked" : "");
+        cell.innerHTML = S.meals[cellKey] ? "" : `<div class="meal-icon">${meal.icon}</div>`;
+      };
+      grid.appendChild(cell);
+    }
+  });
+
+  panel.appendChild(grid);
+  return panel;
+}
+
 function renderAll() {
   const grid = document.getElementById("panel-grid");
   grid.innerHTML = "";
@@ -2724,6 +2823,7 @@ function renderAll() {
   grid.appendChild(buildPriorityPanel());
   grid.appendChild(buildFinancialPanel());
   grid.appendChild(buildDebtPanel());
+  grid.appendChild(buildMealPanel());
   grid.appendChild(buildNotepadPanel());
 }
 
@@ -2749,7 +2849,6 @@ document.getElementById("today-date").textContent =
       document.getElementById("auth-screen").style.display = "none";
       document.getElementById("panel-grid-wrapper").style.display = "";
       document.getElementById("app-header").style.display = "";
-      document.querySelector("footer").style.display = "";
       await loadCloudData(session.user.id);
       addSignOutButton();
       renderAll();

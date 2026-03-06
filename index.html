@@ -426,35 +426,28 @@
   }
   .water-reset-btn:hover { opacity: 1; }
 
-  /* Medication rows */
-  .med-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 12px; border-radius: 12px;
-    background: #f5f0fa; margin-bottom: 7px;
-    transition: background 0.15s;
+  /* Medication cards — two large side-by-side tap buttons */
+  .med-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .med-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 10px; padding: 18px 10px 14px;
+    border-radius: 16px; border: 2px solid #e0d8ec;
+    background: white; cursor: pointer;
+    transition: all 0.18s; -webkit-tap-highlight-color: transparent;
+    position: relative; min-height: 130px;
   }
-  .med-row.taken { background: #CDFAA733; }
-  .med-icon-wrap {
-    width: 36px; height: 36px; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .med-icon-wrap svg { width: 100%; height: 100%; }
-  .med-check-btn {
-    width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
-    border: 2px solid #e0d8ec; background: white; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
-    margin-left: auto;
-  }
-  .med-row.taken .med-check-btn { border-color: var(--mint); background: var(--mint); }
-  .med-info { flex: 1; min-width: 0; }
-  .med-name { font-size: 13px; font-weight: 500; color: var(--dark); }
-  .med-schedule { font-size: 10px; color: var(--muted); margin-top: 1px; }
-  .med-taken-badge {
-    font-size: 10px; font-weight: 600; color: #3a7a55;
+  .med-card:hover { border-color: var(--lavender); background: #faf7fd; }
+  .med-card.taken { background: #CDFAA744; border-color: var(--mint); }
+  .med-card svg { width: 64px; height: 64px; transition: transform 0.18s; }
+  .med-card:active svg { transform: scale(0.93); }
+  .med-card-label { font-size: 10px; color: var(--muted); text-align: center; line-height: 1.4; }
+  .med-card.taken .med-card-label { color: #3a7a55; }
+  .med-card-check {
+    position: absolute; top: 8px; right: 10px;
+    font-size: 13px; font-weight: 700; color: #3a7a55;
     opacity: 0; transition: opacity 0.2s;
   }
-  .med-row.taken .med-taken-badge { opacity: 1; }
+  .med-card.taken .med-card-check { opacity: 1; }
 
   /* ── Debt Remaining Panel ── */
   .debt-total-row { display:flex; align-items:baseline; gap:8px; margin:8px 0 14px; }
@@ -2889,95 +2882,81 @@ function buildHabitsPanel() {
   const medLbl = div("habits-section-label"); medLbl.textContent = "Medications";
   medSection.appendChild(medLbl);
 
-  // SVG icons
-  const PILL_SVG = `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="13" width="30" height="10" rx="5" fill="#CDB4DB" opacity="0.3" stroke="#CDB4DB" stroke-width="1.5"/>
-    <rect x="3" y="13" width="15" height="10" rx="5" fill="#CDB4DB"/>
-    <rect x="17" y="13" width="16" height="10" rx="5" fill="#FFAFCC"/>
-    <line x1="18" y1="13" x2="18" y2="23" stroke="white" stroke-width="1.5"/>
+  const PILL_SVG = `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- pill body -->
+    <rect x="6" y="22" width="52" height="20" rx="10" fill="#CDB4DB" opacity="0.25" stroke="#CDB4DB" stroke-width="2"/>
+    <!-- left half -->
+    <path d="M6 32 C6 26.48 10.48 22 16 22 L32 22 L32 42 L16 42 C10.48 42 6 37.52 6 32Z" fill="#CDB4DB"/>
+    <!-- right half -->
+    <path d="M32 22 L48 22 C53.52 22 58 26.48 58 32 C58 37.52 53.52 42 48 42 L32 42 Z" fill="#FFAFCC"/>
+    <!-- dividing line -->
+    <line x1="32" y1="22" x2="32" y2="42" stroke="white" stroke-width="2.5"/>
+    <!-- shine -->
+    <ellipse cx="20" cy="28" rx="4" ry="2.5" fill="white" opacity="0.4" transform="rotate(-20 20 28)"/>
   </svg>`;
 
-  const SYRINGE_SVG = `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- needle tip -->
-    <line x1="28" y1="8" x2="33" y2="3" stroke="#8b7fa8" stroke-width="1.5" stroke-linecap="round"/>
-    <!-- barrel -->
-    <rect x="10" y="13" width="18" height="8" rx="2" fill="#BDE0FE" stroke="#A2D2FF" stroke-width="1.5"/>
+  const SYRINGE_SVG = `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- needle cap diagonal line -->
+    <line x1="48" y1="10" x2="56" y2="2" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/>
+    <!-- barrel body -->
+    <rect x="16" y="24" width="32" height="14" rx="4" fill="#BDE0FE" stroke="#A2D2FF" stroke-width="2"/>
+    <!-- fluid fill inside barrel -->
+    <rect x="18" y="26" width="18" height="10" rx="2" fill="#A2D2FF" opacity="0.5"/>
     <!-- plunger rod -->
-    <line x1="4" y1="17" x2="10" y2="17" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/>
+    <line x1="4" y1="31" x2="16" y2="31" stroke="#8b7fa8" stroke-width="2.5" stroke-linecap="round"/>
     <!-- plunger flange -->
-    <rect x="2" y="14" width="3" height="6" rx="1" fill="#CDB4DB"/>
+    <rect x="2" y="26" width="5" height="10" rx="2" fill="#CDB4DB"/>
     <!-- needle hub -->
-    <rect x="28" y="14" width="4" height="6" rx="1" fill="#A2D2FF"/>
+    <rect x="48" y="26" width="6" height="10" rx="2" fill="#A2D2FF"/>
     <!-- needle -->
-    <line x1="32" y1="17" x2="36" y2="17" stroke="#8b7fa8" stroke-width="1.5" stroke-linecap="round"/>
-    <!-- tick marks inside barrel -->
-    <line x1="15" y1="14" x2="15" y2="16" stroke="#A2D2FF" stroke-width="1"/>
-    <line x1="19" y1="14" x2="19" y2="16" stroke="#A2D2FF" stroke-width="1"/>
-    <line x1="23" y1="14" x2="23" y2="16" stroke="#A2D2FF" stroke-width="1"/>
+    <line x1="54" y1="31" x2="62" y2="31" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/>
+    <!-- tick marks -->
+    <line x1="26" y1="25" x2="26" y2="28" stroke="#7bb8e8" stroke-width="1.5"/>
+    <line x1="32" y1="25" x2="32" y2="28" stroke="#7bb8e8" stroke-width="1.5"/>
+    <line x1="38" y1="25" x2="38" y2="28" stroke="#7bb8e8" stroke-width="1.5"/>
   </svg>`;
 
-  // Daily pill row
-  const dailyRow = div("med-row" + (habits.dailyMed ? " taken" : ""));
+  const medCards = div("med-cards");
 
-  const dailyIconWrap = div("med-icon-wrap");
-  dailyIconWrap.innerHTML = PILL_SVG;
-  dailyRow.appendChild(dailyIconWrap);
-
-  const dailyInfo = div("med-info");
-  dailyInfo.appendChild(span("med-schedule", "Daily · every day"));
-  dailyRow.appendChild(dailyInfo);
-
-  const dailyBadge = span("med-taken-badge", "taken ✓");
-  dailyRow.appendChild(dailyBadge);
-
-  const dailyBtn = el("button", "med-check-btn");
-  dailyBtn.innerHTML = habits.dailyMed ? "✓" : "";
-  dailyBtn.title = habits.dailyMed ? "Mark as not taken" : "Mark as taken";
-  dailyBtn.onclick = () => {
+  // ── Daily pill card ──
+  const dailyCard = el("button", "med-card" + (habits.dailyMed ? " taken" : ""));
+  const dailyCheck = span("med-card-check", "✓"); dailyCard.appendChild(dailyCheck);
+  dailyCard.innerHTML += PILL_SVG;
+  const dailyLbl = div("med-card-label");
+  dailyLbl.textContent = habits.dailyMed ? "taken today" : "daily · tap to log";
+  dailyCard.appendChild(dailyLbl);
+  dailyCard.onclick = () => {
     const h = getHabits(); h.dailyMed = !h.dailyMed; saveHabits(h);
-    dailyRow.classList.toggle("taken", h.dailyMed);
-    dailyBtn.innerHTML = h.dailyMed ? "✓" : "";
-    dailyBadge.style.opacity = h.dailyMed ? "1" : "0";
+    dailyCard.classList.toggle("taken", h.dailyMed);
+    dailyLbl.textContent = h.dailyMed ? "taken today" : "daily · tap to log";
   };
-  dailyRow.appendChild(dailyBtn);
-  medSection.appendChild(dailyRow);
+  medCards.appendChild(dailyCard);
 
-  // Weekly shot row
+  // ── Weekly shot card ──
   const weekKey = getWeekKey(0);
   const shotTaken = habits.weeklyShot?.taken && habits.weeklyShot?.week === weekKey;
-  const shotRow = div("med-row" + (shotTaken ? " taken" : ""));
-
-  const shotIconWrap = div("med-icon-wrap");
-  shotIconWrap.innerHTML = SYRINGE_SVG;
-  shotRow.appendChild(shotIconWrap);
-
-  const shotInfo = div("med-info");
-  const shotSchedText = isFriday() && !shotTaken ? "Due today" : shotTaken ? "Done this week" : "Weekly · due Friday";
-  const shotSched = span("med-schedule", shotSchedText);
-  if (isFriday() && !shotTaken) shotSched.style.color = C.hotPink;
-  shotInfo.appendChild(shotSched);
-  shotRow.appendChild(shotInfo);
-
-  const shotBadge = span("med-taken-badge", "taken ✓");
-  shotRow.appendChild(shotBadge);
-
-  const shotBtn = el("button", "med-check-btn");
-  shotBtn.innerHTML = shotTaken ? "✓" : "";
-  shotBtn.title = shotTaken ? "Mark as not taken" : "Mark as taken";
-  if (!isFriday() && !shotTaken) shotBtn.style.opacity = "0.5";
-  shotBtn.onclick = () => {
+  const shotCard = el("button", "med-card" + (shotTaken ? " taken" : ""));
+  if (!isFriday() && !shotTaken) shotCard.style.opacity = "0.65";
+  const shotCheck = span("med-card-check", "✓"); shotCard.appendChild(shotCheck);
+  shotCard.innerHTML += SYRINGE_SVG;
+  const shotLbl = div("med-card-label");
+  const shotLblText = () => shotCard.classList.contains("taken") ? "done this week" : isFriday() ? "due today!" : "friday · due soon";
+  shotLbl.textContent = shotLblText();
+  if (isFriday() && !shotTaken) shotLbl.style.color = C.hotPink;
+  shotCard.appendChild(shotLbl);
+  shotCard.onclick = () => {
     const h = getHabits();
     const nowTaken = !(h.weeklyShot?.taken && h.weeklyShot?.week === weekKey);
     h.weeklyShot = { taken: nowTaken, week: weekKey };
     saveHabits(h);
-    shotRow.classList.toggle("taken", nowTaken);
-    shotBtn.innerHTML = nowTaken ? "✓" : "";
-    shotBtn.style.opacity = "1";
-    shotBadge.style.opacity = nowTaken ? "1" : "0";
+    shotCard.classList.toggle("taken", nowTaken);
+    shotCard.style.opacity = "1";
+    shotLbl.textContent = shotLblText();
+    shotLbl.style.color = "";
   };
-  shotRow.appendChild(shotBtn);
-  medSection.appendChild(shotRow);
+  medCards.appendChild(shotCard);
 
+  medSection.appendChild(medCards);
   panel.appendChild(medSection);
   return panel;
 }

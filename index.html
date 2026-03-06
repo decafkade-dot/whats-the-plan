@@ -25,9 +25,9 @@
     --dark:       #3a3350;
     --muted:      #8b7fa8;
     --card:       rgba(255,255,255,0.72);
-    --row-h:      28px;
-    --time-col:   56px;
-    --header-h:   38px;
+    --row-h:      20px;
+    --time-col:   50px;
+    --header-h:   32px;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
 
@@ -118,14 +118,15 @@
 
   .sched-scroll {
     overflow-x: auto; overflow-y: auto;
-    max-height: 500px;
+    max-height: calc(100vh - 340px);
+    min-height: 260px;
     border-radius: 12px;
     border: 1px solid #CDB4DB44;
     position: relative;
     user-select: none;
     -webkit-overflow-scrolling: touch;
   }
-  .sched-inner { display: flex; min-width: 560px; }
+  .sched-inner { display: flex; min-width: 520px; }
 
   .time-col { width: var(--time-col); flex-shrink: 0; position: sticky; left: 0; z-index: 4; background: white; }
   .time-corner { height: var(--header-h); position: sticky; top: 0; z-index: 5; background: white; border-bottom: 1.5px solid #CDB4DB55; border-right: 1px solid #CDB4DB33; }
@@ -149,18 +150,65 @@
   .grid-row.half { border-top: 1px solid #CDB4DB14; }
   .day-col.today .grid-row { background: #CDB4DB08; }
 
+  /* ── Shift Import ── */
+  .shift-import-toggle {
+    padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 500;
+    cursor: pointer; font-family: inherit; color: var(--dark); transition: all 0.15s;
+    background: transparent; border: 1.5px solid #e0d8ec; min-height: 32px;
+    display: inline-flex; align-items: center; gap: 5px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .shift-import-toggle:hover { border-color: var(--skyBlue); background: #BDE0FE22; }
+  .shift-import-toggle.open  { border-color: var(--skyBlue); background: #BDE0FE33; }
+  .shift-import-panel {
+    display: none; background: #f0f8ff; border: 1.5px solid #BDE0FE88;
+    border-radius: 12px; padding: 14px; margin-bottom: 10px; gap: 10px;
+    flex-direction: column;
+  }
+  .shift-import-panel.open { display: flex; }
+  .shift-import-label { font-size: 11px; font-weight: 500; color: var(--muted); }
+  .shift-import-example { font-size: 10px; color: #9ab8cc; font-family: monospace; margin-top: 2px; }
+  .shift-import-textarea {
+    width: 100%; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #BDE0FE;
+    font-size: 12px; font-family: monospace; color: var(--dark); resize: vertical;
+    outline: none; line-height: 1.6; min-height: 72px; background: white;
+  }
+  .shift-import-textarea:focus { border-color: var(--cornflower); }
+  .shift-import-row { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+  .shift-import-btn { padding: 8px 16px; border-radius: 8px; border: none; background: var(--skyBlue); color: var(--dark); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: filter 0.15s; }
+  .shift-import-btn:hover { filter: brightness(0.93); }
+  .shift-import-msg { font-size: 11px; flex: 1; min-width: 0; }
+  .day-col.past { opacity: 0.38; }
+  .day-col.past .day-body { cursor: not-allowed; pointer-events: none; }
+  .day-col.past .day-header { color: var(--muted); font-style: italic; }
+  .day-col.past .block-chip { cursor: default; pointer-events: none; filter: grayscale(0.35); }
+
+  /* ── Current Time Indicator ── */
+  .current-time-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: var(--hotPink); z-index: 20; pointer-events: none;
+    box-shadow: 0 0 5px rgba(255,175,204,0.75);
+    transition: top 1s linear;
+  }
+  .current-time-line::before {
+    content: ""; position: absolute; left: -3px; top: -4px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--hotPink);
+    box-shadow: 0 0 4px rgba(255,175,204,0.8);
+  }
+
   .block-chip {
-    position: absolute; left: 2px; right: 2px; border-radius: 7px; border-width: 1px; border-style: solid;
-    padding: 3px 6px 10px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; gap: 1px; z-index: 2; transition: filter 0.1s;
+    position: absolute; left: 2px; right: 2px; border-radius: 5px; border-width: 1px; border-style: solid;
+    padding: 2px 4px 8px; cursor: pointer; overflow: hidden; display: flex; flex-direction: column; gap: 0px; z-index: 2; transition: filter 0.1s;
     -webkit-tap-highlight-color: transparent;
   }
   .block-chip:hover { filter: brightness(0.96); }
-  .block-chip .chip-label  { font-size: 9px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
-  .block-chip .chip-time   { font-size: 8px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .block-chip .chip-note   { font-size: 8px; opacity: 0.65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .block-chip .note-dot    { position: absolute; top: 4px; right: 4px; width: 4px; height: 4px; border-radius: 50%; opacity: 0.5; }
-  .block-chip .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 12px; cursor: ns-resize; border-radius: 0 0 7px 7px; display: flex; align-items: center; justify-content: center; }
-  .block-chip .resize-pip { width: 18px; height: 2px; border-radius: 1px; opacity: 0.55; }
+  .block-chip .chip-label  { font-size: 8px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+  .block-chip .chip-time   { font-size: 7px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .block-chip .chip-note   { font-size: 7px; opacity: 0.65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .block-chip .note-dot    { position: absolute; top: 3px; right: 3px; width: 3px; height: 3px; border-radius: 50%; opacity: 0.5; }
+  .block-chip .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 9px; cursor: ns-resize; border-radius: 0 0 5px 5px; display: flex; align-items: center; justify-content: center; }
+  .block-chip .resize-pip { width: 14px; height: 2px; border-radius: 1px; opacity: 0.55; }
 
   .drag-ghost { position: absolute; left: 2px; right: 2px; background: #CDB4DB44; border: 1.5px dashed #CDB4DB; border-radius: 7px; pointer-events: none; z-index: 10; }
 
@@ -346,7 +394,25 @@
     #sticky-modal { padding: 20px 16px; max-width: 100%; border-radius: 20px; }
   }
 
-  footer { text-align: center; margin-top: 32px; color: var(--muted); font-size: 11px; opacity: 0.7; }
+  /* ── Debt Remaining Panel ── */
+  .debt-total-row { display:flex; align-items:baseline; gap:8px; margin:8px 0 14px; }
+  .debt-total-amt { font-size:32px; font-weight:600; letter-spacing:-1px; color:#c0516b; }
+  .debt-total-lbl { font-size:12px; color:var(--muted); }
+  .debt-item-row  { display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; background:#f5f0fa; margin-bottom:6px; }
+  .debt-item-name { flex:1; font-size:13px; color:var(--dark); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .debt-item-name:hover { color:var(--muted); }
+  .debt-item-bal  { font-size:13px; font-weight:500; cursor:pointer; padding:3px 7px; border-radius:6px; white-space:nowrap; }
+  .debt-item-bal:hover { background:#FFAFCC22; }
+  .debt-item-due  { font-size:10px; color:var(--muted); white-space:nowrap; }
+  .debt-name-input { flex:1; padding:4px 8px; border-radius:6px; border:1.5px solid var(--lavender); font-size:13px; font-family:inherit; background:white; outline:none; min-width:0; }
+  .debt-bal-input  { width:90px; text-align:right; padding:4px 8px; border-radius:6px; border:1.5px solid #FFAFCC; font-size:13px; font-family:inherit; background:white; outline:none; }
+  .debt-due-input  { width:100px; padding:4px 8px; border-radius:6px; border:1.5px solid var(--skyBlue); font-size:12px; font-family:inherit; background:white; outline:none; color:var(--muted); }
+  .debt-del-btn   { border:none; background:transparent; cursor:pointer; color:var(--muted); font-size:16px; opacity:0.3; padding:4px; line-height:1; font-family:inherit; flex-shrink:0; min-width:28px; min-height:28px; display:flex; align-items:center; justify-content:center; }
+  .debt-del-btn:hover { opacity:0.7; }
+  .debt-add-btn   { width:100%; padding:9px; border-radius:10px; border:1.5px dashed #FFAFCC88; background:transparent; color:var(--muted); font-size:13px; cursor:pointer; font-family:inherit; margin-top:2px; }
+  .debt-add-btn:hover { border-color:var(--hotPink); color:var(--dark); }
+  .debt-next-pay  { font-size:11px; color:var(--muted); padding:6px 10px; border-radius:8px; background:#FFC8DD22; border:1px solid #FFC8DD66; margin-bottom:10px; line-height:1.5; }
+  .debt-empty     { text-align:center; color:var(--muted); font-size:13px; padding:18px 10px; background:#f5f0fa; border-radius:12px; }
 
   /* ── Focus Timer Panel ── */
   .focus-ring-wrap { display:flex; justify-content:center; margin:4px 0 14px; position:relative; }
@@ -510,6 +576,20 @@
     body.printing-scheduler .sched-header { margin-bottom: 6px !important; }
     body.printing-scheduler .panel-accent { display: none !important; }
     body.printing-scheduler .resize-handle { display: none !important; }
+
+    /* Hide elements added after v3 */
+    body.printing-scheduler #brain-dump-btn,
+    body.printing-scheduler #brain-dump-overlay,
+    body.printing-scheduler #break-prompt,
+    body.printing-scheduler .shift-import-panel,
+    body.printing-scheduler .shift-import-toggle,
+    body.printing-scheduler .current-time-line,
+    body.printing-scheduler #debt-panel { display: none !important; }
+
+    /* Remove past-day ghosting so all days print at full opacity */
+    body.printing-scheduler .day-col.past { opacity: 1 !important; }
+    body.printing-scheduler .day-col.past .day-body { pointer-events: auto !important; }
+    body.printing-scheduler .day-col.past .block-chip { filter: none !important; }
   }
 
   /* Print title bar (hidden on screen) */
@@ -674,14 +754,14 @@ const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const CATEGORIES = [
   { label: "Academic", bg: C.lavender  },
   { label: "Work",     bg: C.skyBlue   },
-  { label: "Home",     bg: C.mint      },
+  { label: "Other",    bg: C.mint      },
   { label: "Social",   bg: C.yellow    },
   { label: "Fitness",  bg: C.hotPink   },
 ];
 
-const ROW_H      = 28;
-const HEADER_H   = 38;
-const TIME_COL_W = 56;
+const ROW_H      = 20;
+const HEADER_H   = 32;
+const TIME_COL_W = 50;
 
 const STATUS_CYCLE = ["unpaid", "pending", "paid"];
 const STATUS_ICON  = { unpaid: "○", pending: "◑", paid: "✓" };
@@ -865,6 +945,8 @@ const S = {
     wasBreakDue: false,    // true when work finished, waiting for break prompt response
   },
   brainDump: ls("mc-brainDump", []),
+  debts:     ls("mc-debts", []),
+  editingDebt: null,
 };
 
 // Save pruned blocks back immediately
@@ -1107,6 +1189,145 @@ function div(cls, style, ...children) { return el("div", cls, style, ...children
 function span(cls, txt, style)        { const s = el("span", cls, style); s.textContent = txt; return s; }
 function btn(cls, txt, onClick)       { const b = el("button", cls); b.textContent = txt; b.onclick = onClick; return b; }
 
+// ─── Shift Import Parser ──────────────────────────────────────────────────────
+
+function parseTimeStr(t) {
+  // Accepts: "1pm", "7:30pm", "5:30am", "12pm", "12:30am", "13:00" etc.
+  t = t.trim().toLowerCase();
+  const match = t.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+  if (!match) return null;
+  let h = parseInt(match[1], 10);
+  const m = parseInt(match[2] || "0", 10);
+  const ampm = match[3];
+  if (ampm === "pm" && h !== 12) h += 12;
+  if (ampm === "am" && h === 12) h = 0;
+  return { h, m };
+}
+
+function snapToNearestSlot(h, m, slots) {
+  const step = S.settings.stepMinutes;
+  // Round DOWN to nearest step boundary
+  const snapped = Math.floor(m / step) * step;
+  const key = `${String(h).padStart(2,"0")}:${String(snapped).padStart(2,"0")}`;
+  if (slots.includes(key)) return key;
+  // Scan forward for nearest available slot (handles startHour offsets)
+  for (const s of slots) {
+    const [sh, sm] = s.split(":").map(Number);
+    if (sh > h || (sh === h && sm >= snapped)) return s;
+  }
+  return slots[slots.length - 1];
+}
+
+function dateToWeekKeyAndDayName(dateStr) {
+  // dateStr: "M/D/YY" or "M/D/YYYY"
+  const parts = dateStr.trim().split("/");
+  if (parts.length < 3) return null;
+  let [mo, dd, yy] = parts.map(Number);
+  if (yy < 100) yy += 2000;
+  const d = new Date(yy, mo - 1, dd);
+  if (isNaN(d)) return null;
+  d.setHours(0, 0, 0, 0);
+  const dow    = d.getDay();                     // 0=Sun … 6=Sat
+  const toMon  = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(d); monday.setDate(d.getDate() + toMon);
+  const weekKey = monday.toISOString().slice(0, 10);
+  const dayIdx  = dow === 0 ? 6 : dow - 1;      // 0=Mon … 6=Sun
+  return { weekKey, dayName: DAYS[dayIdx] };
+}
+
+function importShifts(raw) {
+  const msgEl  = document.getElementById("shift-import-msg");
+  const slots  = getSlots();
+  const lines  = raw.split("\n").map(l => l.trim()).filter(Boolean);
+
+  if (!lines.length) {
+    if (msgEl) { msgEl.style.color = "#c0516b"; msgEl.textContent = "Nothing to import."; }
+    return;
+  }
+
+  let added = 0, skipped = 0;
+  const LINE_RE = /^(\d{1,2}\/\d{1,2}\/\d{2,4})\s*,\s*(.+?)\s*-\s*(.+)$/;
+
+  lines.forEach(line => {
+    const m = line.match(LINE_RE);
+    if (!m) { skipped++; return; }
+    const [, dateStr, startStr, endStr] = m;
+
+    const dateInfo = dateToWeekKeyAndDayName(dateStr);
+    if (!dateInfo) { skipped++; return; }
+
+    const startT = parseTimeStr(startStr);
+    const endT   = parseTimeStr(endStr);
+    if (!startT || !endT) { skipped++; return; }
+
+    const startSlot = snapToNearestSlot(startT.h, startT.m, slots);
+    const endSlot   = snapToNearestSlot(endT.h,   endT.m,   slots);
+    const si = slots.indexOf(startSlot);
+    const ei = slots.indexOf(endSlot);
+    if (si < 0 || ei <= si) { skipped++; return; }
+
+    const { weekKey, dayName } = dateInfo;
+    if (!S.blocksByWeek[weekKey]) S.blocksByWeek[weekKey] = {};
+    const dayBlocks = S.blocksByWeek[weekKey][dayName] || [];
+
+    if (hasOverlap(dayBlocks, si, ei, slots)) { skipped++; return; }
+
+    dayBlocks.push({
+      id:       Date.now() + Math.random(),
+      start:    startSlot, end: endSlot,
+      category: "Work", color: C.skyBlue,
+      note:     "",
+    });
+    S.blocksByWeek[weekKey][dayName] = dayBlocks;
+    added++;
+  });
+
+  lsSave("mc-blocksByWeek", S.blocksByWeek);
+  syncBlocksToCloud();
+  rerenderSchedulerOnly();
+
+  if (msgEl) {
+    if (added > 0) {
+      msgEl.style.color = "#3a7a55";
+      msgEl.textContent = `✓ ${added} shift${added > 1 ? "s" : ""} added${skipped ? ` (${skipped} skipped)` : ""}`;
+    } else {
+      msgEl.style.color = "#c0516b";
+      msgEl.textContent = `Nothing added — ${skipped} line${skipped > 1 ? "s" : ""} had errors or overlaps.`;
+    }
+    setTimeout(() => { if (msgEl) msgEl.textContent = ""; }, 4000);
+  }
+
+  // Auto-navigate to the week of the first successfully parsed shift
+  const firstLine = lines.find(l => LINE_RE.test(l));
+  if (firstLine && added > 0) {
+    const m2 = firstLine.match(LINE_RE);
+    if (m2) {
+      const info = dateToWeekKeyAndDayName(m2[1]);
+      if (info) {
+        // Calculate offset from current week
+        const [ty, tm, td] = getWeekKey(0).split("-").map(Number);
+        const [iy, im, id] = info.weekKey.split("-").map(Number);
+        const baseMs   = new Date(ty, tm - 1, td).getTime();
+        const targetMs = new Date(iy, im - 1, id).getTime();
+        S.weekOffset = Math.round((targetMs - baseMs) / (7 * 86400000));
+        rerenderSchedulerOnly();
+      }
+    }
+  }
+}
+
+// ─── Past-day detection ───────────────────────────────────────────────────────
+
+function isPastDay(dayIndex) {
+  // dayIndex: 0=Mon … 6=Sun, relative to S.weekOffset
+  if (S.weekOffset > 0) return false;
+  if (S.weekOffset < 0) return true;
+  // Current week: compare day index to today
+  const today    = new Date().getDay();          // 0=Sun … 6=Sat
+  const todayIdx = today === 0 ? 6 : today - 1; // 0=Mon … 6=Sun
+  return dayIndex < todayIdx;
+}
+
 // ─── Panel: Weekly Time Map ────────────────────────────────────────────────────
 
 function buildCatHoursPills(container) {
@@ -1185,6 +1406,17 @@ function buildScheduler() {
   const exportBtn = el("button", "export-pdf-btn"); exportBtn.textContent = "Export PDF"; exportBtn.onclick = exportToPDF;
   ctrl.appendChild(exportBtn);
 
+  // Import Shifts toggle
+  const importToggle = el("button", "shift-import-toggle"); importToggle.id = "shift-import-toggle";
+  importToggle.innerHTML = "Import Shifts";
+  importToggle.onclick = () => {
+    const p = document.getElementById("shift-import-panel");
+    const open = p.classList.toggle("open");
+    importToggle.classList.toggle("open", open);
+    if (open) setTimeout(() => document.getElementById("shift-import-ta")?.focus(), 60);
+  };
+  ctrl.appendChild(importToggle);
+
   // Copy prev week button
   const prevWeekKey   = getWeekKey(S.weekOffset - 1);
   const prevHasBlocks = DAYS.some(d => ((S.blocksByWeek[prevWeekKey] || {})[d] || []).length > 0);
@@ -1204,6 +1436,21 @@ function buildScheduler() {
   const catHoursRow = div("cat-hours-row"); catHoursRow.id = "sched-cat-hours";
   buildCatHoursPills(catHoursRow);
   panel.appendChild(catHoursRow);
+
+  // ── Shift Import Panel ──
+  const importPanel = div("shift-import-panel"); importPanel.id = "shift-import-panel";
+  const importLbl = div("shift-import-label"); importLbl.textContent = "Paste one shift per line:";
+  const importEx  = div("shift-import-example"); importEx.textContent = "3/15/26, 1pm-7:30pm      3/16/26, 5:30am-1pm";
+  const importTa  = el("textarea","shift-import-textarea"); importTa.id = "shift-import-ta";
+  importTa.placeholder = "3/15/26, 1pm-7:30pm\n3/16/26, 5:30am-1pm";
+  const importRow = div("shift-import-row");
+  const importBtn = el("button","shift-import-btn"); importBtn.textContent = "Fill Blocks";
+  importBtn.onclick = () => importShifts(importTa.value);
+  const importMsg = span("shift-import-msg",""); importMsg.id = "shift-import-msg";
+  importRow.appendChild(importBtn); importRow.appendChild(importMsg);
+  importPanel.appendChild(importLbl); importPanel.appendChild(importEx);
+  importPanel.appendChild(importTa); importPanel.appendChild(importRow);
+  panel.appendChild(importPanel);
 
   // Scroll container
   const scrl = div("sched-scroll"); scrl.id = "sched-scroll";
@@ -1225,7 +1472,9 @@ function buildScheduler() {
 
   DAYS.forEach((day, di) => {
     const isToday = S.weekOffset === 0 && di === todayIdx;
-    const col = div("day-col" + (isToday ? " today" : "")); col.id = "col-" + day;
+    const isPast  = isPastDay(di);
+    const colCls  = "day-col" + (isToday ? " today" : "") + (isPast ? " past" : "");
+    const col = div(colCls); col.id = "col-" + day;
 
     const hd = div("day-header" + (isToday ? " today" : "")); hd.id = "header-" + day;
     hd.textContent = day;
@@ -1244,10 +1493,11 @@ function buildScheduler() {
 
     renderBlocksIntoBody(body, day, slots);
 
-    // Mouse events
-    body.addEventListener("mousedown", e => onBodyMouseDown(e, day, scrl));
-    // Touch events
-    body.addEventListener("touchstart", e => onBodyTouchStart(e, day, scrl), { passive: false });
+    // Mouse / touch events — only for non-past days
+    if (!isPast) {
+      body.addEventListener("mousedown", e => onBodyMouseDown(e, day, scrl));
+      body.addEventListener("touchstart", e => onBodyTouchStart(e, day, scrl), { passive: false });
+    }
 
     col.appendChild(body);
     daysWrap.appendChild(col);
@@ -1256,6 +1506,9 @@ function buildScheduler() {
   inner.appendChild(daysWrap);
   scrl.appendChild(inner);
   panel.appendChild(scrl);
+
+  // Inject live time indicator after DOM is ready
+  setTimeout(() => { initCurrentTimeLine(); startTimeLineTick(); }, 0);
   return panel;
 }
 
@@ -1291,6 +1544,58 @@ function renderBlocksIntoBody(body, day, slots) {
   });
 }
 
+// ─── Current Time Indicator ───────────────────────────────────────────────────
+
+function updateCurrentTimeLine() {
+  // Only show on the current week view
+  const line = document.getElementById("current-time-line");
+  if (!line) return;
+
+  if (S.weekOffset !== 0) { line.style.display = "none"; return; }
+
+  const now    = new Date();
+  const slots  = getSlots();
+  const { startHour, endHour, stepMinutes } = S.settings;
+  const totalH = now.getHours();
+  const totalM = now.getMinutes();
+
+  // Hide if current time is outside the grid range
+  if (totalH < startHour || totalH > endHour) { line.style.display = "none"; return; }
+
+  // Calculate pixel offset from top of day body
+  const minutesFromStart = (totalH - startHour) * 60 + totalM;
+  const topPx = (minutesFromStart / stepMinutes) * ROW_H;
+
+  line.style.display = "block";
+  line.style.top     = topPx + "px";
+}
+
+function initCurrentTimeLine() {
+  // Only inject if viewing current week
+  const today    = new Date().getDay();
+  const todayIdx = today === 0 ? 6 : today - 1;
+  const dayName  = DAYS[todayIdx];
+  const body     = document.getElementById("body-" + dayName);
+  if (!body) return;
+
+  // Remove any stale line first
+  const old = document.getElementById("current-time-line");
+  if (old) old.remove();
+
+  const line = document.createElement("div");
+  line.className = "current-time-line";
+  line.id        = "current-time-line";
+  body.appendChild(line);
+  updateCurrentTimeLine();
+}
+
+// Start the live tick — updates every 30 seconds
+let _timeLineInterval = null;
+function startTimeLineTick() {
+  clearInterval(_timeLineInterval);
+  _timeLineInterval = setInterval(updateCurrentTimeLine, 30000);
+}
+
 function rerenderSchedulerOnly() {
   const slots    = getSlots();
   const today    = new Date().getDay();
@@ -1314,8 +1619,9 @@ function rerenderSchedulerOnly() {
     renderBlocksIntoBody(body, day, slots);
 
     const isToday = S.weekOffset === 0 && di === todayIdx;
+    const isPast  = isPastDay(di);
     const col = document.getElementById("col-" + day);
-    if (col) col.className = "day-col" + (isToday ? " today" : "");
+    if (col) col.className = "day-col" + (isToday ? " today" : "") + (isPast ? " past" : "");
     const hdr = document.getElementById("header-" + day);
     if (hdr) {
       hdr.className = "day-header" + (isToday ? " today" : "");
@@ -1348,6 +1654,9 @@ function rerenderSchedulerOnly() {
     cb.disabled = !ph;
     cb.title = ph ? `Copy all blocks from ${getWeekLabel(pvk)}` : "No blocks in the previous week";
   }
+
+  // Refresh time indicator position after week change
+  setTimeout(initCurrentTimeLine, 0);
 }
 
 // ─── Export to PDF (landscape) ────────────────────────────────────────────────
@@ -1356,11 +1665,15 @@ function exportToPDF() {
   const hint = document.getElementById("print-hint");
   hint.style.display = "block";
   document.body.classList.add("printing-scheduler");
-  setTimeout(() => {
-    window.print();
-    document.body.classList.remove("printing-scheduler");
-    setTimeout(() => { hint.style.display = "none"; }, 600);
-  }, 120);
+  // Double rAF ensures the browser fully commits the CSS class repaint
+  // before the print dialog opens (fixes blank/overflow issues in Chrome/Edge)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      window.print();
+      document.body.classList.remove("printing-scheduler");
+      hint.style.display = "none";
+    });
+  });
 }
 
 // ─── Copy from Previous Week ──────────────────────────────────────────────────
@@ -2316,6 +2629,110 @@ document.getElementById("bd-to-note-btn").onclick = () => {
 // Init badge on load
 updateBrainDumpBadge();
 
+// ─── Panel: Debt Remaining ────────────────────────────────────────────────────
+
+function buildDebtPanel() {
+  const panel = div("panel"); panel.id = "debt-panel";
+  panel.appendChild(div("panel-accent", { background: C.blushPink }));
+  const h2 = document.createElement("h2"); h2.textContent = "Debt Remaining"; panel.appendChild(h2);
+  const sub = div("sub"); sub.textContent = "Click name or balance to edit · Track balances & due dates"; panel.appendChild(sub);
+
+  const total = S.debts.reduce((s, d) => s + (parseFloat(String(d.balance).replace(/,/g,"")) || 0), 0);
+
+  // ── Total display ──
+  const totalRow = div("debt-total-row");
+  totalRow.appendChild(span("debt-total-amt", "$" + total.toLocaleString("en-US", { minimumFractionDigits:0, maximumFractionDigits:0 })));
+  totalRow.appendChild(span("debt-total-lbl", "total remaining"));
+  panel.appendChild(totalRow);
+
+  // ── Next upcoming payment ──
+  const today = new Date(); today.setHours(0,0,0,0);
+  const withDue = S.debts
+    .filter(d => d.dueDate)
+    .map(d => { const dt = new Date(d.dueDate + "T00:00:00"); return { ...d, _dt: dt }; })
+    .filter(d => !isNaN(d._dt))
+    .sort((a,b) => a._dt - b._dt);
+  if (withDue.length > 0) {
+    const next = withDue[0];
+    const diff = Math.round((next._dt - today) / 86400000);
+    const label = diff < 0 ? `${Math.abs(diff)}d overdue` : diff === 0 ? "due today" : `due in ${diff}d`;
+    const hint = div("debt-next-pay");
+    hint.innerHTML = `Next payment: <strong>${next.name}</strong> &mdash; ${label}`;
+    panel.appendChild(hint);
+  }
+
+  if (S.debts.length === 0) {
+    const empty = div("debt-empty"); empty.textContent = "No debts tracked yet — add one below";
+    panel.appendChild(empty);
+  }
+
+  // ── Debt items ──
+  S.debts.forEach(d => {
+    const row = div("debt-item-row");
+
+    // Name field (editable inline)
+    if (S.editingDebt === d.id + "-name") {
+      const inp = el("input","debt-name-input"); inp.value = d.name;
+      inp.onblur = ev => { d.name=ev.target.value||d.name; S.editingDebt=null; lsSave("mc-debts",S.debts); renderAll(); };
+      inp.onkeydown = ev => {
+        if(ev.key==="Enter"||ev.key==="Tab"){d.name=ev.target.value||d.name;S.editingDebt=null;lsSave("mc-debts",S.debts);renderAll();}
+        if(ev.key==="Escape"){S.editingDebt=null;renderAll();}
+      };
+      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
+    } else {
+      const nm = span("debt-item-name", d.name||"Unnamed debt"); nm.title="Click to edit name";
+      nm.onclick=()=>{S.editingDebt=d.id+"-name"; renderAll();}; row.appendChild(nm);
+    }
+
+    // Due date (editable inline)
+    if (S.editingDebt === d.id + "-due") {
+      const inp = el("input","debt-due-input"); inp.type="date"; inp.value=d.dueDate||"";
+      inp.onblur = ev => { d.dueDate=ev.target.value; S.editingDebt=null; lsSave("mc-debts",S.debts); renderAll(); };
+      inp.onkeydown = ev => {
+        if(ev.key==="Enter"){d.dueDate=ev.target.value;S.editingDebt=null;lsSave("mc-debts",S.debts);renderAll();}
+        if(ev.key==="Escape"){S.editingDebt=null;renderAll();}
+      };
+      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
+    } else {
+      let dueStr = "set due date";
+      if (d.dueDate) {
+        const dt = new Date(d.dueDate + "T00:00:00");
+        if (!isNaN(dt)) {
+          const diff = Math.round((dt - today) / 86400000);
+          dueStr = diff < 0 ? `${Math.abs(diff)}d overdue` : diff === 0 ? "due today" : `in ${diff}d`;
+        }
+      }
+      const dueEl = span("debt-item-due", dueStr); dueEl.style.cursor="pointer"; dueEl.title="Click to set due date";
+      dueEl.onclick=()=>{S.editingDebt=d.id+"-due"; renderAll();}; row.appendChild(dueEl);
+    }
+
+    // Balance (editable inline)
+    if (S.editingDebt === d.id + "-bal") {
+      const inp = el("input","debt-bal-input"); inp.value=d.balance;
+      inp.onblur = ev => { d.balance=ev.target.value; S.editingDebt=null; lsSave("mc-debts",S.debts); renderAll(); };
+      inp.onkeydown = ev => {
+        if(ev.key==="Enter"){d.balance=ev.target.value;S.editingDebt=null;lsSave("mc-debts",S.debts);renderAll();}
+        if(ev.key==="Escape"){S.editingDebt=null;renderAll();}
+      };
+      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
+    } else {
+      const bal = span("debt-item-bal","$"+d.balance);
+      bal.onclick=()=>{S.editingDebt=d.id+"-bal"; renderAll();}; row.appendChild(bal);
+    }
+
+    const del = el("button","debt-del-btn"); del.textContent="\u00d7"; del.title="Remove";
+    del.onclick=()=>{S.debts=S.debts.filter(x=>x.id!==d.id);lsSave("mc-debts",S.debts);renderAll();};
+    row.appendChild(del); panel.appendChild(row);
+  });
+
+  const addBtn = btn("debt-add-btn","+ Add debt",()=>{
+    S.debts.push({id:Date.now(),name:"New debt",balance:"0",dueDate:""});
+    lsSave("mc-debts",S.debts); renderAll();
+  });
+  panel.appendChild(addBtn);
+  return panel;
+}
+
 function renderAll() {
   const grid = document.getElementById("panel-grid");
   grid.innerHTML = "";
@@ -2323,6 +2740,7 @@ function renderAll() {
   grid.appendChild(buildFocusPanel());
   grid.appendChild(buildPriorityPanel());
   grid.appendChild(buildFinancialPanel());
+  grid.appendChild(buildDebtPanel());
   grid.appendChild(buildNotepadPanel());
 }
 

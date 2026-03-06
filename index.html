@@ -518,78 +518,10 @@
     box-shadow: 0 4px 16px rgba(0,0,0,0.2);
   }
 
-  /* ── Print styles – Landscape, full color ── */
-  @page { size: A4 landscape; margin: 8mm 10mm; }
-
+  /* ── Print styles: handled dynamically by exportToPDF() via injected <style> ── */
+  /* This fallback only applies if someone uses Ctrl+P directly (not the button) */
   @media print {
-    /* Force print colors for all elements */
-    * {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-      color-adjust: exact !important;
-    }
-
-    body.printing-scheduler {
-      background: white !important;
-      padding: 0 !important;
-    }
-    body.printing-scheduler footer,
-    body.printing-scheduler #block-editor,
-    body.printing-scheduler #print-hint,
-    body.printing-scheduler #app-header { display: none !important; }
-
-    body.printing-scheduler .panel-grid { display: block !important; }
-    body.printing-scheduler .panel:not(.sched-panel) { display: none !important; }
-    body.printing-scheduler .sched-panel {
-      box-shadow: none !important; border-radius: 0 !important;
-      padding: 6px 0 0 !important; overflow: visible !important; background: white !important;
-    }
-
-    /* Print header: show title + week label at top */
-    body.printing-scheduler .print-title-bar { display: flex !important; }
-
-    body.printing-scheduler .sched-scroll {
-      overflow: visible !important; max-height: none !important; border: none !important;
-    }
-    body.printing-scheduler .sched-inner { min-width: unset !important; width: 100% !important; }
-    body.printing-scheduler .days-wrap { flex: 1 !important; }
-    body.printing-scheduler .day-col   { flex: 1 !important; min-width: 0 !important; }
-
-    /* Remove sticky so grid prints fully */
-    body.printing-scheduler .time-col,
-    body.printing-scheduler .time-corner,
-    body.printing-scheduler .day-header { position: relative !important; }
-
-    /* Block chips: preserve background colors */
-    body.printing-scheduler .block-chip {
-      -webkit-print-color-adjust: exact !important;
-      print-color-adjust: exact !important;
-    }
-
-    /* Hide interactive controls; keep labels + cat hours */
-    body.printing-scheduler .week-nav-btn,
-    body.printing-scheduler .export-pdf-btn,
-    body.printing-scheduler .copy-week-btn,
-    body.printing-scheduler .pill-btn,
-    body.printing-scheduler .legend-item { display: none !important; }
-
-    body.printing-scheduler .sched-header { margin-bottom: 6px !important; }
-    body.printing-scheduler .panel-accent { display: none !important; }
-    body.printing-scheduler .resize-handle { display: none !important; }
-
-    /* Hide elements added after v3 */
-    body.printing-scheduler #brain-dump-btn,
-    body.printing-scheduler #brain-dump-overlay,
-    body.printing-scheduler #break-prompt,
-    body.printing-scheduler .shift-import-panel,
-    body.printing-scheduler .shift-import-toggle,
-    body.printing-scheduler .current-time-line,
-    body.printing-scheduler #debt-panel { display: none !important; }
-
-    /* Remove past-day ghosting so all days print at full opacity */
-    body.printing-scheduler .day-col.past { opacity: 1 !important; }
-    body.printing-scheduler .day-col.past .day-body { pointer-events: auto !important; }
-    body.printing-scheduler .day-col.past .block-chip { filter: none !important; }
+    #brain-dump-btn, #brain-dump-overlay, #break-prompt { display: none !important; }
   }
 
   /* Print title bar (hidden on screen) */
@@ -1662,18 +1594,69 @@ function rerenderSchedulerOnly() {
 // ─── Export to PDF (landscape) ────────────────────────────────────────────────
 
 function exportToPDF() {
-  const hint = document.getElementById("print-hint");
-  hint.style.display = "block";
-  document.body.classList.add("printing-scheduler");
-  // Double rAF ensures the browser fully commits the CSS class repaint
-  // before the print dialog opens (fixes blank/overflow issues in Chrome/Edge)
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      window.print();
-      document.body.classList.remove("printing-scheduler");
-      hint.style.display = "none";
-    });
-  });
+  // Inject a dedicated <style> tag so print rules are guaranteed to exist
+  // before window.print() is called — no class toggling, no timing races.
+  const printCSS = `
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      @page { size: A4 landscape; margin: 8mm 10mm; }
+
+      body { background: white !important; padding: 0 !important; }
+
+      /* Hide everything except the scheduler panel */
+      footer, #block-editor, #print-hint, #app-header,
+      #brain-dump-btn, #brain-dump-overlay, #break-prompt,
+      #sticky-modal-backdrop, #debt-panel { display: none !important; }
+
+      .panel-grid { display: block !important; }
+      .panel:not(.sched-panel) { display: none !important; }
+
+      .sched-panel {
+        box-shadow: none !important; border-radius: 0 !important;
+        padding: 6px 0 0 !important; overflow: visible !important;
+        background: white !important;
+      }
+      .print-title-bar { display: flex !important; }
+
+      .sched-scroll {
+        overflow: visible !important; max-height: none !important;
+        border: none !important;
+      }
+      .sched-inner  { min-width: unset !important; width: 100% !important; }
+      .days-wrap    { flex: 1 !important; }
+      .day-col      { flex: 1 !important; min-width: 0 !important; }
+
+      .time-col, .time-corner, .day-header { position: relative !important; }
+
+      .week-nav-btn, .export-pdf-btn, .copy-week-btn,
+      .pill-btn, .legend-item, .shift-import-toggle,
+      .shift-import-panel, .current-time-line,
+      .resize-handle, .panel-accent, .sched-header > div:last-child > div:last-child
+        { display: none !important; }
+
+      .sched-header { margin-bottom: 6px !important; }
+
+      /* Restore ghosted days to full opacity for print */
+      .day-col.past               { opacity: 1 !important; }
+      .day-col.past .block-chip   { filter: none !important; }
+    }
+  `;
+
+  const styleEl = document.createElement("style");
+  styleEl.id = "__pdf-print-style";
+  styleEl.textContent = printCSS;
+  document.head.appendChild(styleEl);
+
+  // Use beforeprint / afterprint events for the cleanest possible cleanup
+  function cleanup() {
+    const s = document.getElementById("__pdf-print-style");
+    if (s) s.remove();
+    window.removeEventListener("afterprint", cleanup);
+  }
+  window.addEventListener("afterprint", cleanup);
+
+  // Small delay lets the style tag parse before the dialog opens
+  setTimeout(() => { window.print(); }, 80);
 }
 
 // ─── Copy from Previous Week ──────────────────────────────────────────────────

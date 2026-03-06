@@ -428,17 +428,23 @@
 
   /* Medication rows */
   .med-row {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: center; gap: 12px;
     padding: 10px 12px; border-radius: 12px;
     background: #f5f0fa; margin-bottom: 7px;
     transition: background 0.15s;
   }
   .med-row.taken { background: #CDFAA733; }
+  .med-icon-wrap {
+    width: 36px; height: 36px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .med-icon-wrap svg { width: 100%; height: 100%; }
   .med-check-btn {
     width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
     border: 2px solid #e0d8ec; background: white; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     font-size: 14px; transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+    margin-left: auto;
   }
   .med-row.taken .med-check-btn { border-color: var(--mint); background: var(--mint); }
   .med-info { flex: 1; min-width: 0; }
@@ -2883,48 +2889,93 @@ function buildHabitsPanel() {
   const medLbl = div("habits-section-label"); medLbl.textContent = "Medications";
   medSection.appendChild(medLbl);
 
-  // Daily pill
+  // SVG icons
+  const PILL_SVG = `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="3" y="13" width="30" height="10" rx="5" fill="#CDB4DB" opacity="0.3" stroke="#CDB4DB" stroke-width="1.5"/>
+    <rect x="3" y="13" width="15" height="10" rx="5" fill="#CDB4DB"/>
+    <rect x="17" y="13" width="16" height="10" rx="5" fill="#FFAFCC"/>
+    <line x1="18" y1="13" x2="18" y2="23" stroke="white" stroke-width="1.5"/>
+  </svg>`;
+
+  const SYRINGE_SVG = `<svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- needle tip -->
+    <line x1="28" y1="8" x2="33" y2="3" stroke="#8b7fa8" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- barrel -->
+    <rect x="10" y="13" width="18" height="8" rx="2" fill="#BDE0FE" stroke="#A2D2FF" stroke-width="1.5"/>
+    <!-- plunger rod -->
+    <line x1="4" y1="17" x2="10" y2="17" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/>
+    <!-- plunger flange -->
+    <rect x="2" y="14" width="3" height="6" rx="1" fill="#CDB4DB"/>
+    <!-- needle hub -->
+    <rect x="28" y="14" width="4" height="6" rx="1" fill="#A2D2FF"/>
+    <!-- needle -->
+    <line x1="32" y1="17" x2="36" y2="17" stroke="#8b7fa8" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- tick marks inside barrel -->
+    <line x1="15" y1="14" x2="15" y2="16" stroke="#A2D2FF" stroke-width="1"/>
+    <line x1="19" y1="14" x2="19" y2="16" stroke="#A2D2FF" stroke-width="1"/>
+    <line x1="23" y1="14" x2="23" y2="16" stroke="#A2D2FF" stroke-width="1"/>
+  </svg>`;
+
+  // Daily pill row
   const dailyRow = div("med-row" + (habits.dailyMed ? " taken" : ""));
+
+  const dailyIconWrap = div("med-icon-wrap");
+  dailyIconWrap.innerHTML = PILL_SVG;
+  dailyRow.appendChild(dailyIconWrap);
+
+  const dailyInfo = div("med-info");
+  dailyInfo.appendChild(span("med-schedule", "Daily · every day"));
+  dailyRow.appendChild(dailyInfo);
+
+  const dailyBadge = span("med-taken-badge", "taken ✓");
+  dailyRow.appendChild(dailyBadge);
+
   const dailyBtn = el("button", "med-check-btn");
-  dailyBtn.textContent = habits.dailyMed ? "✓" : "";
+  dailyBtn.innerHTML = habits.dailyMed ? "✓" : "";
   dailyBtn.title = habits.dailyMed ? "Mark as not taken" : "Mark as taken";
   dailyBtn.onclick = () => {
     const h = getHabits(); h.dailyMed = !h.dailyMed; saveHabits(h);
     dailyRow.classList.toggle("taken", h.dailyMed);
-    dailyBtn.textContent = h.dailyMed ? "✓" : "";
+    dailyBtn.innerHTML = h.dailyMed ? "✓" : "";
     dailyBadge.style.opacity = h.dailyMed ? "1" : "0";
   };
-  const dailyInfo = div("med-info");
-  dailyInfo.appendChild(span("med-name", "Daily medication"));
-  dailyInfo.appendChild(span("med-schedule", "Every day"));
-  const dailyBadge = span("med-taken-badge", "taken ✓");
-  dailyRow.appendChild(dailyBtn); dailyRow.appendChild(dailyInfo); dailyRow.appendChild(dailyBadge);
+  dailyRow.appendChild(dailyBtn);
   medSection.appendChild(dailyRow);
 
-  // Weekly shot — check if current week's shot has been logged
+  // Weekly shot row
   const weekKey = getWeekKey(0);
   const shotTaken = habits.weeklyShot?.taken && habits.weeklyShot?.week === weekKey;
   const shotRow = div("med-row" + (shotTaken ? " taken" : ""));
+
+  const shotIconWrap = div("med-icon-wrap");
+  shotIconWrap.innerHTML = SYRINGE_SVG;
+  shotRow.appendChild(shotIconWrap);
+
+  const shotInfo = div("med-info");
+  const shotSchedText = isFriday() && !shotTaken ? "Due today" : shotTaken ? "Done this week" : "Weekly · due Friday";
+  const shotSched = span("med-schedule", shotSchedText);
+  if (isFriday() && !shotTaken) shotSched.style.color = C.hotPink;
+  shotInfo.appendChild(shotSched);
+  shotRow.appendChild(shotInfo);
+
+  const shotBadge = span("med-taken-badge", "taken ✓");
+  shotRow.appendChild(shotBadge);
+
   const shotBtn = el("button", "med-check-btn");
-  shotBtn.textContent = shotTaken ? "✓" : "";
+  shotBtn.innerHTML = shotTaken ? "✓" : "";
   shotBtn.title = shotTaken ? "Mark as not taken" : "Mark as taken";
-  if (!isFriday() && !shotTaken) { shotBtn.style.opacity = "0.5"; shotBtn.title = "Due Friday"; }
+  if (!isFriday() && !shotTaken) shotBtn.style.opacity = "0.5";
   shotBtn.onclick = () => {
     const h = getHabits();
     const nowTaken = !(h.weeklyShot?.taken && h.weeklyShot?.week === weekKey);
     h.weeklyShot = { taken: nowTaken, week: weekKey };
     saveHabits(h);
     shotRow.classList.toggle("taken", nowTaken);
-    shotBtn.textContent = nowTaken ? "✓" : "";
+    shotBtn.innerHTML = nowTaken ? "✓" : "";
+    shotBtn.style.opacity = "1";
     shotBadge.style.opacity = nowTaken ? "1" : "0";
   };
-  const shotInfo = div("med-info");
-  shotInfo.appendChild(span("med-name", "Weekly shot"));
-  const shotSched = span("med-schedule", isFriday() ? "Due today 💉" : shotTaken ? "Done this week" : "Due Friday");
-  if (isFriday() && !shotTaken) shotSched.style.color = C.hotPink;
-  shotInfo.appendChild(shotSched);
-  const shotBadge = span("med-taken-badge", "taken ✓");
-  shotRow.appendChild(shotBtn); shotRow.appendChild(shotInfo); shotRow.appendChild(shotBadge);
+  shotRow.appendChild(shotBtn);
   medSection.appendChild(shotRow);
 
   panel.appendChild(medSection);

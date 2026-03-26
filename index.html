@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="What's the Plan?">
@@ -19,6 +19,7 @@
     --lavender:   #CDB4DB;
     --blushPink:  #FFC8DD;
     --hotPink:    #FFAFCC;
+    --appointment:#FCC781;
     --skyBlue:    #BDE0FE;
     --cornflower: #A2D2FF;
     --mint:       #CDFAA7;
@@ -48,12 +49,19 @@
     --sched-bg:#221d38; --text:#e8e4f0; --text2:#a89cc0;
   }
 
+  html {
+    height:100%;
+    overscroll-behavior:none;
+    touch-action:manipulation;
+  }
+
   body {
     font-family: 'DM Sans', sans-serif; min-height:100vh; color:var(--text);
     background: radial-gradient(ellipse at 20% 20%,#CDB4DB44 0%,transparent 50%),
                 radial-gradient(ellipse at 80% 80%,#BDE0FE33 0%,transparent 50%),var(--bg);
     padding:0; overscroll-behavior:none; transition:background .3s,color .3s;
   }
+  input, textarea, select, button { touch-action:manipulation; }
   [data-theme="dark"] body {
     background: radial-gradient(ellipse at 20% 20%,#CDB4DB12 0%,transparent 50%),
                 radial-gradient(ellipse at 80% 80%,#BDE0FE0a 0%,transparent 50%),var(--bg);
@@ -287,7 +295,7 @@
   .current-time-line { position:absolute; left:0; right:0; height:2px; background:var(--hotPink); z-index:20; pointer-events:none; box-shadow:0 0 5px rgba(255,175,204,.75); transition:top 1s linear; }
   .current-time-line::before { content:""; position:absolute; left:-3px; top:-4px; width:10px; height:10px; border-radius:50%; background:var(--hotPink); }
 
-  /* Shift import */
+  /* Time block import */
   .shift-import-toggle { padding:4px 11px; border-radius:20px; font-size:11px; font-weight:500; cursor:pointer; font-family:inherit; color:var(--text); transition:all .15s; background:transparent; border:1.5px solid var(--border-soft); min-height:32px; display:inline-flex; align-items:center; gap:5px; }
   .shift-import-panel { display:none; background:var(--bg-row); border:1.5px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; gap:10px; flex-direction:column; }
   .shift-import-panel.open { display:flex; }
@@ -298,6 +306,20 @@
   .shift-import-row { display:flex; gap:7px; align-items:center; flex-wrap:wrap; }
   .shift-import-btn { padding:8px 16px; border-radius:8px; border:none; background:var(--skyBlue); color:#2a2240; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; }
   .shift-import-msg { font-size:11px; flex:1; min-width:0; }
+  .time-import-meta { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+  .time-import-note { width:100%; padding:10px 12px; border-radius:8px; border:1.5px solid var(--border); font-size:12px; font-family:inherit; color:var(--text); outline:none; background:var(--bg-input); }
+  .time-import-note:focus { border-color:var(--appointment); }
+  .time-import-cats { display:flex; flex-wrap:wrap; gap:6px; }
+  .time-import-cat-btn {
+    padding:7px 11px; border-radius:18px; border:1.5px solid var(--border-soft);
+    background:transparent; color:var(--text); cursor:pointer; font-size:11px;
+    font-family:inherit; transition:all .15s; min-height:32px;
+  }
+  .time-import-cat-btn.active { font-weight:600; }
+  .week-jump-input {
+    min-height:32px; padding:5px 10px; border-radius:20px; border:1.5px solid var(--border-soft);
+    background:var(--bg-input); color:var(--text); font-size:11px; font-family:inherit; outline:none;
+  }
 
   /* Block editor */
   #block-editor { position:fixed; z-index:2000; background:var(--bg-card); border-radius:14px; padding:16px; width:260px; box-shadow:0 8px 32px rgba(0,0,0,.15); display:none; flex-direction:column; gap:12px; font-size:13px; backdrop-filter:blur(12px); }
@@ -440,6 +462,9 @@
   .notepad-pin-btn { padding:9px 18px; border-radius:10px; border:none; background:var(--cornflower); color:white; cursor:pointer; font-weight:600; font-size:13px; font-family:inherit; }
   .notepad-pin-btn:disabled { opacity:.4; cursor:default; }
   .sticky-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+  .notes-page-flow { display:flex; flex-direction:column; gap:16px; }
+  .notes-pinned-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  .notes-pinned-count { font-size:11px; color:var(--text2); white-space:nowrap; }
   .sticky-note { position:relative; padding:14px 14px 20px; border-radius:4px 14px 14px 14px; font-size:13px; line-height:1.5; color:#2a2240; word-break:break-word; box-shadow:2px 3px 10px rgba(0,0,0,.1); transition:transform .15s; cursor:pointer; }
   .sticky-note:hover { transform:rotate(0deg) scale(1.02); }
   .sticky-note::before { content:""; position:absolute; top:0; left:0; width:18px; height:18px; background:rgba(0,0,0,.08); border-radius:0 0 8px 0; clip-path:polygon(0 0,100% 0,0 100%); }
@@ -535,10 +560,18 @@
   .print-title-bar .ptb-week { font-size:12px; color:var(--text2); }
 
   @media(max-width:480px) {
-    .home-grid { grid-template-columns:repeat(2,1fr); }
-    .nav-tile .tile-label { font-size:11px; }
+    .home-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .nav-tile { border-radius:20px; gap:6px; }
+    .nav-tile .tile-icon { width:40px; height:40px; }
+    .nav-tile .tile-label { font-size:10px; letter-spacing:.2px; }
     .page-content { padding:0; }
     .panel { padding:18px 14px; }
+    .time-import-meta { grid-template-columns:1fr; }
+  }
+  @media(max-width:600px) {
+    input, textarea, select {
+      font-size:16px !important;
+    }
   }
 </style>
 </head>
@@ -742,6 +775,7 @@ const supa = supabase.createClient(SUPA_URL, SUPA_KEY);
 
 const C = {
   lavender:  "#CDB4DB", blushPink: "#FFC8DD", hotPink:  "#FFAFCC",
+  appointment:"#FCC781",
   skyBlue:   "#BDE0FE", cornflower:"#A2D2FF", mint:     "#CDFAA7",
   yellow:    "#FDEF81", dark:      "#3a3350", muted:    "#8b7fa8",
 };
@@ -751,6 +785,7 @@ const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 const CATEGORIES = [
   { label: "Academic", bg: C.lavender  },
   { label: "Work",     bg: C.skyBlue   },
+  { label: "Appointments", bg: C.appointment },
   { label: "Other",    bg: C.mint      },
   { label: "Social",   bg: C.yellow    },
   { label: "Fitness",  bg: C.hotPink   },
@@ -775,6 +810,7 @@ function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val))
 
 let _userId = null;
 let _syncDebounce = {};
+let _cloudChannel = null;
 
 // Write to Supabase with debounce (300ms) to avoid hammering on rapid edits
 function syncToCloud(table, payload) {
@@ -871,6 +907,87 @@ function showSyncStatus(status) {
     el.textContent = "offline";
     el.style.color = "#8b7fa8";
   }
+}
+
+function teardownCloudSubscriptions() {
+  if (!_cloudChannel) return;
+  supa.removeChannel(_cloudChannel);
+  _cloudChannel = null;
+}
+
+function handleCloudChange(table, row) {
+  if (!row) return;
+
+  switch (table) {
+    case "blocks_by_week":
+      if (!row.week_key || !row.day) return;
+      if (!S.blocksByWeek[row.week_key]) S.blocksByWeek[row.week_key] = {};
+      S.blocksByWeek[row.week_key][row.day] = row.blocks || [];
+      S.blocksByWeek = pruneOldWeeks(S.blocksByWeek);
+      lsSave("mc-blocksByWeek", S.blocksByWeek);
+      if (currentPage === "planner") rerenderSchedulerOnly();
+      break;
+    case "notes_by_week":
+      if (!row.week_key) return;
+      S.notesByWeek[row.week_key] = row.notes || [];
+      lsSave("mc-notesByWeek", S.notesByWeek);
+      if (currentPage === "notes") renderNotesPage();
+      break;
+    case "priorities":
+      S.priorities = Array.isArray(row.items) ? row.items : [];
+      lsSave("mc-priorities", S.priorities);
+      if (currentPage === "priorities" || currentPage === "focus") renderPage(currentPage);
+      break;
+    case "financials":
+      if (Array.isArray(row.items)) {
+        S.finSections = row.items;
+        lsSave("mc-fin-sections", S.finSections);
+        if (currentPage === "financials") renderFinancialsPage();
+      }
+      break;
+    case "morning_todos":
+      lsSave("mc-morning-todos", Array.isArray(row.items) ? row.items : []);
+      if (currentPage === "morning") renderMorningPage();
+      break;
+    case "evening_todos":
+      lsSave("mc-evening-todos", Array.isArray(row.items) ? row.items : []);
+      if (currentPage === "evening") renderEveningPage();
+      break;
+    case "settings":
+      if (row.data && typeof row.data === "object") {
+        S.settings = { ...S.settings, ...row.data };
+        lsSave("mc-settings", S.settings);
+        if (currentPage === "planner") rerenderSchedulerOnly();
+      }
+      break;
+  }
+}
+
+function subscribeToCloud(userId) {
+  teardownCloudSubscriptions();
+  const channel = supa.channel(`live-sync-${userId}`);
+  const tables = [
+    "blocks_by_week",
+    "notes_by_week",
+    "priorities",
+    "financials",
+    "morning_todos",
+    "evening_todos",
+    "settings",
+  ];
+
+  tables.forEach(table => {
+    channel.on(
+      "postgres_changes",
+      { event: "*", schema: "public", table, filter: `user_id=eq.${userId}` },
+      payload => handleCloudChange(table, payload.new || payload.old)
+    );
+  });
+
+  channel.subscribe(status => {
+    if (status === "CHANNEL_ERROR") showSyncStatus("error");
+  });
+  _cloudChannel = channel;
 }
 
 // ─── Auto-prune weeks older than 8 weeks (never prune future) ────────────────
@@ -1151,6 +1268,26 @@ async function loadCloudData(userId) {
       syncToCloud("settings", { data: S.settings });
     }
 
+    // Morning tasks
+    const { data: morningRow } = await supa.from("morning_todos")
+      .select("items").eq("user_id", userId).maybeSingle();
+    if (morningRow?.items) {
+      lsSave("mc-morning-todos", morningRow.items);
+    } else {
+      const localMorning = ls("mc-morning-todos", []);
+      if (localMorning.length > 0) syncToCloud("morning_todos", { items: localMorning });
+    }
+
+    // Evening tasks
+    const { data: eveningRow } = await supa.from("evening_todos")
+      .select("items").eq("user_id", userId).maybeSingle();
+    if (eveningRow?.items) {
+      lsSave("mc-evening-todos", eveningRow.items);
+    } else {
+      const localEvening = ls("mc-evening-todos", []);
+      if (localEvening.length > 0) syncToCloud("evening_todos", { items: localEvening });
+    }
+
 
     // Debts
     const { data: debtRow } = await supa.from("debts")
@@ -1218,6 +1355,7 @@ async function loadCloudData(userId) {
     // Push any local blocks to cloud that cloud doesn't have yet
     syncBlocksToCloud();
     syncNotesToCloud();
+    subscribeToCloud(userId);
 
     showSyncStatus("saved");
   } catch (e) {
@@ -1312,6 +1450,10 @@ const editor = {
   startSlot: null, endSlot: null,
   block: null, category: "Academic", color: C.lavender, note: "",
 };
+const timeBlockImport = {
+  category: "Work",
+  note: "",
+};
 
 // ─── Render helpers ───────────────────────────────────────────────────────────
 
@@ -1326,7 +1468,11 @@ function div(cls, style, ...children) { return el("div", cls, style, ...children
 function span(cls, txt, style)        { const s = el("span", cls, style); s.textContent = txt; return s; }
 function btn(cls, txt, onClick)       { const b = el("button", cls); b.textContent = txt; b.onclick = onClick; return b; }
 
-// ─── Shift Import Parser ──────────────────────────────────────────────────────
+function getCategoryConfig(label) {
+  return CATEGORIES.find(cat => cat.label === label) || CATEGORIES[0];
+}
+
+// ─── Time Block Import Parser ─────────────────────────────────────────────────
 
 function parseTimeStr(t) {
   // Accepts: "1pm", "7:30pm", "5:30am", "12pm", "12:30am", "13:00" etc.
@@ -1372,10 +1518,62 @@ function dateToWeekKeyAndDayName(dateStr) {
   return { weekKey, dayName: DAYS[dayIdx] };
 }
 
-function importShifts(raw) {
+function dayTokenToDayName(token) {
+  const normalized = token.trim().toLowerCase();
+  const map = {
+    mon: "Mon", monday: "Mon",
+    tue: "Tue", tues: "Tue", tuesday: "Tue",
+    wed: "Wed", wednesday: "Wed",
+    thu: "Thu", thur: "Thu", thurs: "Thu", thursday: "Thu",
+    fri: "Fri", friday: "Fri",
+    sat: "Sat", saturday: "Sat",
+    sun: "Sun", sunday: "Sun",
+  };
+  return map[normalized] || null;
+}
+
+function getDateForDayInWeek(weekKey, dayName) {
+  const [y, m, d] = weekKey.split("-").map(Number);
+  const monday = new Date(y, m - 1, d);
+  const dayIndex = DAYS.indexOf(dayName);
+  monday.setDate(monday.getDate() + dayIndex);
+  return monday;
+}
+
+function getWeekOffsetFromKey(weekKey) {
+  const [ty, tm, td] = getWeekKey(0).split("-").map(Number);
+  const [iy, im, id] = weekKey.split("-").map(Number);
+  const baseMs = new Date(ty, tm - 1, td).getTime();
+  const targetMs = new Date(iy, im - 1, id).getTime();
+  return Math.round((targetMs - baseMs) / (7 * 86400000));
+}
+
+function parseTimeBlockLine(line, baseWeekKey) {
+  const normalized = line.replace(/[–—]/g, "-").trim();
+  const dateMatch = normalized.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4})\s*,?\s*(.+?)\s*-\s*(.+)$/i);
+  if (dateMatch) {
+    const [, dateStr, startStr, endStr] = dateMatch;
+    const dateInfo = dateToWeekKeyAndDayName(dateStr);
+    if (!dateInfo) return null;
+    return { weekKey: dateInfo.weekKey, dayName: dateInfo.dayName, startStr, endStr };
+  }
+
+  const dayMatch = normalized.match(/^([A-Za-z]+)\s*,?\s*(.+?)\s*-\s*(.+)$/i);
+  if (!dayMatch) return null;
+  const [, dayToken, startStr, endStr] = dayMatch;
+  const dayName = dayTokenToDayName(dayToken);
+  if (!dayName) return null;
+  return { weekKey: baseWeekKey, dayName, startStr, endStr };
+}
+
+function importTimeBlocks(raw) {
   const msgEl  = document.getElementById("shift-import-msg");
   const slots  = getSlots();
   const lines  = raw.split("\n").map(l => l.trim()).filter(Boolean);
+  const category = timeBlockImport.category;
+  const note = timeBlockImport.note.trim();
+  const categoryConfig = getCategoryConfig(category);
+  const baseWeekKey = getWeekKey(S.weekOffset);
 
   if (!lines.length) {
     if (msgEl) { msgEl.style.color = "#c0516b"; msgEl.textContent = "Nothing to import."; }
@@ -1383,15 +1581,12 @@ function importShifts(raw) {
   }
 
   let added = 0, skipped = 0;
-  const LINE_RE = /^(\d{1,2}\/\d{1,2}\/\d{2,4})\s*,\s*(.+?)\s*-\s*(.+)$/;
+  let firstImportedWeekKey = null;
 
   lines.forEach(line => {
-    const m = line.match(LINE_RE);
-    if (!m) { skipped++; return; }
-    const [, dateStr, startStr, endStr] = m;
-
-    const dateInfo = dateToWeekKeyAndDayName(dateStr);
-    if (!dateInfo) { skipped++; return; }
+    const parsed = parseTimeBlockLine(line, baseWeekKey);
+    if (!parsed) { skipped++; return; }
+    const { weekKey, dayName, startStr, endStr } = parsed;
 
     const startT = parseTimeStr(startStr);
     const endT   = parseTimeStr(endStr);
@@ -1403,7 +1598,6 @@ function importShifts(raw) {
     const ei = slots.indexOf(endSlot);
     if (si < 0 || ei <= si) { skipped++; return; }
 
-    const { weekKey, dayName } = dateInfo;
     if (!S.blocksByWeek[weekKey]) S.blocksByWeek[weekKey] = {};
     const dayBlocks = S.blocksByWeek[weekKey][dayName] || [];
 
@@ -1412,10 +1606,12 @@ function importShifts(raw) {
     dayBlocks.push({
       id:       Date.now() + Math.random(),
       start:    startSlot, end: endSlot,
-      category: "Work", color: C.skyBlue,
-      note:     "",
+      category,
+      color:    categoryConfig.bg,
+      note,
     });
     S.blocksByWeek[weekKey][dayName] = dayBlocks;
+    if (!firstImportedWeekKey) firstImportedWeekKey = weekKey;
     added++;
   });
 
@@ -1426,7 +1622,7 @@ function importShifts(raw) {
   if (msgEl) {
     if (added > 0) {
       msgEl.style.color = "#3a7a55";
-      msgEl.textContent = `✓ ${added} shift${added > 1 ? "s" : ""} added${skipped ? ` (${skipped} skipped)` : ""}`;
+      msgEl.textContent = `✓ ${added} time block${added > 1 ? "s" : ""} added${skipped ? ` (${skipped} skipped)` : ""}`;
     } else {
       msgEl.style.color = "#c0516b";
       msgEl.textContent = `Nothing added — ${skipped} line${skipped > 1 ? "s" : ""} had errors or overlaps.`;
@@ -1434,22 +1630,9 @@ function importShifts(raw) {
     setTimeout(() => { if (msgEl) msgEl.textContent = ""; }, 4000);
   }
 
-  // Auto-navigate to the week of the first successfully parsed shift
-  const firstLine = lines.find(l => LINE_RE.test(l));
-  if (firstLine && added > 0) {
-    const m2 = firstLine.match(LINE_RE);
-    if (m2) {
-      const info = dateToWeekKeyAndDayName(m2[1]);
-      if (info) {
-        // Calculate offset from current week
-        const [ty, tm, td] = getWeekKey(0).split("-").map(Number);
-        const [iy, im, id] = info.weekKey.split("-").map(Number);
-        const baseMs   = new Date(ty, tm - 1, td).getTime();
-        const targetMs = new Date(iy, im - 1, id).getTime();
-        S.weekOffset = Math.round((targetMs - baseMs) / (7 * 86400000));
-        rerenderSchedulerOnly();
-      }
-    }
+  if (firstImportedWeekKey && added > 0) {
+    S.weekOffset = getWeekOffsetFromKey(firstImportedWeekKey);
+    rerenderSchedulerOnly();
   }
 }
 
@@ -1493,11 +1676,12 @@ function buildScheduler() {
   const slots = getSlots();
   const panel = div("panel panel-full sched-panel");
   panel.appendChild(div("panel-accent", { background: C.lavender }));
+  const viewedWeekKey = getWeekKey(S.weekOffset);
 
   // Print-only title bar
   const ptb = div("print-title-bar");
   ptb.appendChild(span("ptb-title", "What's the Plan?"));
-  ptb.appendChild(span("ptb-week", getWeekLabel(getWeekKey(S.weekOffset))));
+  ptb.appendChild(span("ptb-week", getWeekLabel(viewedWeekKey)));
   panel.appendChild(ptb);
 
   // ── Header ──
@@ -1514,11 +1698,22 @@ function buildScheduler() {
   const weekNavRow = div("week-nav-row");
   const prevBtn = el("button", "week-nav-btn"); prevBtn.textContent = "‹";
   prevBtn.onclick = () => { S.weekOffset--; rerenderSchedulerOnly(); };
-  const weekLabelSpan = span("week-label-text", getWeekLabel(getWeekKey(S.weekOffset)));
+  const weekLabelSpan = span("week-label-text", getWeekLabel(viewedWeekKey));
   weekLabelSpan.id = "sched-week-label";
   const nextBtn = el("button", "week-nav-btn"); nextBtn.textContent = "›";
   nextBtn.onclick = () => { S.weekOffset++; rerenderSchedulerOnly(); };
   weekNavRow.appendChild(prevBtn); weekNavRow.appendChild(weekLabelSpan); weekNavRow.appendChild(nextBtn);
+
+  const weekJump = el("input", "week-jump-input");
+  weekJump.type = "date";
+  weekJump.value = viewedWeekKey;
+  weekJump.title = "Jump to any planning week";
+  weekJump.onchange = e => {
+    if (!e.target.value) return;
+    S.weekOffset = getWeekOffsetFromKey(e.target.value);
+    rerenderSchedulerOnly();
+  };
+  weekNavRow.appendChild(weekJump);
 
   // Controls row
   const ctrl = div("sched-controls");
@@ -1543,9 +1738,9 @@ function buildScheduler() {
   const exportBtn = el("button", "export-pdf-btn"); exportBtn.textContent = "Export PDF"; exportBtn.onclick = exportToPDF;
   ctrl.appendChild(exportBtn);
 
-  // Import Shifts toggle
+  // Import Time Blocks toggle
   const importToggle = el("button", "shift-import-toggle"); importToggle.id = "shift-import-toggle";
-  importToggle.innerHTML = "Import Shifts";
+  importToggle.innerHTML = "Import Time Blocks";
   importToggle.onclick = () => {
     const p = document.getElementById("shift-import-panel");
     const open = p.classList.toggle("open");
@@ -1574,19 +1769,55 @@ function buildScheduler() {
   buildCatHoursPills(catHoursRow);
   panel.appendChild(catHoursRow);
 
-  // ── Shift Import Panel ──
+  // ── Time Block Import Panel ──
   const importPanel = div("shift-import-panel"); importPanel.id = "shift-import-panel";
-  const importLbl = div("shift-import-label"); importLbl.textContent = "Paste one shift per line:";
-  const importEx  = div("shift-import-example"); importEx.textContent = "3/15/26, 1pm-7:30pm      3/16/26, 5:30am-1pm";
+  const importLbl = div("shift-import-label"); importLbl.textContent = "Type one time block per line for the selected week or a dated week:";
+  const importEx  = div("shift-import-example"); importEx.textContent = "Tue, 1pm-3pm      Thu, 9:30am-11am      4/18/26, 2pm-4pm";
   const importTa  = el("textarea","shift-import-textarea"); importTa.id = "shift-import-ta";
-  importTa.placeholder = "3/15/26, 1pm-7:30pm\n3/16/26, 5:30am-1pm";
+  importTa.placeholder = "Tue, 1pm-3pm\nThu, 9:30am-11am\n4/18/26, 2pm-4pm";
+  const importMeta = div("time-import-meta");
+  const importCatWrap = div();
+  const importCatLbl = div("shift-import-label"); importCatLbl.textContent = "Block type";
+  const importCats = div("time-import-cats");
+  CATEGORIES.forEach(cat => {
+    const catBtn = el("button", "time-import-cat-btn" + (timeBlockImport.category === cat.label ? " active" : ""));
+    catBtn.textContent = cat.label;
+    if (timeBlockImport.category === cat.label) {
+      catBtn.style.borderColor = cat.bg;
+      catBtn.style.background = cat.bg + "55";
+    }
+    catBtn.onclick = () => {
+      timeBlockImport.category = cat.label;
+      importCats.querySelectorAll(".time-import-cat-btn").forEach(btnEl => {
+        const isActive = btnEl.textContent === cat.label;
+        btnEl.classList.toggle("active", isActive);
+        btnEl.style.borderColor = isActive ? cat.bg : "";
+        btnEl.style.background = isActive ? cat.bg + "55" : "";
+      });
+    };
+    importCats.appendChild(catBtn);
+  });
+  importCatWrap.appendChild(importCatLbl);
+  importCatWrap.appendChild(importCats);
+
+  const importNoteWrap = div();
+  const importNoteLbl = div("shift-import-label"); importNoteLbl.textContent = "Optional note for each imported block";
+  const importNote = el("input", "time-import-note");
+  importNote.type = "text";
+  importNote.placeholder = "Example: Dentist, class prep, team meeting";
+  importNote.value = timeBlockImport.note;
+  importNote.oninput = e => { timeBlockImport.note = e.target.value; };
+  importNoteWrap.appendChild(importNoteLbl);
+  importNoteWrap.appendChild(importNote);
+  importMeta.appendChild(importCatWrap);
+  importMeta.appendChild(importNoteWrap);
   const importRow = div("shift-import-row");
-  const importBtn = el("button","shift-import-btn"); importBtn.textContent = "Fill Blocks";
-  importBtn.onclick = () => importShifts(importTa.value);
+  const importBtn = el("button","shift-import-btn"); importBtn.textContent = "Add Time Blocks";
+  importBtn.onclick = () => importTimeBlocks(importTa.value);
   const importMsg = span("shift-import-msg",""); importMsg.id = "shift-import-msg";
   importRow.appendChild(importBtn); importRow.appendChild(importMsg);
   importPanel.appendChild(importLbl); importPanel.appendChild(importEx);
-  importPanel.appendChild(importTa); importPanel.appendChild(importRow);
+  importPanel.appendChild(importTa); importPanel.appendChild(importMeta); importPanel.appendChild(importRow);
   panel.appendChild(importPanel);
 
   // Scroll container
@@ -1740,6 +1971,8 @@ function rerenderSchedulerOnly() {
 
   const wl = document.getElementById("sched-week-label");
   if (wl) wl.textContent = getWeekLabel(getWeekKey(S.weekOffset));
+  const jumpInput = document.querySelector(".week-jump-input");
+  if (jumpInput) jumpInput.value = getWeekKey(S.weekOffset);
 
   const ptbWeek = document.querySelector(".ptb-week");
   if (ptbWeek) ptbWeek.textContent = getWeekLabel(getWeekKey(S.weekOffset));
@@ -1833,7 +2066,7 @@ function exportToPDF() {
 
       .time-col, .time-corner, .day-header { position: relative !important; }
 
-      .week-nav-btn, .export-pdf-btn, .copy-week-btn,
+      .week-nav-btn, .week-jump-input, .export-pdf-btn, .copy-week-btn,
       .pill-btn, .legend-item, .shift-import-toggle,
       .shift-import-panel, .current-time-line,
       .resize-handle, .panel-accent, .sched-header > div:last-child > div:last-child
@@ -2462,13 +2695,15 @@ document.getElementById("sticky-modal-backdrop").addEventListener("click", e => 
 });
 
 function buildNotepadPanel() {
+  const wrap = div("notes-page-flow");
+
   const panel = div("panel panel-full");
   panel.appendChild(div("panel-accent", { background: C.cornflower }));
 
   const h2 = document.createElement("h2"); h2.textContent = "Weekly Notes";
   panel.appendChild(h2);
   const sub = div("sub");
-  sub.innerHTML = `Jot anything for ${getWeekLabel(getWeekKey(S.weekOffset))} &middot; Pin to save as a sticky note`;
+  sub.innerHTML = `Jot anything for ${getWeekLabel(getWeekKey(S.weekOffset))} &middot; Pinned notes stay collected below so they stay in view`;
   panel.appendChild(sub);
 
   // ── Textarea ──
@@ -2510,13 +2745,27 @@ function buildNotepadPanel() {
   row.appendChild(charCount);
   row.appendChild(pinBtn);
   panel.appendChild(row);
+  wrap.appendChild(panel);
 
-  // ── Sticky notes grid ──
+  const pinnedPanel = div("panel panel-full");
+  pinnedPanel.appendChild(div("panel-accent", { background: C.appointment }));
+  const pinnedHead = div("notes-pinned-head");
+  const pinnedTitleWrap = div();
+  const pinnedTitle = document.createElement("h2"); pinnedTitle.textContent = "Pinned Notes";
+  const pinnedSub = div("sub");
+  pinnedSub.textContent = "Scroll down anytime to review and edit everything you pinned for this week.";
+  pinnedTitleWrap.appendChild(pinnedTitle);
+  pinnedTitleWrap.appendChild(pinnedSub);
+  pinnedHead.appendChild(pinnedTitleWrap);
+
   const notes = getCurrentNotes();
+  pinnedHead.appendChild(span("notes-pinned-count", `${notes.length} note${notes.length === 1 ? "" : "s"}`));
+  pinnedPanel.appendChild(pinnedHead);
+
   if (notes.length === 0) {
     const empty = div("sticky-empty");
     empty.textContent = "No pinned notes this week — type something above and hit Pin note";
-    panel.appendChild(empty);
+    pinnedPanel.appendChild(empty);
   } else {
     const grid = div("sticky-grid");
     notes.forEach((note, i) => {
@@ -2552,10 +2801,11 @@ function buildNotepadPanel() {
       card.appendChild(hint);
       grid.appendChild(card);
     });
-    panel.appendChild(grid);
+    pinnedPanel.appendChild(grid);
   }
 
-  return panel;
+  wrap.appendChild(pinnedPanel);
+  return wrap;
 }
 
 // ─── Panel: Focus Timer ───────────────────────────────────────────────────────
@@ -3908,6 +4158,7 @@ document.getElementById("today-date").textContent =
       renderHomeTiles();
     }
     if (event === "SIGNED_OUT") {
+      teardownCloudSubscriptions();
       _userId = null;
       location.reload();
     }

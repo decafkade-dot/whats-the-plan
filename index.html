@@ -87,8 +87,8 @@
   .sync-btn:disabled, .home-sync-btn:disabled { opacity:.55; cursor:default; pointer-events:none; }
 
   .home-grid {
-    display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
-    max-width:420px; width:100%;
+    display:grid; grid-template-columns:repeat(3,1fr); gap:18px;
+    max-width:400px; width:100%;
   }
   .home-bottom { width:100%; max-width:720px; }
   .home-bottom-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
@@ -100,7 +100,7 @@
   }
   .home-bottom-link:hover { border-color:var(--cornflower); background:#A2D2FF22; }
   .home-preview-week { font-size:11px; color:var(--text2); }
-  @media(max-width:400px){ .home-grid{gap:12px;} }
+  @media(max-width:400px){ .home-grid{gap:10px; grid-template-columns:repeat(2,1fr);} }
 
   .nav-tile {
     aspect-ratio:1; border-radius:24px; display:flex; flex-direction:column;
@@ -125,7 +125,7 @@
     stroke-linecap:round; stroke-linejoin:round;
   }
   .nav-tile:hover .tile-icon { transform:scale(1.1); }
-  .nav-tile .tile-label { font-size:12px; font-weight:700; color:var(--text); letter-spacing:.4px; }
+  .nav-tile .tile-label { font-size:13px; font-weight:600; color:var(--text); letter-spacing:.3px; }
 
   /* ══ PAGE VIEWS ══ */
   .page-view { display:none; min-height:100vh; padding:0 16px calc(24px + var(--safe-bottom)); }
@@ -227,49 +227,6 @@
 
 
 
-  /* ══ WEEKLY TRACKER GRID (meds + hydration) ══ */
-  .week-tracker { display:grid; grid-template-columns:repeat(7,1fr); gap:8px; margin-bottom:20px; }
-  @media(max-width:500px) { .week-tracker { gap:5px; } }
-  .week-tracker-day {
-    display:flex; flex-direction:column; align-items:center; gap:8px;
-    padding:14px 6px 16px; border-radius:16px; border:2px solid var(--border-soft);
-    background:var(--bg-input); transition:all .2s; position:relative;
-  }
-  .week-tracker-day.today { border-color:var(--lavender); background:var(--lavender); background:linear-gradient(135deg,#CDB4DB22,#CDB4DB11); border-width:2.5px; }
-  .week-tracker-day.past { opacity:.4; }
-  .week-tracker-day.past::after { content:''; position:absolute; inset:0; border-radius:14px; background:var(--bg); opacity:.3; pointer-events:none; }
-  .week-tracker-day-label { font-size:11px; font-weight:700; color:var(--text2); letter-spacing:.5px; }
-  .week-tracker-day.today .week-tracker-day-label { color:var(--text); }
-  .week-tracker-day-date { font-size:9px; color:var(--text2); opacity:.7; }
-  .week-tracker-btn {
-    width:48px; height:48px; border-radius:50%; border:2.5px solid var(--border-soft);
-    background:transparent; cursor:pointer; display:flex; align-items:center;
-    justify-content:center; transition:all .2s; -webkit-tap-highlight-color:transparent;
-  }
-  .week-tracker-btn:hover { border-color:var(--lavender); transform:scale(1.08); }
-  .week-tracker-btn.done { background:var(--mint); border-color:var(--mint); }
-  .week-tracker-btn.done svg { opacity:1; }
-  .week-tracker-btn svg { width:20px; height:20px; opacity:.25; transition:opacity .2s; }
-  .week-tracker-sub { font-size:9px; color:var(--text2); text-align:center; line-height:1.3; }
-  .week-tracker-day.past .week-tracker-btn { cursor:default; pointer-events:none; }
-
-  /* Water weekly */
-  .water-weekly-day { display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 4px 14px; border-radius:16px; border:2px solid var(--border-soft); background:var(--bg-input); transition:all .2s; position:relative; }
-  .water-weekly-day.today { border-color:var(--cornflower); border-width:2.5px; }
-  .water-weekly-day.past { opacity:.4; }
-  .water-weekly-count { font-size:22px; font-weight:700; color:var(--cornflower); line-height:1; }
-  .water-weekly-goal { font-size:9px; color:var(--text2); }
-  .water-weekly-btns { display:flex; gap:4px; }
-  .water-weekly-btn {
-    width:32px; height:32px; border-radius:50%; border:1.5px solid var(--border-soft);
-    background:transparent; cursor:pointer; display:flex; align-items:center;
-    justify-content:center; font-size:16px; font-weight:600; color:var(--text);
-    transition:all .15s; font-family:inherit;
-  }
-  .water-weekly-btn:hover { border-color:var(--cornflower); background:#A2D2FF22; }
-  .water-weekly-day.past .water-weekly-btn { cursor:default; pointer-events:none; }
-  .water-weekly-bar { width:100%; height:4px; border-radius:2px; background:var(--border-soft); overflow:hidden; }
-  .water-weekly-bar-fill { height:100%; border-radius:2px; background:var(--cornflower); transition:width .3s; }
 
   /* ══ SCHEDULER GRID ══ */
   .sched-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
@@ -491,31 +448,6 @@
   .spend-log-del { border:none; background:transparent; cursor:pointer; color:var(--text2); font-size:14px; opacity:.4; }
   .spend-empty { text-align:center; color:var(--text2); font-size:12px; padding:14px; background:var(--bg-row); border-radius:10px; }
 
-  /* ══ HABITS ══ */
-  .habits-section { margin-bottom:18px; }
-  .habits-section-label { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--text2); text-transform:uppercase; margin-bottom:10px; }
-  .water-bottle-wrap { display:flex; align-items:center; gap:14px; }
-  .water-bottle-btn { position:relative; width:52px; height:80px; background:transparent; border:none; cursor:pointer; padding:0; flex-shrink:0; }
-  .water-fill { transition:height .4s cubic-bezier(.34,1.56,.64,1),y .4s cubic-bezier(.34,1.56,.64,1); }
-  .water-count-wrap { display:flex; flex-direction:column; gap:2px; }
-  .water-count-num { font-size:28px; font-weight:600; letter-spacing:-1px; color:var(--cornflower); line-height:1; }
-  .water-count-sub { font-size:11px; color:var(--text2); }
-  .water-dots { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
-  .water-dot { width:10px; height:10px; border-radius:50%; background:var(--border-soft); transition:background .25s,transform .2s; }
-  .water-dot.filled { background:var(--cornflower); transform:scale(1.15); }
-  .water-reset-btn { font-size:10px; color:var(--text2); background:transparent; border:none; cursor:pointer; font-family:inherit; margin-top:4px; padding:0; text-decoration:underline; opacity:.6; }
-  .med-cards { display:grid; grid-template-columns:1fr; gap:10px; }
-  .med-card { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:18px 10px 14px; border-radius:16px; border:2px solid var(--border-soft); background:var(--bg-input); cursor:pointer; transition:all .18s; position:relative; min-height:110px; }
-  .med-card:hover { border-color:var(--lavender); }
-  .med-card.taken { background:#CDFAA744; border-color:var(--mint); }
-  .med-card svg { width:64px; height:64px; transition:transform .18s; }
-  .med-card:active svg { transform:scale(.93); }
-  .med-card-label { font-size:10px; color:var(--text2); text-align:center; line-height:1.4; }
-  .med-card.taken .med-card-label { color:#3a7a55; }
-  .med-card-check { position:absolute; top:8px; right:10px; font-size:13px; font-weight:700; color:#3a7a55; opacity:0; transition:opacity .2s; }
-  .med-card.taken .med-card-check { opacity:1; }
-  .friday-drawer { margin-top:14px; padding:14px; border-radius:14px; background:#BDE0FE18; border:1.5px solid #BDE0FE55; }
-  .friday-drawer-label { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--text2); text-transform:uppercase; margin-bottom:10px; display:flex; align-items:center; gap:6px; }
 
   /* ══ PRIORITY ══ */
   .priority-item { display:flex; align-items:center; gap:10px; padding:12px; border-radius:12px; margin-bottom:8px; }
@@ -732,16 +664,6 @@
   <div class="page-content" id="priorities-content"></div>
 </div>
 
-<!-- PAGE: Notes -->
-<div id="page-notes" class="page-view">
-  <div class="page-topbar">
-    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-    <div class="page-title">Weekly Notes</div>
-  </div>
-  <div class="page-content" id="notes-content"></div>
-</div>
-
-
 <!-- PAGE: Focus Timer -->
 <div id="page-focus" class="page-view">
   <div class="page-topbar">
@@ -751,23 +673,6 @@
   <div class="page-content" id="focus-content"></div>
 </div>
 
-<!-- PAGE: Medication -->
-<div id="page-medication" class="page-view">
-  <div class="page-topbar">
-    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-    <div class="page-title">Daily Medication</div>
-  </div>
-  <div class="page-content" id="medication-content"></div>
-</div>
-
-<!-- PAGE: Hydration -->
-<div id="page-hydration" class="page-view">
-  <div class="page-topbar">
-    <button class="back-btn" onclick="goHome()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
-    <div class="page-title">Hydration</div>
-  </div>
-  <div class="page-content" id="hydration-content"></div>
-</div>
 
 <!-- Block editor (floats above everything) -->
 <div id="block-editor">
@@ -1011,11 +916,6 @@ function syncDebtsToCloud() {
   syncToCloud("debts", { items: S.debts });
 }
 
-function syncHabitsToCloud() {
-  const h = ls("mc-habits", {});
-  syncToCloud("habits", { data: h });
-}
-
 function syncSpendingToCloud() {
   syncToCloud("spending", { log: S.spendingLog, accounts: S.spendAccounts });
 }
@@ -1122,7 +1022,7 @@ function handleCloudChange(table, row) {
       if (!row.week_key) return;
       S.notesByWeek[row.week_key] = row.notes || [];
       lsSave("mc-notesByWeek", S.notesByWeek);
-      if (currentPage === "notes" || currentPage === "home") renderAll();
+      if (currentPage === "home") renderAll();
       break;
     case "priorities":
       S.priorities = Array.isArray(row.items) ? row.items : [];
@@ -1149,10 +1049,6 @@ function handleCloudChange(table, row) {
       lsSave("mc-evening-todos", Array.isArray(row.items) ? row.items : []);
       if (currentPage === "evening") renderEveningPage();
       break;
-    case "habits":
-      lsSave("mc-habits", row.data && typeof row.data === "object" ? row.data : {});
-      if (["morning", "evening", "medication", "hydration"].includes(currentPage)) renderPage(currentPage);
-      break;
     case "spending":
       if (Array.isArray(row.log)) {
         S.spendingLog = row.log;
@@ -1169,14 +1065,6 @@ function handleCloudChange(table, row) {
       lsSave("mc-brainDump", S.brainDump);
       updateBrainDumpBadge();
       if (document.getElementById("brain-dump-overlay")?.classList.contains("open")) renderBrainDumpList();
-      break;
-    case "med_week":
-      lsSave("mc-med-week", row.data && typeof row.data === "object" ? row.data : {});
-      if (currentPage === "medication") renderMedicationPage();
-      break;
-    case "water_week":
-      lsSave("mc-water-week", row.data && typeof row.data === "object" ? row.data : {});
-      if (currentPage === "hydration") renderHydrationPage();
       break;
     case "settings":
       if (row.data && typeof row.data === "object") {
@@ -1199,11 +1087,8 @@ function subscribeToCloud(userId) {
     "debts",
     "morning_todos",
     "evening_todos",
-    "habits",
     "spending",
     "brain_dump",
-    "med_week",
-    "water_week",
     "settings",
   ];
 
@@ -1473,21 +1358,20 @@ async function loadCloudData(userId) {
     // Priorities
     const { data: priRow } = await supa.from("priorities")
       .select("items").eq("user_id", userId).maybeSingle();
-    if (priRow?.items?.length > 0) {
+    if (priRow && Array.isArray(priRow.items)) {
       S.priorities = priRow.items;
       lsSave("mc-priorities", S.priorities);
-    } else if (S.priorities.length > 0) {
-      // Push local data up to cloud on first login
+    } else if (!priRow && S.priorities.length > 0) {
       syncToCloud("priorities", { items: S.priorities });
     }
 
     // Financials
     const { data: finRow } = await supa.from("financials")
       .select("items").eq("user_id", userId).maybeSingle();
-    if (finRow?.items?.length > 0 && Array.isArray(finRow.items) && finRow.items[0]?.items) {
+    if (finRow && Array.isArray(finRow.items)) {
       S.finSections = finRow.items;
       lsSave("mc-fin-sections", S.finSections);
-    } else if (S.finSections.length > 0) {
+    } else if (!finRow && S.finSections.length > 0) {
       syncToCloud("financials", { items: S.finSections });
     }
 
@@ -1525,29 +1409,21 @@ async function loadCloudData(userId) {
     // Debts
     const { data: debtRow } = await supa.from("debts")
       .select("items").eq("user_id", userId).maybeSingle();
-    if (debtRow?.items?.length > 0) {
+    if (debtRow && Array.isArray(debtRow.items)) {
       S.debts = debtRow.items.map(normalizeDebtItem);
       lsSave("mc-debts", S.debts);
-    } else if (S.debts.length > 0) {
+    } else if (!debtRow && S.debts.length > 0) {
       syncToCloud("debts", { items: S.debts });
-    }
-
-    // Habits
-    const { data: habRow } = await supa.from("habits")
-      .select("data").eq("user_id", userId).maybeSingle();
-    if (habRow?.data && habRow.data.date) {
-      lsSave("mc-habits", habRow.data);
-    } else {
-      const localH = ls("mc-habits", {});
-      if (localH.date) syncToCloud("habits", { data: localH });
     }
 
     // Spending
     const { data: spendRow } = await supa.from("spending")
       .select("log,accounts").eq("user_id", userId).maybeSingle();
     if (spendRow) {
-      if (spendRow.log?.length > 0) { S.spendingLog = spendRow.log; lsSave("mc-spending", S.spendingLog); }
-      if (spendRow.accounts?.length > 0) { S.spendAccounts = spendRow.accounts; lsSave("mc-spend-accounts", S.spendAccounts); }
+      S.spendingLog = Array.isArray(spendRow.log) ? spendRow.log : [];
+      lsSave("mc-spending", S.spendingLog);
+      S.spendAccounts = Array.isArray(spendRow.accounts) ? spendRow.accounts : S.spendAccounts;
+      lsSave("mc-spend-accounts", S.spendAccounts);
     } else {
       if (S.spendingLog.length > 0 || S.spendAccounts.length > 0) {
         syncToCloud("spending", { log: S.spendingLog, accounts: S.spendAccounts });
@@ -1557,32 +1433,11 @@ async function loadCloudData(userId) {
     // Brain Dump
     const { data: bdRow } = await supa.from("brain_dump")
       .select("items").eq("user_id", userId).maybeSingle();
-    if (bdRow?.items?.length > 0) {
+    if (bdRow && Array.isArray(bdRow.items)) {
       S.brainDump = bdRow.items;
       lsSave("mc-brainDump", S.brainDump);
-    } else if (S.brainDump.length > 0) {
+    } else if (!bdRow && S.brainDump.length > 0) {
       syncToCloud("brain_dump", { items: S.brainDump });
-    }
-
-
-    // Med week tracker
-    const { data: mwRow } = await supa.from("med_week")
-      .select("data").eq("user_id", userId).maybeSingle();
-    if (mwRow?.data && Object.keys(mwRow.data).length > 0) {
-      lsSave("mc-med-week", mwRow.data);
-    } else {
-      const localMW = ls("mc-med-week", {});
-      if (Object.keys(localMW).length > 0) syncToCloud("med_week", { data: localMW });
-    }
-
-    // Water week tracker
-    const { data: wwRow } = await supa.from("water_week")
-      .select("data").eq("user_id", userId).maybeSingle();
-    if (wwRow?.data && Object.keys(wwRow.data).length > 0) {
-      lsSave("mc-water-week", wwRow.data);
-    } else {
-      const localWW = ls("mc-water-week", {});
-      if (Object.keys(localWW).length > 0) syncToCloud("water_week", { data: localWW });
     }
 
     // Push any local blocks to cloud that cloud doesn't have yet
@@ -3792,204 +3647,6 @@ function buildDebtPanel() {
   return panel;
 }
 
-// ─── Panel: Daily Habits (Water + Meds) ──────────────────────────────────────
-
-function todayKey() {
-  return new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
-}
-
-function isFriday() { return new Date().getDay() === 5; }
-
-function getHabits() {
-  // Auto-reset water count if it's a new day
-  const stored = ls("mc-habits", {});
-  if (stored.date !== todayKey()) {
-    return { date: todayKey(), water: 0, dailyMed: false, weeklyShot: ls("mc-habits",{}).weeklyShot || { taken: false, week: "" } };
-  }
-  return stored;
-}
-
-function saveHabits(h) { lsSave("mc-habits", h); syncHabitsToCloud(); }
-
-function buildHabitsPanel() {
-  const panel = div("panel");
-  panel.appendChild(div("panel-accent", { background: C.cornflower }));
-  const h2 = document.createElement("h2"); h2.textContent = "Daily Habits"; panel.appendChild(h2);
-  const sub = div("sub"); sub.textContent = "Resets each day · Hydration + medications"; panel.appendChild(sub);
-
-  const habits = getHabits();
-  const GOAL = 8;
-
-  // ── Water Section ──
-  const waterSection = div("habits-section");
-  const waterLbl = div("habits-section-label"); waterLbl.textContent = "Hydration";
-  waterSection.appendChild(waterLbl);
-
-  const bottleWrap = div("water-bottle-wrap");
-
-  // SVG water bottle
-  const bottleBtn = document.createElement("button");
-  bottleBtn.className = "water-bottle-btn";
-  bottleBtn.title = habits.water >= GOAL ? "Goal reached!" : "Tap to log a glass";
-
-  function buildBottleSVG(count) {
-    const pct   = Math.min(count / GOAL, 1);
-    const fillH = Math.round(48 * pct);   // max fill height inside bottle body
-    const fillY = 22 + (48 - fillH);      // top of fill rect (bottle body starts at y=22)
-    const fillColor = pct >= 1 ? "#5bb8f5" : "#A2D2FF";
-    return `<svg class="water-bottle-svg" viewBox="0 0 52 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- cap -->
-      <rect x="18" y="4" width="16" height="10" rx="4" fill="#CDB4DB"/>
-      <!-- bottle body outline -->
-      <rect x="8" y="18" width="36" height="54" rx="10" fill="white" stroke="#CDB4DB" stroke-width="2"/>
-      <!-- water fill (clipped inside body shape) -->
-      <clipPath id="bottle-clip"><rect x="9" y="19" width="34" height="52" rx="9"/></clipPath>
-      <rect class="water-fill" x="9" y="${fillY}" width="34" height="${fillH}" fill="${fillColor}" opacity="0.7" clip-path="url(#bottle-clip)"/>
-      <!-- shine -->
-      <rect x="14" y="24" width="5" height="16" rx="2.5" fill="white" opacity="0.5"/>
-      <!-- straw line if full -->
-      ${pct >= 1 ? '<line x1="26" y1="4" x2="26" y2="18" stroke="#A2D2FF" stroke-width="2" stroke-linecap="round"/>' : ''}
-    </svg>`;
-  }
-
-  bottleBtn.innerHTML = buildBottleSVG(habits.water);
-  bottleBtn.onclick = () => {
-    const h = getHabits();
-    if (h.water >= GOAL) return;
-    h.water = Math.min(h.water + 1, GOAL);
-    saveHabits(h);
-    // Update bottle SVG in place
-    bottleBtn.innerHTML = buildBottleSVG(h.water);
-    bottleBtn.title = h.water >= GOAL ? "Goal reached!" : "Tap to log a glass";
-    // Update count
-    countNum.textContent = h.water;
-    countSub.textContent = h.water >= GOAL ? "Goal reached!" : `of ${GOAL} glasses`;
-    // Update dots
-    dotsWrap.querySelectorAll(".water-dot").forEach((d, i) => d.classList.toggle("filled", i < h.water));
-  };
-  bottleWrap.appendChild(bottleBtn);
-
-  const countWrap = div("water-count-wrap");
-  const countNum  = span("water-count-num", String(habits.water));
-  const countSub  = span("water-count-sub", habits.water >= GOAL ? "Goal reached!" : `of ${GOAL} glasses`);
-  if (habits.water >= GOAL) countNum.style.color = "#5bb8f5";
-
-  const dotsWrap = div("water-dots");
-  for (let i = 0; i < GOAL; i++) {
-    const d = div("water-dot" + (i < habits.water ? " filled" : ""));
-    dotsWrap.appendChild(d);
-  }
-
-  const resetBtn = el("button", "water-reset-btn"); resetBtn.textContent = "reset";
-  resetBtn.onclick = () => {
-    const h = getHabits(); h.water = 0; saveHabits(h);
-    countNum.textContent = "0";
-    countSub.textContent = `of ${GOAL} glasses`;
-    countNum.style.color = "";
-    bottleBtn.innerHTML = buildBottleSVG(0);
-    dotsWrap.querySelectorAll(".water-dot").forEach(d => d.classList.remove("filled"));
-  };
-
-  countWrap.appendChild(countNum);
-  countWrap.appendChild(countSub);
-  countWrap.appendChild(dotsWrap);
-  countWrap.appendChild(resetBtn);
-  bottleWrap.appendChild(countWrap);
-  waterSection.appendChild(bottleWrap);
-  panel.appendChild(waterSection);
-
-  // ── Medications Section ──
-  const medSection = div("habits-section");
-  const medLbl = div("habits-section-label"); medLbl.textContent = "Medications";
-  medSection.appendChild(medLbl);
-
-  const PILL_SVG = `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- pill body -->
-    <rect x="6" y="22" width="52" height="20" rx="10" fill="#CDB4DB" opacity="0.25" stroke="#CDB4DB" stroke-width="2"/>
-    <!-- left half -->
-    <path d="M6 32 C6 26.48 10.48 22 16 22 L32 22 L32 42 L16 42 C10.48 42 6 37.52 6 32Z" fill="#CDB4DB"/>
-    <!-- right half -->
-    <path d="M32 22 L48 22 C53.52 22 58 26.48 58 32 C58 37.52 53.52 42 48 42 L32 42 Z" fill="#FFAFCC"/>
-    <!-- dividing line -->
-    <line x1="32" y1="22" x2="32" y2="42" stroke="white" stroke-width="2.5"/>
-    <!-- shine -->
-    <ellipse cx="20" cy="28" rx="4" ry="2.5" fill="white" opacity="0.4" transform="rotate(-20 20 28)"/>
-  </svg>`;
-
-  const SYRINGE_SVG = `<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- needle cap diagonal line -->
-    <line x1="48" y1="10" x2="56" y2="2" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/>
-    <!-- barrel body -->
-    <rect x="16" y="24" width="32" height="14" rx="4" fill="#BDE0FE" stroke="#A2D2FF" stroke-width="2"/>
-    <!-- fluid fill inside barrel -->
-    <rect x="18" y="26" width="18" height="10" rx="2" fill="#A2D2FF" opacity="0.5"/>
-    <!-- plunger rod -->
-    <line x1="4" y1="31" x2="16" y2="31" stroke="#8b7fa8" stroke-width="2.5" stroke-linecap="round"/>
-    <!-- plunger flange -->
-    <rect x="2" y="26" width="5" height="10" rx="2" fill="#CDB4DB"/>
-    <!-- needle hub -->
-    <rect x="48" y="26" width="6" height="10" rx="2" fill="#A2D2FF"/>
-    <!-- needle -->
-    <line x1="54" y1="31" x2="62" y2="31" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/>
-    <!-- tick marks -->
-    <line x1="26" y1="25" x2="26" y2="28" stroke="#7bb8e8" stroke-width="1.5"/>
-    <line x1="32" y1="25" x2="32" y2="28" stroke="#7bb8e8" stroke-width="1.5"/>
-    <line x1="38" y1="25" x2="38" y2="28" stroke="#7bb8e8" stroke-width="1.5"/>
-  </svg>`;
-
-  const medCards = div("med-cards");
-
-  // ── Daily pill card ──
-  const dailyCard = el("button", "med-card" + (habits.dailyMed ? " taken" : ""));
-  const dailyCheck = span("med-card-check", "✓"); dailyCard.appendChild(dailyCheck);
-  dailyCard.innerHTML += PILL_SVG;
-  const dailyLbl = div("med-card-label");
-  dailyLbl.textContent = habits.dailyMed ? "taken today" : "daily · tap to log";
-  dailyCard.appendChild(dailyLbl);
-  dailyCard.onclick = () => {
-    const h = getHabits(); h.dailyMed = !h.dailyMed; saveHabits(h);
-    dailyCard.classList.toggle("taken", h.dailyMed);
-    dailyLbl.textContent = h.dailyMed ? "taken today" : "daily · tap to log";
-  };
-  medCards.appendChild(dailyCard);
-
-  medSection.appendChild(medCards);
-  panel.appendChild(medSection);
-
-  // ── Friday-Only Shot Drawer ──
-  if (isFriday() || (habits.weeklyShot?.taken && habits.weeklyShot?.week === getWeekKey(0))) {
-    const fridayDrawer = div("friday-drawer");
-    const fridayLabel = div("friday-drawer-label");
-    fridayLabel.textContent = "Weekly Injection";
-    fridayDrawer.appendChild(fridayLabel);
-
-    const weekKey = getWeekKey(0);
-    const shotTaken = habits.weeklyShot?.taken && habits.weeklyShot?.week === weekKey;
-    const shotRow = div("med-cards");
-    const shotCard = el("button", "med-card" + (shotTaken ? " taken" : ""));
-    shotCard.style.minHeight = "100px";
-    const shotCheck = span("med-card-check", "✓"); shotCard.appendChild(shotCheck);
-    shotCard.innerHTML += SYRINGE_SVG;
-    const shotLbl = div("med-card-label");
-    shotLbl.textContent = shotTaken ? "done this week ✓" : "due today — tap to log";
-    if (!shotTaken) shotLbl.style.color = C.hotPink;
-    shotCard.appendChild(shotLbl);
-    shotCard.onclick = () => {
-      const h = getHabits();
-      const nowTaken = !(h.weeklyShot?.taken && h.weeklyShot?.week === weekKey);
-      h.weeklyShot = { taken: nowTaken, week: weekKey };
-      saveHabits(h);
-      shotCard.classList.toggle("taken", nowTaken);
-      shotLbl.textContent = nowTaken ? "done this week ✓" : "due today — tap to log";
-      shotLbl.style.color = nowTaken ? "" : C.hotPink;
-    };
-    shotRow.appendChild(shotCard);
-    fridayDrawer.appendChild(shotRow);
-    panel.appendChild(fridayDrawer);
-  }
-
-  return panel;
-}
 
 
 // ─── Panel: Quick Spending Logger ─────────────────────────────────────────────
@@ -4135,25 +3792,6 @@ const ICONS = {
     </svg>
   `,
 
-  medication: `
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="9" y="20" width="30" height="10" rx="5" stroke="currentColor" stroke-width="2.8"/>
-      <path d="M24 20v10" stroke="currentColor" stroke-width="2.4" opacity=".55"/>
-      <path d="M14 25h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-      <path d="M28 25h6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-      <path d="M24 10v5M20 12.5h8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-    </svg>
-  `,
-
-  hydration: `
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M19 8h10" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-      <rect x="16" y="10" width="16" height="28" rx="6.5" stroke="currentColor" stroke-width="2.8"/>
-      <path d="M19 24c1.7 2 8.3 2 10 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-      <path d="M21 15h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".5"/>
-    </svg>
-  `,
-
   priorities: `
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect x="10" y="11" width="28" height="26" rx="8" stroke="currentColor" stroke-width="2.6"/>
@@ -4164,28 +3802,17 @@ const ICONS = {
     </svg>
   `,
 
-  notes: `
-    <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M15 10h14l6 6v20a4 4 0 0 1-4 4H15a4 4 0 0 1-4-4V14a4 4 0 0 1 4-4z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
-      <path d="M29 10v6h6" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
-      <path d="M17 23h14M17 28h11" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-    </svg>
-  `,
-
   focus: `
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="24" cy="24" r="10" stroke="currentColor" stroke-width="2.8"/>
-      <path d="M24 8v4M24 36v4M8 24h4M36 24h4" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
-      <circle cx="24" cy="24" r="2.6" fill="currentColor"/>
+      <circle cx="21" cy="21" r="9" stroke="currentColor" stroke-width="2.8"/>
+      <path d="M28 28l8 8" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
     </svg>
   `,
 
   financials: `
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="8" y="13" width="32" height="22" rx="8" stroke="currentColor" stroke-width="2.6"/>
-      <path d="M8 20h32" stroke="currentColor" stroke-width="2.4"/>
-      <circle cx="17" cy="27" r="2.2" fill="currentColor" opacity=".75"/>
-      <path d="M25 27h8" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M24 6v36" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M17 14c0 0 1.5-4 7-4s7.5 3.5 7.5 6c0 3-2.5 5-7.5 6s-7.5 3-7.5 6c0 2.5 1.5 6 7.5 6s7-4 7-4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
   `
 };
@@ -4195,11 +3822,8 @@ const NAV_TILES = [
   { id:"morning",    icon:ICONS.morning,    label:"Morning",    color:"#FDEF81", bg:"#FDEF8122" },
   { id:"evening",    icon:ICONS.evening,    label:"Evening",    color:"#FFAFCC", bg:"#FFAFCC22" },
   { id:"financials", icon:ICONS.financials, label:"Financials", color:"#CDFAA7", bg:"#CDFAA722" },
-  { id:"notes",      icon:ICONS.notes,      label:"Notes",      color:"#A2D2FF", bg:"#A2D2FF22" },
   { id:"focus",      icon:ICONS.focus,      label:"Focus",      color:"#CDB4DB", bg:"#CDB4DB18" },
   { id:"priorities", icon:ICONS.priorities, label:"Priorities", color:"#BDE0FE", bg:"#BDE0FE22" },
-  { id:"medication", icon:ICONS.medication, label:"Medication", color:"#FFAFCC", bg:"#FFAFCC18" },
-  { id:"hydration",  icon:ICONS.hydration,  label:"Hydration",  color:"#A2D2FF", bg:"#A2D2FF18" },
 ];
 
 // ═══ ROUTING ═════════════════════════════════════════════════════════════════
@@ -4243,16 +3867,31 @@ function renderHomePinnedNotes() {
   titleWrap.appendChild(weekText);
   head.appendChild(titleWrap);
 
-  const openBtn = el("button", "home-bottom-link");
-  openBtn.type = "button";
-  openBtn.textContent = "Open Notes";
-  openBtn.onclick = () => { S.weekOffset = 0; navigateTo("notes"); };
-  head.appendChild(openBtn);
+  // Quick-add note button
+  const addNoteBtn = el("button", "home-bottom-link");
+  addNoteBtn.type = "button";
+  addNoteBtn.textContent = "+ New Note";
+  addNoteBtn.onclick = () => {
+    const notes = getNotesForWeek(getWeekKey(0));
+    const colorIdx = notes.length % STICKY_COLORS.length;
+    const newNote = {
+      id: Date.now(),
+      text: "",
+      color: STICKY_COLORS[colorIdx],
+      ts: new Date().toLocaleString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
+    };
+    S.notesByWeek[getWeekKey(0)] = [...notes, newNote];
+    lsSave("mc-notesByWeek", S.notesByWeek);
+    syncNotesToCloud();
+    openStickyModal(newNote);
+    renderHomePinnedNotes();
+  };
+  head.appendChild(addNoteBtn);
   panel.appendChild(head);
 
   const notes = getNotesForWeek(getWeekKey(0));
   if (notes.length === 0) {
-    panel.appendChild(div("sticky-empty", {}, "No pinned notes for this week yet."));
+    panel.appendChild(div("sticky-empty", {}, "No pinned notes for this week yet — tap + New Note to start."));
   } else {
     const grid = div("sticky-grid");
     notes.slice(0, 4).forEach((note, i) => {
@@ -4261,8 +3900,9 @@ function renderHomePinnedNotes() {
       card.style.background = c.bg;
       card.style.borderBottom = `3px solid ${c.border}`;
       card.style.transform = STICKY_ROTATIONS[i % STICKY_ROTATIONS.length];
-      card.title = "Open Notes to edit";
-      card.onclick = () => { S.weekOffset = 0; navigateTo("notes"); };
+      card.title = "Click to edit";
+      card.style.cursor = "pointer";
+      card.onclick = () => openStickyModal(note);
 
       const ts = div("sticky-ts");
       ts.textContent = note.ts || "";
@@ -4303,9 +3943,6 @@ function renderPage(pageId) {
     case "evening": renderEveningPage(); break;
     case "priorities": renderPrioritiesPage(); break;
     case "focus": renderFocusPage(); break;
-    case "medication": renderMedicationPage(); break;
-    case "hydration": renderHydrationPage(); break;
-    case "notes": renderNotesPage(); break;
   }
 }
 
@@ -4396,112 +4033,8 @@ function renderPrioritiesPage() {
   c.appendChild(buildPriorityPanel());
 }
 
-function renderNotesPage() {
-  const c = document.getElementById("notes-content"); c.innerHTML = "";
-  c.appendChild(buildNotepadPanel());
-}
 
-// Shared water section builder (used by both morning and evening)
-function buildWaterSection() {
-  const habits = getHabits();
-  const GOAL = 8;
-  const section = div("habits-section");
-  const bottleWrap = div("water-bottle-wrap");
-  const bottleBtn = document.createElement("button");
-  bottleBtn.className = "water-bottle-btn";
-  bottleBtn.title = habits.water >= GOAL ? "Goal reached!" : "Tap to log a glass";
-  function buildBottleSVG(count) {
-    const pct = Math.min(count / GOAL, 1);
-    const fillH = Math.round(48 * pct);
-    const fillY = 22 + (48 - fillH);
-    const fillColor = pct >= 1 ? "#5bb8f5" : "#A2D2FF";
-    return '<svg class="water-bottle-svg" viewBox="0 0 52 80" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="18" y="4" width="16" height="10" rx="4" fill="#CDB4DB"/><rect x="8" y="18" width="36" height="54" rx="10" fill="' + (document.documentElement.getAttribute("data-theme")==="dark"?"#2a2240":"white") + '" stroke="#CDB4DB" stroke-width="2"/><clipPath id="bottle-clip"><rect x="9" y="19" width="34" height="52" rx="9"/></clipPath><rect class="water-fill" x="9" y="' + fillY + '" width="34" height="' + fillH + '" fill="' + fillColor + '" opacity="0.7" clip-path="url(#bottle-clip)"/><rect x="14" y="24" width="5" height="16" rx="2.5" fill="white" opacity="0.5"/>' + (pct >= 1 ? '<line x1="26" y1="4" x2="26" y2="18" stroke="#A2D2FF" stroke-width="2" stroke-linecap="round"/>' : '') + '</svg>';
-  }
-  bottleBtn.innerHTML = buildBottleSVG(habits.water);
-  const countWrap = div("water-count-wrap");
-  const countNum = span("water-count-num", String(habits.water));
-  const countSub = span("water-count-sub", habits.water >= GOAL ? "Goal reached!" : "of " + GOAL + " glasses");
-  if (habits.water >= GOAL) countNum.style.color = "#5bb8f5";
-  const dotsWrap = div("water-dots");
-  for (let i = 0; i < GOAL; i++) dotsWrap.appendChild(div("water-dot" + (i < habits.water ? " filled" : "")));
-  const resetBtn = el("button", "water-reset-btn"); resetBtn.textContent = "reset";
-  bottleBtn.onclick = () => {
-    const h = getHabits(); if (h.water >= GOAL) return;
-    h.water = Math.min(h.water + 1, GOAL); saveHabits(h);
-    bottleBtn.innerHTML = buildBottleSVG(h.water);
-    countNum.textContent = h.water;
-    countSub.textContent = h.water >= GOAL ? "Goal reached!" : "of " + GOAL + " glasses";
-    if (h.water >= GOAL) countNum.style.color = "#5bb8f5";
-    dotsWrap.querySelectorAll(".water-dot").forEach((d,i) => d.classList.toggle("filled", i < h.water));
-  };
-  resetBtn.onclick = () => {
-    const h = getHabits(); h.water = 0; saveHabits(h);
-    countNum.textContent = "0"; countSub.textContent = "of " + GOAL + " glasses";
-    countNum.style.color = ""; bottleBtn.innerHTML = buildBottleSVG(0);
-    dotsWrap.querySelectorAll(".water-dot").forEach(d => d.classList.remove("filled"));
-  };
-  countWrap.appendChild(countNum); countWrap.appendChild(countSub);
-  countWrap.appendChild(dotsWrap); countWrap.appendChild(resetBtn);
-  bottleWrap.appendChild(bottleBtn); bottleWrap.appendChild(countWrap);
-  section.appendChild(bottleWrap);
-  return section;
-}
 
-// Shared med section builder
-function buildMedSection() {
-  const habits = getHabits();
-  const section = div();
-  const medCards = div("med-cards");
-  const PILL_SVG = '<svg viewBox="0 0 64 64" fill="none"><rect x="6" y="22" width="52" height="20" rx="10" fill="#CDB4DB" opacity="0.25" stroke="#CDB4DB" stroke-width="2"/><path d="M6 32 C6 26.48 10.48 22 16 22 L32 22 L32 42 L16 42 C10.48 42 6 37.52 6 32Z" fill="#CDB4DB"/><path d="M32 22 L48 22 C53.52 22 58 26.48 58 32 C58 37.52 53.52 42 48 42 L32 42 Z" fill="#FFAFCC"/><line x1="32" y1="22" x2="32" y2="42" stroke="white" stroke-width="2.5"/></svg>';
-  const SYRINGE_SVG = '<svg viewBox="0 0 64 64" fill="none"><rect x="16" y="24" width="32" height="14" rx="4" fill="#BDE0FE" stroke="#A2D2FF" stroke-width="2"/><rect x="18" y="26" width="18" height="10" rx="2" fill="#A2D2FF" opacity="0.5"/><line x1="4" y1="31" x2="16" y2="31" stroke="#8b7fa8" stroke-width="2.5" stroke-linecap="round"/><rect x="2" y="26" width="5" height="10" rx="2" fill="#CDB4DB"/><rect x="48" y="26" width="6" height="10" rx="2" fill="#A2D2FF"/><line x1="54" y1="31" x2="62" y2="31" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/></svg>';
-
-  // Daily pill
-  const dailyCard = el("button", "med-card" + (habits.dailyMed ? " taken" : ""));
-  const dailyCheck = span("med-card-check", "\u2713"); dailyCard.appendChild(dailyCheck);
-  dailyCard.innerHTML += PILL_SVG;
-  const dailyLbl = div("med-card-label");
-  dailyLbl.textContent = habits.dailyMed ? "taken today" : "daily medication \u00b7 tap to log";
-  dailyCard.appendChild(dailyLbl);
-  dailyCard.onclick = () => {
-    const h = getHabits(); h.dailyMed = !h.dailyMed; saveHabits(h);
-    dailyCard.classList.toggle("taken", h.dailyMed);
-    dailyLbl.textContent = h.dailyMed ? "taken today" : "daily medication \u00b7 tap to log";
-  };
-  medCards.appendChild(dailyCard);
-  section.appendChild(medCards);
-
-  // Friday injection drawer
-  const weekKey = getWeekKey(0);
-  const shotTaken = habits.weeklyShot?.taken && habits.weeklyShot?.week === weekKey;
-  if (isFriday() || shotTaken) {
-    const fridayDrawer = div("friday-drawer");
-    const fridayLabel = div("friday-drawer-label");
-    fridayLabel.innerHTML = '<svg viewBox="0 0 16 16" fill="none" width="16" height="16"><rect x="2" y="5" width="12" height="6" rx="2" fill="#BDE0FE" stroke="#A2D2FF" stroke-width="1"/><line x1="14" y1="8" x2="16" y2="8" stroke="#8b7fa8" stroke-width="1.5" stroke-linecap="round"/></svg> Weekly Injection';
-    fridayDrawer.appendChild(fridayLabel);
-    const shotCards = div("med-cards");
-    const shotCard = el("button", "med-card" + (shotTaken ? " taken" : ""));
-    shotCard.style.minHeight = "100px";
-    const shotCheck = span("med-card-check", "\u2713"); shotCard.appendChild(shotCheck);
-    shotCard.innerHTML += SYRINGE_SVG;
-    const shotLbl = div("med-card-label");
-    shotLbl.textContent = shotTaken ? "done this week" : "due today \u2014 tap to log";
-    if (!shotTaken) shotLbl.style.color = C.hotPink;
-    shotCard.appendChild(shotLbl);
-    shotCard.onclick = () => {
-      const h = getHabits();
-      const nowTaken = !(h.weeklyShot?.taken && h.weeklyShot?.week === weekKey);
-      h.weeklyShot = { taken: nowTaken, week: weekKey };
-      saveHabits(h);
-      shotCard.classList.toggle("taken", nowTaken);
-      shotLbl.textContent = nowTaken ? "done this week" : "due today \u2014 tap to log";
-      shotLbl.style.color = nowTaken ? "" : C.hotPink;
-    };
-    shotCards.appendChild(shotCard);
-    fridayDrawer.appendChild(shotCards);
-    section.appendChild(fridayDrawer);
-  }
-  return section;
-}
 
 
 function renderFocusPage() {
@@ -4509,174 +4042,7 @@ function renderFocusPage() {
   c.appendChild(buildFocusPanel());
 }
 
-// ═══ MEDICATION WEEKLY TRACKER ═══════════════════════════════════════════════
 
-function getMedWeekData() {
-  const data = ls("mc-med-week", {});
-  // Clean up old days beyond current week
-  return data;
-}
-function saveMedWeekData(data) { lsSave("mc-med-week", data); syncToCloud("med_week", { data }); }
-
-function renderMedicationPage() {
-  const c = document.getElementById("medication-content"); c.innerHTML = "";
-
-  const panel = div("panel");
-  panel.appendChild(div("panel-accent", { background: C.lavender }));
-  const h2 = document.createElement("h2"); h2.textContent = "Daily Medication"; panel.appendChild(h2);
-  const sub = div("sub"); sub.textContent = "Tap each day when you take your medication"; panel.appendChild(sub);
-
-  const data = getMedWeekData();
-  const today = new Date();
-  const todayDow = today.getDay();
-  const todayIdx = todayDow === 0 ? 6 : todayDow - 1;
-
-  // Get Monday of this week
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - todayIdx);
-  monday.setHours(0,0,0,0);
-
-  const grid = div("week-tracker");
-  DAYS.forEach((day, di) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + di);
-    const key = d.toISOString().slice(0,10);
-    const isPast = di < todayIdx;
-    const isToday = di === todayIdx;
-    const taken = !!data[key];
-
-    const col = div("week-tracker-day" + (isToday ? " today" : "") + (isPast ? " past" : ""));
-    const label = div("week-tracker-day-label"); label.textContent = day;
-    const dateLabel = div("week-tracker-day-date"); dateLabel.textContent = d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
-
-    const btn = el("button", "week-tracker-btn" + (taken ? " done" : ""));
-    btn.innerHTML = '<svg viewBox="0 0 20 20" fill="none"><path d="M4 10l4 4 8-8" stroke="#2a2240" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    if (!isPast) {
-      btn.onclick = () => {
-        const dd = getMedWeekData();
-        dd[key] = !dd[key];
-        if (!dd[key]) delete dd[key];
-        saveMedWeekData(dd);
-        renderMedicationPage();
-      };
-    }
-
-    const statusLabel = div("week-tracker-sub");
-    statusLabel.textContent = taken ? "taken" : isPast ? "missed" : isToday ? "tap to log" : "";
-    if (!taken && isPast) statusLabel.style.color = "#c0516b";
-
-    col.appendChild(label); col.appendChild(dateLabel); col.appendChild(btn); col.appendChild(statusLabel);
-    grid.appendChild(col);
-  });
-  panel.appendChild(grid);
-
-  // Friday injection section
-  const weekKey = getWeekKey(0);
-  const habits = getHabits();
-  const shotTaken = habits.weeklyShot?.taken && habits.weeklyShot?.week === weekKey;
-
-  const shotPanel = div("panel");
-  shotPanel.appendChild(div("panel-accent", { background: C.skyBlue }));
-  const h2s = document.createElement("h2"); h2s.textContent = "Weekly Injection"; shotPanel.appendChild(h2s);
-  const subS = div("sub"); subS.textContent = isFriday() ? "Due today" : shotTaken ? "Completed this week" : "Due Friday"; shotPanel.appendChild(subS);
-
-  const SYRINGE_SVG = '<svg viewBox="0 0 64 64" fill="none"><rect x="16" y="24" width="32" height="14" rx="4" fill="#BDE0FE" stroke="#A2D2FF" stroke-width="2"/><rect x="18" y="26" width="18" height="10" rx="2" fill="#A2D2FF" opacity="0.5"/><line x1="4" y1="31" x2="16" y2="31" stroke="#8b7fa8" stroke-width="2.5" stroke-linecap="round"/><rect x="2" y="26" width="5" height="10" rx="2" fill="#CDB4DB"/><rect x="48" y="26" width="6" height="10" rx="2" fill="#A2D2FF"/><line x1="54" y1="31" x2="62" y2="31" stroke="#8b7fa8" stroke-width="2" stroke-linecap="round"/></svg>';
-
-  const shotCards = div("med-cards");
-  const shotCard = el("button", "med-card" + (shotTaken ? " taken" : ""));
-  shotCard.style.minHeight = "100px";
-  const shotCheck = span("med-card-check", "\u2713"); shotCard.appendChild(shotCheck);
-  shotCard.innerHTML += SYRINGE_SVG;
-  const shotLbl = div("med-card-label");
-  shotLbl.textContent = shotTaken ? "done this week" : isFriday() ? "due today \u2014 tap to log" : "due Friday";
-  if (!shotTaken && isFriday()) shotLbl.style.color = C.hotPink;
-  shotCard.appendChild(shotLbl);
-  shotCard.onclick = () => {
-    const h = getHabits();
-    const nowTaken = !(h.weeklyShot?.taken && h.weeklyShot?.week === weekKey);
-    h.weeklyShot = { taken: nowTaken, week: weekKey };
-    saveHabits(h);
-    renderMedicationPage();
-  };
-  shotCards.appendChild(shotCard);
-  shotPanel.appendChild(shotCards);
-
-  c.appendChild(panel);
-  c.appendChild(shotPanel);
-}
-
-// ═══ HYDRATION WEEKLY TRACKER ════════════════════════════════════════════════
-
-function getWaterWeekData() { return ls("mc-water-week", {}); }
-function saveWaterWeekData(data) { lsSave("mc-water-week", data); syncToCloud("water_week", { data }); }
-
-function renderHydrationPage() {
-  const c = document.getElementById("hydration-content"); c.innerHTML = "";
-  const GOAL = 8;
-
-  const panel = div("panel");
-  panel.appendChild(div("panel-accent", { background: C.cornflower }));
-  const h2 = document.createElement("h2"); h2.textContent = "Hydration Tracker"; panel.appendChild(h2);
-  const sub = div("sub"); sub.textContent = "Goal: " + GOAL + " glasses per day"; panel.appendChild(sub);
-
-  const data = getWaterWeekData();
-  const today = new Date();
-  const todayDow = today.getDay();
-  const todayIdx = todayDow === 0 ? 6 : todayDow - 1;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() - todayIdx);
-  monday.setHours(0,0,0,0);
-
-  // Weekly total
-  let weekTotal = 0;
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(monday); d.setDate(monday.getDate() + i);
-    weekTotal += (data[d.toISOString().slice(0,10)] || 0);
-  }
-  const totalRow = div("", { display:"flex", alignItems:"baseline", gap:"8px", marginBottom:"16px" });
-  const totalNum = span("", String(weekTotal), { fontSize:"32px", fontWeight:"700", color:"var(--cornflower)", letterSpacing:"-1px", lineHeight:"1" });
-  const totalLbl = span("", "glasses this week (" + (GOAL*7) + " goal)", { fontSize:"12px", color:"var(--text2)" });
-  totalRow.appendChild(totalNum); totalRow.appendChild(totalLbl);
-  panel.appendChild(totalRow);
-
-  const grid = div("week-tracker");
-  DAYS.forEach((day, di) => {
-    const d = new Date(monday);
-    d.setDate(monday.getDate() + di);
-    const key = d.toISOString().slice(0,10);
-    const isPast = di < todayIdx;
-    const isToday = di === todayIdx;
-    const count = data[key] || 0;
-    const pct = Math.min(count / GOAL, 1);
-
-    const col = div("water-weekly-day" + (isToday ? " today" : "") + (isPast ? " past" : ""));
-    const label = div("week-tracker-day-label"); label.textContent = day;
-    const countEl = div("water-weekly-count"); countEl.textContent = count;
-    if (count >= GOAL) countEl.style.color = "#5bb8f5";
-    const goalEl = div("water-weekly-goal"); goalEl.textContent = "/ " + GOAL;
-
-    // + / - buttons
-    const btns = div("water-weekly-btns");
-    if (!isPast) {
-      const minus = el("button","water-weekly-btn"); minus.textContent = "\u2212";
-      minus.onclick = () => { const dd = getWaterWeekData(); dd[key] = Math.max(0, (dd[key]||0) - 1); saveWaterWeekData(dd); renderHydrationPage(); };
-      const plus = el("button","water-weekly-btn"); plus.textContent = "+";
-      plus.style.fontWeight = "700";
-      plus.onclick = () => { const dd = getWaterWeekData(); dd[key] = Math.min(GOAL, (dd[key]||0) + 1); saveWaterWeekData(dd); renderHydrationPage(); };
-      btns.appendChild(minus); btns.appendChild(plus);
-    }
-
-    const bar = div("water-weekly-bar");
-    const fill = div("water-weekly-bar-fill"); fill.style.width = (pct * 100) + "%";
-    bar.appendChild(fill);
-
-    col.appendChild(label); col.appendChild(countEl); col.appendChild(goalEl);
-    col.appendChild(btns); col.appendChild(bar);
-    grid.appendChild(col);
-  });
-  panel.appendChild(grid);
-  c.appendChild(panel);
-}
 
 function renderAll() {
   // Re-render the current page

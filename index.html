@@ -71,16 +71,35 @@
   ::-webkit-scrollbar-thumb{background:var(--lavender);border-radius:4px}
 
   /* ══ HOME SCREEN ══ */
-  .home-screen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 16px calc(24px + var(--safe-bottom)); }
-  .home-header { text-align:center; margin-bottom:40px; }
+  .home-screen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:24px; padding:24px 16px calc(24px + var(--safe-bottom)); }
+  .home-header { text-align:center; width:100%; max-width:720px; }
   .home-header h1 { font-family:'Outfit',sans-serif; font-size:clamp(26px,5vw,36px); font-weight:700; letter-spacing:-1px; }
   .home-date { font-size:14px; color:var(--text2); margin-top:8px; font-weight:400; }
-  .home-sync { font-size:11px; height:16px; margin-top:4px; transition:color .3s; }
+  .home-sync-row { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:6px; flex-wrap:wrap; }
+  .home-sync { font-size:11px; min-height:16px; transition:color .3s; }
+  .sync-btn, .home-sync-btn {
+    padding:7px 14px; border-radius:20px; border:1.5px solid var(--border-soft);
+    background:var(--bg-card); color:var(--text); font-size:11px; font-weight:600;
+    cursor:pointer; font-family:inherit; transition:all .15s; min-height:32px;
+    display:inline-flex; align-items:center; justify-content:center; white-space:nowrap;
+  }
+  .sync-btn:hover, .home-sync-btn:hover { border-color:var(--lavender); background:#CDB4DB22; }
+  .sync-btn:disabled, .home-sync-btn:disabled { opacity:.55; cursor:default; pointer-events:none; }
 
   .home-grid {
     display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
     max-width:420px; width:100%;
   }
+  .home-bottom { width:100%; max-width:720px; }
+  .home-bottom-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:16px; }
+  .home-bottom-head h2 { margin-bottom:4px; }
+  .home-bottom-link {
+    padding:7px 14px; border-radius:20px; border:1.5px solid var(--border-soft);
+    background:transparent; color:var(--text); font-size:11px; font-weight:600;
+    cursor:pointer; font-family:inherit; min-height:32px; white-space:nowrap;
+  }
+  .home-bottom-link:hover { border-color:var(--cornflower); background:#A2D2FF22; }
+  .home-preview-week { font-size:11px; color:var(--text2); }
   @media(max-width:400px){ .home-grid{gap:12px;} }
 
   .nav-tile {
@@ -128,6 +147,7 @@
   .back-btn:hover { border-color:var(--lavender); background:#CDB4DB22; }
   .back-btn svg { width:18px; height:18px; stroke:var(--text); }
   .page-title { font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; letter-spacing:-.5px; flex:1; }
+  .page-topbar-actions { display:flex; align-items:center; gap:8px; }
   .page-content { max-width:800px; margin:0 auto; }
 
   /* ══ THEME TOGGLE ══ */
@@ -320,6 +340,33 @@
     min-height:32px; padding:5px 10px; border-radius:20px; border:1.5px solid var(--border-soft);
     background:var(--bg-input); color:var(--text); font-size:11px; font-family:inherit; outline:none;
   }
+  .planner-help-dropdown {
+    margin-bottom:12px; border:1.5px solid var(--border-soft); border-radius:16px;
+    background:var(--bg-input); overflow:hidden;
+  }
+  .planner-help-summary {
+    list-style:none; cursor:pointer; padding:12px 16px; font-size:12px; font-weight:600;
+    display:flex; align-items:center; justify-content:space-between; gap:12px; color:var(--text);
+  }
+  .planner-help-summary::-webkit-details-marker { display:none; }
+  .planner-help-summary::after {
+    content:"▾"; font-size:12px; color:var(--text2); transition:transform .18s ease;
+  }
+  .planner-help-dropdown[open] .planner-help-summary::after { transform:rotate(180deg); }
+  .planner-help-body {
+    padding:0 16px 16px; border-top:1px solid var(--border-soft);
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .planner-help-note { font-size:11px; color:var(--text2); line-height:1.5; padding-top:12px; }
+  .planner-help-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; padding-top:12px; }
+  .planner-help-item {
+    display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:12px;
+    background:var(--bg-row);
+  }
+  .planner-help-swatch { width:14px; height:14px; border-radius:4px; flex-shrink:0; margin-top:2px; }
+  .planner-help-copy { display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .planner-help-copy strong { font-size:12px; color:var(--text); }
+  .planner-help-copy span { font-size:11px; color:var(--text2); line-height:1.45; }
 
   /* Block editor */
   #block-editor { position:fixed; z-index:2000; background:var(--bg-card); border-radius:14px; padding:16px; width:260px; box-shadow:0 8px 32px rgba(0,0,0,.15); display:none; flex-direction:column; gap:12px; font-size:13px; backdrop-filter:blur(12px); }
@@ -382,20 +429,47 @@
   .debt-total-row { display:flex; align-items:baseline; gap:8px; margin:8px 0 14px; }
   .debt-total-amt { font-size:32px; font-weight:600; letter-spacing:-1px; color:#c0516b; }
   .debt-total-lbl { font-size:12px; color:var(--text2); }
-  .debt-item-row { display:flex; align-items:center; gap:6px; padding:8px 12px; border-radius:10px; background:var(--bg-row); margin-bottom:6px; }
-  .debt-item-name { flex:1; font-size:13px; color:var(--text); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
+  .debt-card { padding:14px; border-radius:14px; background:var(--bg-row); margin-bottom:10px; border:1.5px solid transparent; }
+  .debt-card.logged { border-color:#CDFAA788; background:#CDFAA722; }
+  .debt-item-row { display:flex; align-items:flex-start; gap:10px; }
+  .debt-item-main { flex:1; min-width:0; }
+  .debt-item-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .debt-item-name { flex:1; font-size:14px; font-weight:600; color:var(--text); min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; }
   .debt-item-bal { font-size:13px; font-weight:500; cursor:pointer; padding:3px 7px; border-radius:6px; white-space:nowrap; color:var(--text); }
   .debt-item-bal:hover { background:#FFAFCC22; }
-  .debt-item-due { font-size:10px; color:var(--text2); white-space:nowrap; cursor:pointer; }
-  .debt-name-input,.debt-bal-input,.debt-due-input { padding:4px 8px; border-radius:6px; font-size:13px; font-family:inherit; background:var(--bg-input); outline:none; color:var(--text); }
+  .debt-item-meta { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .debt-item-due, .debt-meta-pill, .debt-status-pill {
+    display:inline-flex; align-items:center; gap:6px; min-height:28px; padding:5px 10px;
+    border-radius:999px; font-size:11px; cursor:pointer; border:1px solid var(--border-soft);
+    background:var(--bg-input); color:var(--text2);
+  }
+  .debt-status-pill { cursor:default; }
+  .debt-name-input,.debt-bal-input,.debt-due-input,.debt-pay-input,.debt-meta-input { padding:7px 10px; border-radius:10px; font-size:13px; font-family:inherit; background:var(--bg-input); outline:none; color:var(--text); }
   .debt-name-input { flex:1; border:1.5px solid var(--lavender); min-width:0; }
   .debt-bal-input { width:90px; text-align:right; border:1.5px solid #FFAFCC; }
-  .debt-due-input { width:100px; border:1.5px solid var(--skyBlue); font-size:12px; }
-  .debt-del-btn { border:none; background:transparent; cursor:pointer; color:var(--text2); font-size:16px; opacity:.3; padding:4px; }
+  .debt-due-input, .debt-meta-input { width:110px; border:1.5px solid var(--skyBlue); font-size:12px; }
+  .debt-del-btn { border:none; background:transparent; cursor:pointer; color:var(--text2); font-size:16px; opacity:.3; padding:4px; min-width:32px; min-height:32px; }
   .debt-del-btn:hover { opacity:.7; }
   .debt-add-btn { width:100%; padding:9px; border-radius:10px; border:1.5px dashed #FFAFCC88; background:transparent; color:var(--text2); font-size:13px; cursor:pointer; font-family:inherit; }
   .debt-next-pay { font-size:11px; color:var(--text2); padding:6px 10px; border-radius:8px; background:#FFC8DD22; border:1px solid #FFC8DD66; margin-bottom:10px; }
   .debt-empty { text-align:center; color:var(--text2); font-size:13px; padding:18px 10px; background:var(--bg-row); border-radius:12px; }
+  .debt-item-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; flex-wrap:wrap; }
+  .debt-pay-btn {
+    padding:8px 12px; border-radius:10px; border:none; background:var(--blushPink);
+    color:#2a2240; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .debt-pay-btn.secondary { background:transparent; border:1.5px solid var(--border-soft); color:var(--text2); font-weight:600; }
+  .debt-pay-form { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .debt-pay-input { min-width:120px; flex:1; border:1.5px solid #FFAFCC; }
+  .debt-history { display:flex; flex-direction:column; gap:6px; margin-top:12px; }
+  .debt-history-label { font-size:10px; font-weight:700; letter-spacing:1px; color:var(--text2); text-transform:uppercase; }
+  .debt-history-item {
+    display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px;
+    border-radius:10px; background:var(--bg-input); font-size:11px;
+  }
+  .debt-history-item span:last-child { color:var(--text2); white-space:nowrap; }
+  .debt-summary-line { font-size:11px; color:var(--text2); line-height:1.45; }
+  .debt-history-empty { font-size:11px; color:var(--text2); }
 
   /* ══ SPENDING ══ */
   .spend-cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-bottom:14px; }
@@ -604,9 +678,13 @@
   <div class="home-header">
     <h1>What's the Plan?</h1>
     <div class="home-date" id="today-date"></div>
-    <div class="home-sync" id="sync-status"></div>
+    <div class="home-sync-row">
+      <div class="home-sync" id="sync-status"></div>
+      <button class="home-sync-btn" id="home-sync-btn" type="button">Sync</button>
+    </div>
   </div>
   <div class="home-grid" id="home-grid"></div>
+  <div class="home-bottom" id="home-bottom"></div>
 </div>
 
 <!-- PAGE: Planner -->
@@ -783,12 +861,12 @@ const C = {
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 const CATEGORIES = [
-  { label: "Academic", bg: C.lavender  },
-  { label: "Work",     bg: C.skyBlue   },
-  { label: "Appointments", bg: C.appointment },
-  { label: "Other",    bg: C.mint      },
-  { label: "Social",   bg: C.yellow    },
-  { label: "Fitness",  bg: C.hotPink   },
+  { label: "Academic", bg: C.lavender,   colorName: "Lavender", description: "Classes, coursework, reading, and study blocks." },
+  { label: "Work",     bg: C.skyBlue,    colorName: "Sky blue", description: "Shifts, meetings, admin tasks, and job-related work." },
+  { label: "Appointments", bg: C.appointment, colorName: "Apricot", description: "Fixed commitments like medical visits, calls, or errands with a set time." },
+  { label: "Other",    bg: C.mint,       colorName: "Mint", description: "Catch-all space for chores, life admin, or anything that does not fit elsewhere." },
+  { label: "Social",   bg: C.yellow,     colorName: "Butter yellow", description: "Time with family, friends, events, and plans with other people." },
+  { label: "Fitness",  bg: C.hotPink,    colorName: "Pink", description: "Workouts, walks, recovery, and movement blocks." },
 ];
 
 const ROW_H      = 20;
@@ -806,11 +884,89 @@ function ls(key, fallback) {
 }
 function lsSave(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
 
+function toAmount(value) {
+  const num = parseFloat(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(num) ? num : 0;
+}
+
+function formatAmount(value, decimals = 2, trimTrailing = true) {
+  const num = Number(value) || 0;
+  const formatted = num.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+  if (!trimTrailing) return formatted;
+  return formatted.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+}
+
+function normalizeAmountInput(value) {
+  return formatAmount(toAmount(value));
+}
+
+function clampDueDay(value) {
+  const day = parseInt(value, 10);
+  if (!Number.isFinite(day)) return "";
+  return Math.max(1, Math.min(31, day));
+}
+
+function getMonthKey(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getMonthLabel(monthKey) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("en-US", { month: "short", year: "numeric" });
+}
+
+function getDueDateForMonth(monthKey, dueDay) {
+  if (!dueDay) return null;
+  const [year, month] = monthKey.split("-").map(Number);
+  const lastDay = new Date(year, month, 0).getDate();
+  return new Date(year, month - 1, Math.min(dueDay, lastDay));
+}
+
+function formatOrdinal(day) {
+  if (!day) return "Set monthly due day";
+  const mod10 = day % 10;
+  const mod100 = day % 100;
+  const suffix = mod10 === 1 && mod100 !== 11 ? "st"
+    : mod10 === 2 && mod100 !== 12 ? "nd"
+    : mod10 === 3 && mod100 !== 13 ? "rd"
+    : "th";
+  return `${day}${suffix}`;
+}
+
+function normalizeDebtPayment(entry) {
+  const paidAt = entry?.paidAt || new Date().toISOString();
+  return {
+    monthKey: entry?.monthKey || getMonthKey(new Date(paidAt)),
+    amount: normalizeAmountInput(entry?.amount ?? 0),
+    paidAt,
+  };
+}
+
+function normalizeDebtItem(item) {
+  const dueDay = clampDueDay(item?.dueDay ?? (item?.dueDate ? new Date(`${item.dueDate}T00:00:00`).getDate() : ""));
+  const paymentHistory = Array.isArray(item?.paymentHistory)
+    ? item.paymentHistory.map(normalizeDebtPayment).sort((a, b) => b.monthKey.localeCompare(a.monthKey))
+    : [];
+
+  return {
+    id: item?.id ?? Date.now() + Math.random(),
+    name: item?.name || "New debt",
+    balance: normalizeAmountInput(item?.balance ?? 0),
+    dueDay,
+    monthlyPayment: normalizeAmountInput(item?.monthlyPayment ?? item?.payment ?? 0),
+    paymentHistory,
+  };
+}
+
 // ─── Supabase sync helpers ────────────────────────────────────────────────────
 
 let _userId = null;
 let _syncDebounce = {};
 let _cloudChannel = null;
+let _manualSyncPromise = null;
 
 // Write to Supabase with debounce (300ms) to avoid hammering on rapid edits
 function syncToCloud(table, payload) {
@@ -909,6 +1065,41 @@ function showSyncStatus(status) {
   }
 }
 
+function setSyncButtonsBusy(isBusy) {
+  document.querySelectorAll(".sync-btn, .home-sync-btn").forEach(btn => {
+    btn.disabled = isBusy;
+    btn.textContent = isBusy ? "Syncing..." : "Sync";
+  });
+}
+
+async function manualSyncNow() {
+  if (!_userId) {
+    showSyncStatus("offline");
+    return;
+  }
+  if (_manualSyncPromise) return _manualSyncPromise;
+
+  setSyncButtonsBusy(true);
+  showSyncStatus("saving");
+  _manualSyncPromise = (async () => {
+    try {
+      await loadCloudData(_userId);
+      renderAll();
+      updateBrainDumpBadge();
+      if (document.getElementById("brain-dump-overlay")?.classList.contains("open")) renderBrainDumpList();
+      showSyncStatus("saved");
+    } catch (e) {
+      console.warn("[manual sync] failed:", e);
+      showSyncStatus("error");
+    } finally {
+      setSyncButtonsBusy(false);
+      _manualSyncPromise = null;
+    }
+  })();
+
+  return _manualSyncPromise;
+}
+
 function teardownCloudSubscriptions() {
   if (!_cloudChannel) return;
   supa.removeChannel(_cloudChannel);
@@ -931,7 +1122,7 @@ function handleCloudChange(table, row) {
       if (!row.week_key) return;
       S.notesByWeek[row.week_key] = row.notes || [];
       lsSave("mc-notesByWeek", S.notesByWeek);
-      if (currentPage === "notes") renderNotesPage();
+      if (currentPage === "notes" || currentPage === "home") renderAll();
       break;
     case "priorities":
       S.priorities = Array.isArray(row.items) ? row.items : [];
@@ -945,6 +1136,11 @@ function handleCloudChange(table, row) {
         if (currentPage === "financials") renderFinancialsPage();
       }
       break;
+    case "debts":
+      S.debts = Array.isArray(row.items) ? row.items.map(normalizeDebtItem) : [];
+      lsSave("mc-debts", S.debts);
+      if (currentPage === "financials") renderFinancialsPage();
+      break;
     case "morning_todos":
       lsSave("mc-morning-todos", Array.isArray(row.items) ? row.items : []);
       if (currentPage === "morning") renderMorningPage();
@@ -953,11 +1149,40 @@ function handleCloudChange(table, row) {
       lsSave("mc-evening-todos", Array.isArray(row.items) ? row.items : []);
       if (currentPage === "evening") renderEveningPage();
       break;
+    case "habits":
+      lsSave("mc-habits", row.data && typeof row.data === "object" ? row.data : {});
+      if (["morning", "evening", "medication", "hydration"].includes(currentPage)) renderPage(currentPage);
+      break;
+    case "spending":
+      if (Array.isArray(row.log)) {
+        S.spendingLog = row.log;
+        lsSave("mc-spending", S.spendingLog);
+      }
+      if (Array.isArray(row.accounts)) {
+        S.spendAccounts = row.accounts;
+        lsSave("mc-spend-accounts", S.spendAccounts);
+      }
+      if (currentPage === "financials") renderFinancialsPage();
+      break;
+    case "brain_dump":
+      S.brainDump = Array.isArray(row.items) ? row.items : [];
+      lsSave("mc-brainDump", S.brainDump);
+      updateBrainDumpBadge();
+      if (document.getElementById("brain-dump-overlay")?.classList.contains("open")) renderBrainDumpList();
+      break;
+    case "med_week":
+      lsSave("mc-med-week", row.data && typeof row.data === "object" ? row.data : {});
+      if (currentPage === "medication") renderMedicationPage();
+      break;
+    case "water_week":
+      lsSave("mc-water-week", row.data && typeof row.data === "object" ? row.data : {});
+      if (currentPage === "hydration") renderHydrationPage();
+      break;
     case "settings":
       if (row.data && typeof row.data === "object") {
         S.settings = { ...S.settings, ...row.data };
         lsSave("mc-settings", S.settings);
-        if (currentPage === "planner") rerenderSchedulerOnly();
+        if (currentPage === "planner") renderPlannerPage();
       }
       break;
   }
@@ -971,8 +1196,14 @@ function subscribeToCloud(userId) {
     "notes_by_week",
     "priorities",
     "financials",
+    "debts",
     "morning_todos",
     "evening_todos",
+    "habits",
+    "spending",
+    "brain_dump",
+    "med_week",
+    "water_week",
     "settings",
   ];
 
@@ -1100,7 +1331,7 @@ const DEFAULT_FIN_SECTIONS = [
 const rawBlocksByWeek = ls("mc-blocksByWeek", {});
 
 const S = {
-  settings:      { startHour:4, endHour:23, stepMinutes:30, showLabels:true, ...ls("mc-settings", {}) },
+  settings:      { startHour:4, endHour:23, stepMinutes:30, showLabels:true, plannerFocusMode:true, ...ls("mc-settings", {}) },
   blocksByWeek:  pruneOldWeeks(rawBlocksByWeek),
   weekOffset:    0,
   priorities:    ls("mc-priorities", [
@@ -1142,6 +1373,8 @@ const S = {
 
 // Save pruned blocks back immediately
 lsSave("mc-blocksByWeek", S.blocksByWeek);
+S.debts = S.debts.map(normalizeDebtItem);
+lsSave("mc-debts", S.debts);
 
 // ─── Migration: old mc-blocks → blocksByWeek (runs once, local only) ─────────
 
@@ -1293,7 +1526,7 @@ async function loadCloudData(userId) {
     const { data: debtRow } = await supa.from("debts")
       .select("items").eq("user_id", userId).maybeSingle();
     if (debtRow?.items?.length > 0) {
-      S.debts = debtRow.items;
+      S.debts = debtRow.items.map(normalizeDebtItem);
       lsSave("mc-debts", S.debts);
     } else if (S.debts.length > 0) {
       syncToCloud("debts", { items: S.debts });
@@ -1472,6 +1705,25 @@ function getCategoryConfig(label) {
   return CATEGORIES.find(cat => cat.label === label) || CATEGORIES[0];
 }
 
+function saveSettings() {
+  lsSave("mc-settings", S.settings);
+  syncToCloud("settings", { data: S.settings });
+}
+
+function ensureSyncButtons() {
+  document.getElementById("home-sync-btn")?.addEventListener("click", manualSyncNow);
+  document.querySelectorAll(".page-topbar").forEach(bar => {
+    if (bar.querySelector(".sync-btn")) return;
+    const actions = div("page-topbar-actions");
+    const syncBtn = el("button", "sync-btn");
+    syncBtn.type = "button";
+    syncBtn.textContent = "Sync";
+    syncBtn.onclick = manualSyncNow;
+    actions.appendChild(syncBtn);
+    bar.appendChild(actions);
+  });
+}
+
 // ─── Time Block Import Parser ─────────────────────────────────────────────────
 
 function parseTimeStr(t) {
@@ -1648,6 +1900,41 @@ function isPastDay(dayIndex) {
   return dayIndex < todayIdx;
 }
 
+function buildPlannerHelpDropdown() {
+  const details = document.createElement("details");
+  details.className = "planner-help-dropdown";
+
+  const summary = document.createElement("summary");
+  summary.className = "planner-help-summary";
+  summary.textContent = "Planner Color Guide";
+  details.appendChild(summary);
+
+  const body = div("planner-help-body");
+  const grid = div("planner-help-grid");
+  CATEGORIES.forEach(cat => {
+    const item = div("planner-help-item");
+    const swatch = div("planner-help-swatch", { background: cat.bg });
+    const copy = div("planner-help-copy");
+    const title = document.createElement("strong");
+    title.textContent = `${cat.label} · ${cat.colorName}`;
+    const desc = document.createElement("span");
+    desc.textContent = cat.description;
+    copy.appendChild(title);
+    copy.appendChild(desc);
+    item.appendChild(swatch);
+    item.appendChild(copy);
+    grid.appendChild(item);
+  });
+  body.appendChild(grid);
+
+  const note = div("planner-help-note");
+  note.textContent = "Use these categories as a guide so the planner stays easy to scan. If a block fits better somewhere else, use the label that helps you think fastest.";
+  body.appendChild(note);
+
+  details.appendChild(body);
+  return details;
+}
+
 // ─── Panel: Weekly Time Map ────────────────────────────────────────────────────
 
 function buildCatHoursPills(container) {
@@ -1677,6 +1964,7 @@ function buildScheduler() {
   const panel = div("panel panel-full sched-panel");
   panel.appendChild(div("panel-accent", { background: C.lavender }));
   const viewedWeekKey = getWeekKey(S.weekOffset);
+  const focusMode = !!S.settings.plannerFocusMode;
 
   // Print-only title bar
   const ptb = div("print-title-bar");
@@ -1690,6 +1978,7 @@ function buildScheduler() {
   const hdrLeft = div("", { marginBottom:"0" });
   const h2 = document.createElement("h2"); h2.textContent = "Weekly Time Map";
   const subP = div("sub", { marginBottom:"0" }); subP.textContent = "Drag to create a block \u00b7 Tap a block to edit";
+  if (focusMode) subP.textContent = "Focused planner view \u00b7 Open the color guide if you need a category reminder";
   hdrLeft.appendChild(h2); hdrLeft.appendChild(subP);
 
   const hdrRight = div("", { display:"flex", flexDirection:"column", alignItems:"flex-end", gap:"6px" });
@@ -1718,25 +2007,24 @@ function buildScheduler() {
   // Controls row
   const ctrl = div("sched-controls");
 
+  const focusBtn = el("button", "pill-btn" + (focusMode ? " active" : ""));
+  focusBtn.textContent = focusMode ? "Show extras" : "Planner only";
+  focusBtn.onclick = () => {
+    S.settings.plannerFocusMode = !S.settings.plannerFocusMode;
+    saveSettings();
+    renderPlannerPage();
+  };
+  ctrl.appendChild(focusBtn);
+
   const labelsBtn = el("button", "pill-btn" + (S.settings.showLabels ? " active" : ""));
   labelsBtn.textContent = `Labels ${S.settings.showLabels ? "on" : "off"}`;
-  labelsBtn.onclick = () => { S.settings.showLabels = !S.settings.showLabels; lsSave("mc-settings", S.settings); syncToCloud("settings",{data:S.settings}); rerenderSchedulerOnly(); };
-  ctrl.appendChild(labelsBtn);
+  labelsBtn.onclick = () => { S.settings.showLabels = !S.settings.showLabels; saveSettings(); rerenderSchedulerOnly(); };
 
   const stepBtn = el("button", "pill-btn" + (S.settings.stepMinutes === 15 ? " active" : ""));
   stepBtn.textContent = `${S.settings.stepMinutes}m`;
-  stepBtn.onclick = () => { S.settings.stepMinutes = S.settings.stepMinutes === 30 ? 15 : 30; lsSave("mc-settings", S.settings); syncToCloud("settings",{data:S.settings}); rerenderSchedulerOnly(); };
-  ctrl.appendChild(stepBtn);
-
-  CATEGORIES.forEach(cat => {
-    const item = div("legend-item");
-    item.appendChild(div("legend-dot", { background: cat.bg }));
-    item.appendChild(span("", cat.label));
-    ctrl.appendChild(item);
-  });
+  stepBtn.onclick = () => { S.settings.stepMinutes = S.settings.stepMinutes === 30 ? 15 : 30; saveSettings(); rerenderSchedulerOnly(); };
 
   const exportBtn = el("button", "export-pdf-btn"); exportBtn.textContent = "Export PDF"; exportBtn.onclick = exportToPDF;
-  ctrl.appendChild(exportBtn);
 
   // Import Time Blocks toggle
   const importToggle = el("button", "shift-import-toggle"); importToggle.id = "shift-import-toggle";
@@ -1747,7 +2035,6 @@ function buildScheduler() {
     importToggle.classList.toggle("open", open);
     if (open) setTimeout(() => document.getElementById("shift-import-ta")?.focus(), 60);
   };
-  ctrl.appendChild(importToggle);
 
   // Copy prev week button
   const prevWeekKey   = getWeekKey(S.weekOffset - 1);
@@ -1758,16 +2045,25 @@ function buildScheduler() {
   copyBtn.disabled = !prevHasBlocks;
   copyBtn.title = prevHasBlocks ? `Copy all blocks from ${getWeekLabel(prevWeekKey)}` : "No blocks in the previous week";
   copyBtn.onclick = copyFromPrevWeek;
-  ctrl.appendChild(copyBtn);
+  if (!focusMode) {
+    ctrl.appendChild(labelsBtn);
+    ctrl.appendChild(stepBtn);
+    ctrl.appendChild(copyBtn);
+    ctrl.appendChild(exportBtn);
+    ctrl.appendChild(importToggle);
+  }
 
   hdrRight.appendChild(weekNavRow); hdrRight.appendChild(ctrl);
   hdr.appendChild(hdrLeft); hdr.appendChild(hdrRight);
   panel.appendChild(hdr);
+  panel.appendChild(buildPlannerHelpDropdown());
 
   // Cat hours
-  const catHoursRow = div("cat-hours-row"); catHoursRow.id = "sched-cat-hours";
-  buildCatHoursPills(catHoursRow);
-  panel.appendChild(catHoursRow);
+  if (!focusMode) {
+    const catHoursRow = div("cat-hours-row"); catHoursRow.id = "sched-cat-hours";
+    buildCatHoursPills(catHoursRow);
+    panel.appendChild(catHoursRow);
+  }
 
   // ── Time Block Import Panel ──
   const importPanel = div("shift-import-panel"); importPanel.id = "shift-import-panel";
@@ -1818,10 +2114,11 @@ function buildScheduler() {
   importRow.appendChild(importBtn); importRow.appendChild(importMsg);
   importPanel.appendChild(importLbl); importPanel.appendChild(importEx);
   importPanel.appendChild(importTa); importPanel.appendChild(importMeta); importPanel.appendChild(importRow);
-  panel.appendChild(importPanel);
+  if (!focusMode) panel.appendChild(importPanel);
 
   // Scroll container
   const scrl = div("sched-scroll"); scrl.id = "sched-scroll";
+  scrl.style.maxHeight = focusMode ? "calc(100vh - 220px)" : "calc(100vh - 300px)";
   const inner = div("sched-inner");
 
   // Time-labels column
@@ -2011,10 +2308,22 @@ function rerenderSchedulerOnly() {
     });
   }
 
-  const labelsBtn = document.querySelector(".sched-controls .pill-btn:first-child");
-  const stepBtn   = document.querySelector(".sched-controls .pill-btn:nth-child(2)");
-  if (labelsBtn) { labelsBtn.textContent = `Labels ${S.settings.showLabels ? "on" : "off"}`; labelsBtn.className = "pill-btn" + (S.settings.showLabels ? " active" : ""); }
-  if (stepBtn)   { stepBtn.textContent   = `${S.settings.stepMinutes}m`; stepBtn.className = "pill-btn" + (S.settings.stepMinutes === 15 ? " active" : ""); }
+  const pillBtns = Array.from(document.querySelectorAll(".sched-controls .pill-btn"));
+  const focusBtn = pillBtns.find(b => b.textContent === "Show extras" || b.textContent === "Planner only");
+  const labelsBtn = pillBtns.find(b => b.textContent.startsWith("Labels"));
+  const stepBtn = pillBtns.find(b => /^\d+m$/.test(b.textContent));
+  if (focusBtn) {
+    focusBtn.textContent = S.settings.plannerFocusMode ? "Show extras" : "Planner only";
+    focusBtn.className = "pill-btn" + (S.settings.plannerFocusMode ? " active" : "");
+  }
+  if (labelsBtn) {
+    labelsBtn.textContent = `Labels ${S.settings.showLabels ? "on" : "off"}`;
+    labelsBtn.className = "pill-btn" + (S.settings.showLabels ? " active" : "");
+  }
+  if (stepBtn) {
+    stepBtn.textContent = `${S.settings.stepMinutes}m`;
+    stepBtn.className = "pill-btn" + (S.settings.stepMinutes === 15 ? " active" : "");
+  }
 
   // Update copy-prev-week button state
   const cb = document.getElementById("copy-week-btn");
@@ -2068,7 +2377,7 @@ function exportToPDF() {
 
       .week-nav-btn, .week-jump-input, .export-pdf-btn, .copy-week-btn,
       .pill-btn, .legend-item, .shift-import-toggle,
-      .shift-import-panel, .current-time-line,
+      .shift-import-panel, .planner-help-dropdown, .current-time-line,
       .resize-handle, .panel-accent, .sched-header > div:last-child > div:last-child
         { display: none !important; }
 
@@ -2616,7 +2925,11 @@ const STICKY_COLORS = [
 ];
 
 function getCurrentNotes() {
-  return S.notesByWeek[getWeekKey(S.weekOffset)] || [];
+  return getNotesForWeek(getWeekKey(S.weekOffset));
+}
+
+function getNotesForWeek(weekKey) {
+  return S.notesByWeek[weekKey] || [];
 }
 
 function saveCurrentNotes(notes) {
@@ -3159,33 +3472,111 @@ updateBrainDumpBadge();
 
 // ─── Panel: Debt Remaining ────────────────────────────────────────────────────
 
+const debtPaymentUi = { openId: null, amount: "" };
+
+function saveDebtState() {
+  S.debts = S.debts.map(normalizeDebtItem);
+  lsSave("mc-debts", S.debts);
+  syncDebtsToCloud();
+}
+
+function getDebtPaymentForMonth(debt, monthKey = getMonthKey()) {
+  return (debt.paymentHistory || []).find(entry => entry.monthKey === monthKey) || null;
+}
+
+function getDebtDueMeta(debt, baseDate = new Date()) {
+  const dueDay = clampDueDay(debt.dueDay);
+  if (!dueDay) return null;
+
+  const today = new Date(baseDate);
+  today.setHours(0, 0, 0, 0);
+
+  const currentMonthKey = getMonthKey(today);
+  const dueThisMonth = getDueDateForMonth(currentMonthKey, dueDay);
+  if (!dueThisMonth) return null;
+  dueThisMonth.setHours(0, 0, 0, 0);
+
+  const paidThisMonth = getDebtPaymentForMonth(debt, currentMonthKey);
+  if (paidThisMonth) {
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const nextDue = getDueDateForMonth(getMonthKey(nextMonth), dueDay);
+    nextDue.setHours(0, 0, 0, 0);
+    const diff = Math.round((nextDue - today) / 86400000);
+    return { tone: "paid", label: `Paid · next in ${diff}d`, date: nextDue };
+  }
+
+  const diff = Math.round((dueThisMonth - today) / 86400000);
+  if (diff < 0) return { tone: "overdue", label: `${Math.abs(diff)}d overdue`, date: dueThisMonth };
+  if (diff === 0) return { tone: "due", label: "Due today", date: dueThisMonth };
+  return { tone: "upcoming", label: `Due in ${diff}d`, date: dueThisMonth };
+}
+
+function openDebtPaymentForm(debt) {
+  debtPaymentUi.openId = debt.id;
+  debtPaymentUi.amount = getDebtPaymentForMonth(debt)?.amount || debt.monthlyPayment || "";
+}
+
+function closeDebtPaymentForm() {
+  debtPaymentUi.openId = null;
+  debtPaymentUi.amount = "";
+}
+
+function upsertDebtPayment(debt, amountValue) {
+  const amount = toAmount(amountValue);
+  if (amount <= 0) return false;
+
+  const monthKey = getMonthKey();
+  const currentEntry = getDebtPaymentForMonth(debt, monthKey);
+  const previousAmount = currentEntry ? toAmount(currentEntry.amount) : 0;
+  const delta = amount - previousAmount;
+
+  debt.balance = formatAmount(Math.max(0, toAmount(debt.balance) - delta));
+  debt.paymentHistory = [
+    {
+      monthKey,
+      amount: normalizeAmountInput(amount),
+      paidAt: new Date().toISOString(),
+    },
+    ...(debt.paymentHistory || []).filter(entry => entry.monthKey !== monthKey),
+  ].sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+
+  saveDebtState();
+  return true;
+}
+
+function clearDebtPayment(debt) {
+  const monthKey = getMonthKey();
+  const currentEntry = getDebtPaymentForMonth(debt, monthKey);
+  if (!currentEntry) return;
+
+  debt.balance = formatAmount(toAmount(debt.balance) + toAmount(currentEntry.amount));
+  debt.paymentHistory = (debt.paymentHistory || []).filter(entry => entry.monthKey !== monthKey);
+  saveDebtState();
+}
+
 function buildDebtPanel() {
   const panel = div("panel"); panel.id = "debt-panel";
   panel.appendChild(div("panel-accent", { background: C.blushPink }));
   const h2 = document.createElement("h2"); h2.textContent = "Debt Remaining"; panel.appendChild(h2);
-  const sub = div("sub"); sub.textContent = "Click name or balance to edit · Track balances & due dates"; panel.appendChild(sub);
+  const sub = div("sub"); sub.textContent = "Track monthly due days, log each payment, and let the balance update automatically"; panel.appendChild(sub);
 
-  const total = S.debts.reduce((s, d) => s + (parseFloat(String(d.balance).replace(/,/g,"")) || 0), 0);
+  const total = S.debts.reduce((s, d) => s + toAmount(d.balance), 0);
 
   // ── Total display ──
   const totalRow = div("debt-total-row");
-  totalRow.appendChild(span("debt-total-amt", "$" + total.toLocaleString("en-US", { minimumFractionDigits:0, maximumFractionDigits:0 })));
+  totalRow.appendChild(span("debt-total-amt", "$" + formatAmount(total, 0, true)));
   totalRow.appendChild(span("debt-total-lbl", "total remaining"));
   panel.appendChild(totalRow);
 
   // ── Next upcoming payment ──
-  const today = new Date(); today.setHours(0,0,0,0);
   const withDue = S.debts
-    .filter(d => d.dueDate)
-    .map(d => { const dt = new Date(d.dueDate + "T00:00:00"); return { ...d, _dt: dt }; })
-    .filter(d => !isNaN(d._dt))
-    .sort((a,b) => a._dt - b._dt);
+    .map(debt => ({ debt, meta: getDebtDueMeta(debt) }))
+    .filter(entry => entry.meta?.date)
+    .sort((a, b) => a.meta.date - b.meta.date);
   if (withDue.length > 0) {
     const next = withDue[0];
-    const diff = Math.round((next._dt - today) / 86400000);
-    const label = diff < 0 ? `${Math.abs(diff)}d overdue` : diff === 0 ? "due today" : `due in ${diff}d`;
     const hint = div("debt-next-pay");
-    hint.innerHTML = `Next payment: <strong>${next.name}</strong> &mdash; ${label}`;
+    hint.innerHTML = `Next payment: <strong>${next.debt.name}</strong> &mdash; ${next.meta.label.toLowerCase()}`;
     panel.appendChild(hint);
   }
 
@@ -3196,66 +3587,206 @@ function buildDebtPanel() {
 
   // ── Debt items ──
   S.debts.forEach(d => {
+    const monthKey = getMonthKey();
+    const monthLabel = getMonthLabel(monthKey);
+    const currentPayment = getDebtPaymentForMonth(d, monthKey);
+    const dueMeta = getDebtDueMeta(d);
+    const statusTone = dueMeta?.tone || "upcoming";
+    const statusStyles = {
+      paid: { background: "#CDFAA733", borderColor: "#CDFAA788", color: "#3a7a55" },
+      overdue: { background: "#FFAFCC33", borderColor: "#FFAFCC88", color: "#c0516b" },
+      due: { background: "#FDEF8133", borderColor: "#FDEF8188", color: "#8a6a00" },
+      upcoming: { background: "#BDE0FE33", borderColor: "#BDE0FE88", color: "#4c6f9c" },
+    };
+
+    const card = div("debt-card" + (currentPayment ? " logged" : ""));
     const row = div("debt-item-row");
+    const main = div("debt-item-main");
+    const head = div("debt-item-head");
 
-    // Name field (editable inline)
     if (S.editingDebt === d.id + "-name") {
-      const inp = el("input","debt-name-input"); inp.value = d.name;
-      inp.onblur = ev => { d.name=ev.target.value||d.name; S.editingDebt=null; lsSave("mc-debts",S.debts); syncDebtsToCloud(); renderAll(); };
+      const inp = el("input", "debt-name-input");
+      inp.value = d.name;
+      inp.onblur = ev => { d.name = ev.target.value || d.name; S.editingDebt = null; saveDebtState(); renderAll(); };
       inp.onkeydown = ev => {
-        if(ev.key==="Enter"||ev.key==="Tab"){d.name=ev.target.value||d.name;S.editingDebt=null;lsSave("mc-debts",S.debts);syncDebtsToCloud();renderAll();}
-        if(ev.key==="Escape"){S.editingDebt=null;renderAll();}
+        if (ev.key === "Enter" || ev.key === "Tab") { d.name = ev.target.value || d.name; S.editingDebt = null; saveDebtState(); renderAll(); }
+        if (ev.key === "Escape") { S.editingDebt = null; renderAll(); }
       };
-      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
+      head.appendChild(inp);
+      setTimeout(() => inp.focus(), 0);
     } else {
-      const nm = span("debt-item-name", d.name||"Unnamed debt"); nm.title="Click to edit name";
-      nm.onclick=()=>{S.editingDebt=d.id+"-name"; renderAll();}; row.appendChild(nm);
+      const nm = span("debt-item-name", d.name || "Unnamed debt");
+      nm.title = "Click to edit name";
+      nm.onclick = () => { S.editingDebt = d.id + "-name"; renderAll(); };
+      head.appendChild(nm);
     }
 
-    // Due date (editable inline)
-    if (S.editingDebt === d.id + "-due") {
-      const inp = el("input","debt-due-input"); inp.type="date"; inp.value=d.dueDate||"";
-      inp.onblur = ev => { d.dueDate=ev.target.value; S.editingDebt=null; lsSave("mc-debts",S.debts); syncDebtsToCloud(); renderAll(); };
-      inp.onkeydown = ev => {
-        if(ev.key==="Enter"){d.dueDate=ev.target.value;S.editingDebt=null;lsSave("mc-debts",S.debts);syncDebtsToCloud();renderAll();}
-        if(ev.key==="Escape"){S.editingDebt=null;renderAll();}
-      };
-      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
-    } else {
-      let dueStr = "set due date";
-      if (d.dueDate) {
-        const dt = new Date(d.dueDate + "T00:00:00");
-        if (!isNaN(dt)) {
-          const diff = Math.round((dt - today) / 86400000);
-          dueStr = diff < 0 ? `${Math.abs(diff)}d overdue` : diff === 0 ? "due today" : `in ${diff}d`;
-        }
-      }
-      const dueEl = span("debt-item-due", dueStr); dueEl.style.cursor="pointer"; dueEl.title="Click to set due date";
-      dueEl.onclick=()=>{S.editingDebt=d.id+"-due"; renderAll();}; row.appendChild(dueEl);
-    }
-
-    // Balance (editable inline)
     if (S.editingDebt === d.id + "-bal") {
-      const inp = el("input","debt-bal-input"); inp.value=d.balance;
-      inp.onblur = ev => { d.balance=ev.target.value; S.editingDebt=null; lsSave("mc-debts",S.debts); syncDebtsToCloud(); renderAll(); };
+      const inp = el("input", "debt-bal-input");
+      inp.type = "number";
+      inp.step = "0.01";
+      inp.value = toAmount(d.balance) || 0;
+      inp.onblur = ev => { d.balance = normalizeAmountInput(ev.target.value); S.editingDebt = null; saveDebtState(); renderAll(); };
       inp.onkeydown = ev => {
-        if(ev.key==="Enter"){d.balance=ev.target.value;S.editingDebt=null;lsSave("mc-debts",S.debts);syncDebtsToCloud();renderAll();}
-        if(ev.key==="Escape"){S.editingDebt=null;renderAll();}
+        if (ev.key === "Enter") { d.balance = normalizeAmountInput(ev.target.value); S.editingDebt = null; saveDebtState(); renderAll(); }
+        if (ev.key === "Escape") { S.editingDebt = null; renderAll(); }
       };
-      row.appendChild(inp); setTimeout(()=>inp.focus(),0);
+      head.appendChild(inp);
+      setTimeout(() => inp.focus(), 0);
     } else {
-      const bal = span("debt-item-bal","$"+d.balance);
-      bal.onclick=()=>{S.editingDebt=d.id+"-bal"; renderAll();}; row.appendChild(bal);
+      const bal = span("debt-item-bal", "$" + d.balance);
+      bal.title = "Click to edit balance";
+      bal.onclick = () => { S.editingDebt = d.id + "-bal"; renderAll(); };
+      head.appendChild(bal);
     }
 
-    const del = el("button","debt-del-btn"); del.textContent="\u00d7"; del.title="Remove";
-    del.onclick=()=>{S.debts=S.debts.filter(x=>x.id!==d.id);lsSave("mc-debts",S.debts);syncDebtsToCloud();renderAll();};
-    row.appendChild(del); panel.appendChild(row);
+    main.appendChild(head);
+
+    const summary = div("debt-summary-line");
+    summary.textContent = currentPayment
+      ? `${monthLabel} payment logged for $${currentPayment.amount}. Saved ${new Date(currentPayment.paidAt).toLocaleDateString("en-US", { month:"short", day:"numeric" })}.`
+      : `No payment logged for ${monthLabel} yet.`;
+    main.appendChild(summary);
+
+    const meta = div("debt-item-meta");
+
+    if (S.editingDebt === d.id + "-dueDay") {
+      const inp = el("input", "debt-meta-input");
+      inp.type = "number";
+      inp.min = "1";
+      inp.max = "31";
+      inp.value = d.dueDay || "";
+      inp.onblur = ev => { d.dueDay = clampDueDay(ev.target.value); S.editingDebt = null; saveDebtState(); renderAll(); };
+      inp.onkeydown = ev => {
+        if (ev.key === "Enter") { d.dueDay = clampDueDay(ev.target.value); S.editingDebt = null; saveDebtState(); renderAll(); }
+        if (ev.key === "Escape") { S.editingDebt = null; renderAll(); }
+      };
+      meta.appendChild(inp);
+      setTimeout(() => inp.focus(), 0);
+    } else {
+      const duePill = span("debt-meta-pill", `Due day: ${d.dueDay ? formatOrdinal(d.dueDay) : "set"}`);
+      duePill.title = "Click to set monthly due day";
+      duePill.onclick = () => { S.editingDebt = d.id + "-dueDay"; renderAll(); };
+      meta.appendChild(duePill);
+    }
+
+    if (S.editingDebt === d.id + "-monthlyPayment") {
+      const inp = el("input", "debt-meta-input");
+      inp.type = "number";
+      inp.step = "0.01";
+      inp.value = toAmount(d.monthlyPayment) || 0;
+      inp.onblur = ev => { d.monthlyPayment = normalizeAmountInput(ev.target.value); S.editingDebt = null; saveDebtState(); renderAll(); };
+      inp.onkeydown = ev => {
+        if (ev.key === "Enter") { d.monthlyPayment = normalizeAmountInput(ev.target.value); S.editingDebt = null; saveDebtState(); renderAll(); }
+        if (ev.key === "Escape") { S.editingDebt = null; renderAll(); }
+      };
+      meta.appendChild(inp);
+      setTimeout(() => inp.focus(), 0);
+    } else {
+      const paymentPill = span("debt-meta-pill", `Monthly payment: $${d.monthlyPayment}`);
+      paymentPill.title = "Click to edit monthly payment";
+      paymentPill.onclick = () => { S.editingDebt = d.id + "-monthlyPayment"; renderAll(); };
+      meta.appendChild(paymentPill);
+    }
+
+    const statusPill = span("debt-status-pill", dueMeta?.label || "Set a due day");
+    Object.assign(statusPill.style, statusStyles[statusTone] || statusStyles.upcoming);
+    meta.appendChild(statusPill);
+    main.appendChild(meta);
+
+    const actions = div("debt-item-actions");
+    const payBtn = el("button", "debt-pay-btn");
+    payBtn.textContent = currentPayment ? `Edit ${new Date().toLocaleDateString("en-US", { month:"short" })} payment` : `Log ${new Date().toLocaleDateString("en-US", { month:"short" })} payment`;
+    payBtn.onclick = () => {
+      if (debtPaymentUi.openId === d.id) closeDebtPaymentForm();
+      else openDebtPaymentForm(d);
+      renderAll();
+    };
+    actions.appendChild(payBtn);
+
+    if (currentPayment) {
+      const clearBtn = el("button", "debt-pay-btn secondary");
+      clearBtn.textContent = "Undo this month";
+      clearBtn.onclick = () => {
+        clearDebtPayment(d);
+        closeDebtPaymentForm();
+        renderAll();
+      };
+      actions.appendChild(clearBtn);
+    }
+
+    const del = el("button", "debt-del-btn");
+    del.textContent = "\u00d7";
+    del.title = "Remove";
+    del.onclick = () => {
+      S.debts = S.debts.filter(x => x.id !== d.id);
+      closeDebtPaymentForm();
+      saveDebtState();
+      renderAll();
+    };
+    actions.appendChild(del);
+    main.appendChild(actions);
+
+    if (debtPaymentUi.openId === d.id) {
+      const payForm = div("debt-pay-form");
+      const payInput = el("input", "debt-pay-input");
+      payInput.type = "number";
+      payInput.step = "0.01";
+      payInput.placeholder = d.monthlyPayment ? `Default $${d.monthlyPayment}` : "Payment amount";
+      payInput.value = debtPaymentUi.amount;
+      payInput.oninput = ev => { debtPaymentUi.amount = ev.target.value; };
+      payInput.onkeydown = ev => {
+        if (ev.key === "Enter" && upsertDebtPayment(d, debtPaymentUi.amount)) {
+          closeDebtPaymentForm();
+          renderAll();
+        }
+      };
+
+      const saveBtn = el("button", "debt-pay-btn");
+      saveBtn.textContent = currentPayment ? "Update payment" : "Save payment";
+      saveBtn.onclick = () => {
+        if (!upsertDebtPayment(d, debtPaymentUi.amount)) return;
+        closeDebtPaymentForm();
+        renderAll();
+      };
+
+      const cancelBtn = el("button", "debt-pay-btn secondary");
+      cancelBtn.textContent = "Cancel";
+      cancelBtn.onclick = () => {
+        closeDebtPaymentForm();
+        renderAll();
+      };
+
+      payForm.appendChild(payInput);
+      payForm.appendChild(saveBtn);
+      payForm.appendChild(cancelBtn);
+      main.appendChild(payForm);
+      setTimeout(() => payInput.focus(), 0);
+    }
+
+    const history = div("debt-history");
+    history.appendChild(div("debt-history-label", {}, "Recent Payments"));
+    if ((d.paymentHistory || []).length === 0) {
+      history.appendChild(div("debt-history-empty", {}, "Nothing logged yet."));
+    } else {
+      d.paymentHistory.slice(0, 3).forEach(entry => {
+        const item = div("debt-history-item");
+        item.appendChild(span("", `${getMonthLabel(entry.monthKey)} · $${entry.amount}`));
+        item.appendChild(span("", new Date(entry.paidAt).toLocaleDateString("en-US", { month:"short", day:"numeric" })));
+        history.appendChild(item);
+      });
+    }
+    main.appendChild(history);
+
+    row.appendChild(main);
+    card.appendChild(row);
+    panel.appendChild(card);
   });
 
   const addBtn = btn("debt-add-btn","+ Add debt",()=>{
-    S.debts.push({id:Date.now(),name:"New debt",balance:"0",dueDate:""});
-    lsSave("mc-debts",S.debts); syncDebtsToCloud(); renderAll();
+    S.debts.push(normalizeDebtItem({ id: Date.now(), name: "New debt", balance: "0", dueDay: "", monthlyPayment: "0", paymentHistory: [] }));
+    saveDebtState();
+    renderAll();
   });
   panel.appendChild(addBtn);
   return panel;
@@ -3597,8 +4128,10 @@ const ICONS = {
 
   evening: `
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M30 10c-7 1.5-12 7.6-12 14.8 0 5.8 3.1 10.8 7.8 13.5 1.7 1 3.8.5 4.9-1.1.9-1.3.7-3.1-.4-4.2a11.2 11.2 0 0 1-3.3-8c0-4.2 2.3-7.9 5.8-9.8 1.5-.8 2.1-2.6 1.3-4.2-.8-1.6-2.6-2.3-4.1-2z"
+      <path d="M31.5 10.5a13.8 13.8 0 1 0 6.7 24.6A11.5 11.5 0 1 1 31.5 10.5Z"
             stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+      <path d="M16 13.5l1.2 2.4 2.4 1.2-2.4 1.2-1.2 2.4-1.2-2.4-2.4-1.2 2.4-1.2 1.2-2.4Z"
+            stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
     </svg>
   `,
 
@@ -3688,7 +4221,61 @@ function goHome() {
   currentPage = "home";
   document.querySelectorAll(".page-view").forEach(p => p.classList.remove("active"));
   document.getElementById("home-screen").style.display = "flex";
+  renderHomeTiles();
   window.scrollTo(0, 0);
+}
+
+function renderHomePinnedNotes() {
+  const bottom = document.getElementById("home-bottom");
+  if (!bottom) return;
+  bottom.innerHTML = "";
+
+  const panel = div("panel panel-full");
+  panel.appendChild(div("panel-accent", { background: C.appointment }));
+
+  const head = div("home-bottom-head");
+  const titleWrap = div();
+  const title = document.createElement("h2");
+  title.textContent = "Pinned Notes";
+  const weekText = div("home-preview-week");
+  weekText.textContent = getWeekLabel(getWeekKey(0));
+  titleWrap.appendChild(title);
+  titleWrap.appendChild(weekText);
+  head.appendChild(titleWrap);
+
+  const openBtn = el("button", "home-bottom-link");
+  openBtn.type = "button";
+  openBtn.textContent = "Open Notes";
+  openBtn.onclick = () => { S.weekOffset = 0; navigateTo("notes"); };
+  head.appendChild(openBtn);
+  panel.appendChild(head);
+
+  const notes = getNotesForWeek(getWeekKey(0));
+  if (notes.length === 0) {
+    panel.appendChild(div("sticky-empty", {}, "No pinned notes for this week yet."));
+  } else {
+    const grid = div("sticky-grid");
+    notes.slice(0, 4).forEach((note, i) => {
+      const c = note.color || STICKY_COLORS[i % STICKY_COLORS.length];
+      const card = div("sticky-note");
+      card.style.background = c.bg;
+      card.style.borderBottom = `3px solid ${c.border}`;
+      card.style.transform = STICKY_ROTATIONS[i % STICKY_ROTATIONS.length];
+      card.title = "Open Notes to edit";
+      card.onclick = () => { S.weekOffset = 0; navigateTo("notes"); };
+
+      const ts = div("sticky-ts");
+      ts.textContent = note.ts || "";
+      const txt = div("sticky-text");
+      txt.textContent = note.text.length > 120 ? note.text.slice(0, 117) + "…" : note.text;
+      card.appendChild(ts);
+      card.appendChild(txt);
+      grid.appendChild(card);
+    });
+    panel.appendChild(grid);
+  }
+
+  bottom.appendChild(panel);
 }
 
 function renderHomeTiles() {
@@ -3705,6 +4292,7 @@ function renderHomeTiles() {
     t.onclick = () => navigateTo(tile.id);
     grid.appendChild(t);
   });
+  renderHomePinnedNotes();
 }
 
 function renderPage(pageId) {
@@ -4098,27 +4686,6 @@ function renderAll() {
     renderPage(currentPage);
   }
 }
-
-
-
-// ─── Theme toggle ────────────────────────────────────────────────────────────
-
-function applyTheme(mode) {
-  document.documentElement.setAttribute("data-theme", mode);
-  const btn = document.getElementById("theme-toggle");
-  if (btn) btn.textContent = mode === "dark" ? "☀️" : "🌙";
-  S.themeMode = mode;
-  lsSave("mc-theme", mode);
-}
-
-// Apply saved theme immediately
-applyTheme(ls("mc-theme", "light"));
-
-document.getElementById("theme-toggle").onclick = () => {
-  applyTheme(S.themeMode === "dark" ? "light" : "dark");
-};
-
-
 // ─── Theme toggle ────────────────────────────────────────────────────────────
 
 function applyTheme(mode) {
@@ -4130,6 +4697,7 @@ function applyTheme(mode) {
 }
 applyTheme(ls("mc-theme", "light"));
 document.getElementById("theme-toggle").onclick = () => applyTheme(S.themeMode === "dark" ? "light" : "dark");
+ensureSyncButtons();
 
 // ─── Auth init ───────────────────────────────────────────────────────────────
 

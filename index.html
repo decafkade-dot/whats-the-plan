@@ -224,6 +224,13 @@
     font-weight:700; font-size:14px; font-family:inherit; transition:filter .15s;
   }
   .todo-empty { padding:20px; text-align:center; color:var(--text2); font-size:13px; background:var(--bg-row); border-radius:14px; }
+  .todo-min-input { width:36px; padding:4px 2px; border-radius:8px; border:1.5px solid var(--border-soft); background:var(--bg-input); font-size:11px; text-align:center; font-family:inherit; color:var(--text); outline:none; }
+  .todo-min-input:focus { border-color:var(--lavender); }
+  .todo-min-label { font-size:10px; color:var(--text2); white-space:nowrap; }
+  .todo-time-summary { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; padding:10px 14px; border-radius:12px; background:var(--bg-row); }
+  .todo-time-total { font-size:13px; font-weight:600; color:var(--text); }
+  .todo-add-planner-btn { padding:8px 16px; border-radius:20px; border:1.5px solid var(--border-soft); background:transparent; cursor:pointer; font-size:11px; font-weight:500; font-family:inherit; color:var(--text); transition:all .15s; }
+  .todo-add-planner-btn:hover { border-color:var(--lavender); background:#CDB4DB22; }
 
 
 
@@ -867,6 +874,7 @@ function normalizeDebtItem(item) {
 // ─── Supabase sync helpers ────────────────────────────────────────────────────
 
 let _userId = null;
+let _accessToken = null;
 let _syncDebounce = {};
 let _cloudChannel = null;
 let _manualSyncPromise = null;
@@ -1185,18 +1193,6 @@ const DEFAULT_FIN_SECTIONS = [
     ]
   },
   {
-    id: "savings", label: "CASH SAVINGS", color: "#BDE0FE", collapsed: false,
-    items: [
-      { id: 301, label: "Savings",          value: "100", status: "unpaid" },
-      { id: 302, label: "House Money",      value: "50",  status: "unpaid" },
-      { id: 303, label: "House Repairs",    value: "50",  status: "unpaid" },
-      { id: 304, label: "Auto Maintenance", value: "50",  status: "unpaid" },
-      { id: 305, label: "Medical",          value: "100", status: "unpaid" },
-      { id: 306, label: "Gifts",            value: "75",  status: "unpaid" },
-      { id: 307, label: "Vacation",         value: "75",  status: "unpaid" },
-    ]
-  },
-  {
     id: "variable", label: "VARIABLE", color: "#FDEF81", collapsed: false,
     items: [
       { id: 401, label: "Groceries / Cats",  value: "400", status: "unpaid" },
@@ -1258,6 +1254,10 @@ const S = {
 lsSave("mc-blocksByWeek", S.blocksByWeek);
 S.debts = S.debts.map(normalizeDebtItem);
 lsSave("mc-debts", S.debts);
+
+// Remove cash savings section if present
+S.finSections = S.finSections.filter(s => s.id !== "savings");
+lsSave("mc-fin-sections", S.finSections);
 
 // ─── Migration: old mc-blocks → blocksByWeek (runs once, local only) ─────────
 
@@ -2547,7 +2547,7 @@ function buildFinancialPanel() {
     const title = span("fin-section-title", section.label);
     const secTotal = finItemTotal(section.items);
     const totalSpan = span("fin-section-total", "$" + secTotal.toLocaleString());
-    const chevron = span("fin-section-chevron" + (section.collapsed ? "" : " open"), "▶");
+    const chevron = span("fin-section-chevron" + (section.collapsed ? "" : " open"), ">");
     hdr.appendChild(dot); hdr.appendChild(title); hdr.appendChild(totalSpan); hdr.appendChild(chevron);
     hdr.onclick = () => { section.collapsed = !section.collapsed; saveFinSections(); renderAll(); };
     secDiv.appendChild(hdr);
@@ -2962,9 +2962,9 @@ function buildFocusPanel() {
   const btnRow = div("focus-btn-row");
   const playBtn = el("button","focus-play-btn" + (ft.mode === "break" ? " break-mode" : ""));
   playBtn.id = "focus-play-btn";
-  playBtn.textContent = ft.mode === "idle" ? "▶  Start Focus" : ft.isPaused ? "▶  Resume" : "⏸  Pause";
+  playBtn.textContent = ft.mode === "idle" ? "Start Focus" : ft.isPaused ? "Resume" : "Pause";
   playBtn.onclick = () => toggleFocusTimer();
-  const resetBtn = el("button","focus-reset-btn"); resetBtn.textContent = "↺  Reset";
+  const resetBtn = el("button","focus-reset-btn"); resetBtn.textContent = "Reset";
   resetBtn.onclick = () => resetFocusTimer();
   btnRow.appendChild(playBtn); btnRow.appendChild(resetBtn);
   panel.appendChild(btnRow);
@@ -2990,7 +2990,7 @@ function buildFocusPanel() {
   const warn = div("focus-hyperfocus-warn");
   warn.id = "focus-hyperfocus-warn";
   if (ft.skippedBreaks >= 2) warn.classList.add("show");
-  warn.innerHTML = `⚠️ <span style="flex:1">You've skipped <strong>${ft.skippedBreaks}</strong> breaks. Your brain needs rest to lock in memory — take 5 minutes, it's part of the work.</span>`;
+  warn.innerHTML = `<span style="flex:1">You've skipped <strong>${ft.skippedBreaks}</strong> breaks. Your brain needs rest to lock in memory — take 5 minutes, it's part of the work.</span>`;
   panel.appendChild(warn);
 
   return panel;
@@ -3088,7 +3088,7 @@ function updateFocusTimerDisplay() {
 
   const playBtn = document.getElementById("focus-play-btn");
   if (playBtn) {
-    playBtn.textContent  = ft.mode === "idle" ? "▶  Start Focus" : ft.isPaused ? "▶  Resume" : "⏸  Pause";
+    playBtn.textContent  = ft.mode === "idle" ? "Start Focus" : ft.isPaused ? "Resume" : "Pause";
     playBtn.className    = "focus-play-btn" + (ft.mode === "break" ? " break-mode" : "");
   }
 
@@ -3101,7 +3101,7 @@ function updateFocusTimerDisplay() {
   const warnEl = document.getElementById("focus-hyperfocus-warn");
   if (warnEl) {
     warnEl.className = "focus-hyperfocus-warn" + (ft.skippedBreaks >= 2 ? " show" : "");
-    if (ft.skippedBreaks >= 2) warnEl.innerHTML = `⚠️ <span style="flex:1">You've skipped <strong>${ft.skippedBreaks}</strong> breaks. Skipping rest hurts focus — take 5 minutes, it's part of the work.</span>`;
+    if (ft.skippedBreaks >= 2) warnEl.innerHTML = `<span style="flex:1">You've skipped <strong>${ft.skippedBreaks}</strong> breaks. Skipping rest hurts focus — take 5 minutes, it's part of the work.</span>`;
   }
 }
 
@@ -3725,7 +3725,7 @@ const NAV_TILES = [
   { id:"morning",    icon:ICONS.morning,    label:"Morning",    color:"#FDEF81", bg:"#FDEF8122" },
   { id:"evening",    icon:ICONS.evening,    label:"Evening",    color:"#FFAFCC", bg:"#FFAFCC22" },
   { id:"financials", icon:ICONS.financials, label:"Financials", color:"#CDFAA7", bg:"#CDFAA722" },
-  { id:"focus",      icon:ICONS.focus,      label:"Focus",      color:"#CDB4DB", bg:"#CDB4DB18" },
+  { id:"focus",      icon:ICONS.focus,      label:"Pomodoro",   color:"#CDB4DB", bg:"#CDB4DB18" },
   { id:"priorities", icon:ICONS.priorities, label:"Priorities", color:"#BDE0FE", bg:"#BDE0FE22" },
 ];
 
@@ -3873,18 +3873,23 @@ function saveMorningTodos(items) { lsSave("mc-morning-todos", items); syncToClou
 function getEveningTodos() { return ls("mc-evening-todos", []); }
 function saveEveningTodos(items) { lsSave("mc-evening-todos", items); syncToCloud("evening_todos", { items }); }
 
-function buildTodoList(items, saveFn, accentColor) {
+function buildTodoList(items, saveFn, accentColor, routineLabel) {
   const container = div();
   const list = div("todo-list");
   items.forEach(item => {
+    if (typeof item.minutes === "undefined") item.minutes = 5; // default 5 min per task
     const row = div("todo-item");
     const check = el("button", "todo-check" + (item.done ? " done" : ""));
     check.innerHTML = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     check.onclick = () => { item.done = !item.done; saveFn(items); renderPage(currentPage); };
     const text = span("todo-text" + (item.done ? " done" : ""), item.text);
+    const minInp = el("input", "todo-min-input"); minInp.type = "number"; minInp.min = "1"; minInp.max = "120";
+    minInp.value = item.minutes || 5;
+    minInp.onchange = e => { item.minutes = Math.max(1, parseInt(e.target.value) || 5); saveFn(items); renderPage(currentPage); };
+    const minLbl = span("todo-min-label", "min");
     const del = el("button", "todo-del"); del.textContent = "\u00d7";
     del.onclick = () => { saveFn(items.filter(x => x.id !== item.id)); renderPage(currentPage); };
-    row.appendChild(check); row.appendChild(text); row.appendChild(del);
+    row.appendChild(check); row.appendChild(text); row.appendChild(minInp); row.appendChild(minLbl); row.appendChild(del);
     list.appendChild(row);
   });
   if (items.length === 0) list.appendChild(div("todo-empty", {}, "No tasks yet. Add one below."));
@@ -3896,13 +3901,63 @@ function buildTodoList(items, saveFn, accentColor) {
   addBtn.style.background = accentColor; addBtn.style.color = "#2a2240";
   const doAdd = () => {
     const text = inp.value.trim(); if (!text) return;
-    items.push({ id: Date.now(), text, done: false });
+    items.push({ id: Date.now(), text, done: false, minutes: 5 });
     saveFn(items); renderPage(currentPage);
   };
   addBtn.onclick = doAdd;
   inp.onkeydown = e => { if (e.key === "Enter") doAdd(); };
   addRow.appendChild(inp); addRow.appendChild(addBtn);
   container.appendChild(addRow);
+
+  // Time summary + Add to Planner
+  if (items.length > 0 && routineLabel) {
+    const totalMin = items.reduce((sum, t) => sum + (t.minutes || 5), 0);
+    const hrs = Math.floor(totalMin / 60);
+    const mins = totalMin % 60;
+    const timeStr = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+
+    const summary = div("todo-time-summary");
+    const totalEl = div("todo-time-total");
+    totalEl.textContent = `Est. total: ~${timeStr}`;
+    summary.appendChild(totalEl);
+
+    const planBtn = el("button", "todo-add-planner-btn");
+    planBtn.textContent = "Add to Planner";
+    planBtn.onclick = () => {
+      const now = new Date();
+      const dayIdx = (now.getDay() + 6) % 7; // Mon=0
+      const dayName = DAYS[dayIdx];
+      const slots = getSlots();
+      // Round current time up to next slot
+      const curMin = now.getHours() * 60 + now.getMinutes();
+      const step = S.settings.stepMinutes;
+      const roundedMin = Math.ceil(curMin / step) * step;
+      const startH = String(Math.floor(roundedMin / 60)).padStart(2, "0");
+      const startM = String(roundedMin % 60).padStart(2, "0");
+      const startSlot = `${startH}:${startM}`;
+      const endMin = roundedMin + totalMin;
+      const endH = String(Math.floor(endMin / 60)).padStart(2, "0");
+      const endM = String(endMin % 60).padStart(2, "0");
+      const endSlot = `${endH}:${endM}`;
+      if (slots.indexOf(startSlot) < 0 || slots.indexOf(endSlot) < 0) {
+        alert("Routine doesn't fit in the current planner time range. Adjust your start/end hours in settings.");
+        return;
+      }
+      const weekBlocks = getCurrentWeekBlocks();
+      const dayBlocks = weekBlocks[dayName] || [];
+      const si = slots.indexOf(startSlot), ei = slots.indexOf(endSlot);
+      if (hasOverlap(dayBlocks, si, ei, slots)) {
+        alert("Time slot overlaps with an existing block. Try adjusting your schedule.");
+        return;
+      }
+      const block = { id: Date.now(), start: startSlot, end: endSlot, category: "Other", color: accentColor, note: routineLabel };
+      saveCurrentWeekBlocks({ ...weekBlocks, [dayName]: [...dayBlocks, block] });
+      alert(`Added "${routineLabel}" to ${dayName} ${formatSlot(startSlot)} - ${formatSlot(endSlot)}`);
+    };
+    summary.appendChild(planBtn);
+    container.appendChild(summary);
+  }
+
   return container;
 }
 
@@ -3912,7 +3967,7 @@ function renderMorningPage() {
   todoPanel.appendChild(div("panel-accent", { background: C.yellow }));
   const h2t = document.createElement("h2"); h2t.textContent = "Morning Checklist"; todoPanel.appendChild(h2t);
   const subT = div("sub"); subT.textContent = "Start your day with intention"; todoPanel.appendChild(subT);
-  todoPanel.appendChild(buildTodoList(getMorningTodos(), saveMorningTodos, C.yellow));
+  todoPanel.appendChild(buildTodoList(getMorningTodos(), saveMorningTodos, C.yellow, "Morning Routine"));
   c.appendChild(todoPanel);
 }
 
@@ -3922,7 +3977,7 @@ function renderEveningPage() {
   todoPanel.appendChild(div("panel-accent", { background: C.hotPink }));
   const h2t = document.createElement("h2"); h2t.textContent = "Evening Wind-Down"; todoPanel.appendChild(h2t);
   const subT = div("sub"); subT.textContent = "Reflect and rest"; todoPanel.appendChild(subT);
-  todoPanel.appendChild(buildTodoList(getEveningTodos(), saveEveningTodos, C.hotPink));
+  todoPanel.appendChild(buildTodoList(getEveningTodos(), saveEveningTodos, C.hotPink, "Evening Routine"));
   c.appendChild(todoPanel);
 }
 
@@ -3972,6 +4027,7 @@ document.getElementById("today-date").textContent =
   const { data: { session } } = await supa.auth.getSession();
 
   if (session?.user) {
+    _accessToken = session.access_token;
     document.getElementById("auth-screen").style.display = "none";
     document.getElementById("home-screen").style.display = "flex";
     await loadCloudData(session.user.id);
@@ -3982,6 +4038,7 @@ document.getElementById("today-date").textContent =
   }
 
   supa.auth.onAuthStateChange(async (event, session) => {
+    if (session?.access_token) _accessToken = session.access_token;
     if (event === "SIGNED_IN" && session?.user) {
       document.getElementById("auth-screen").style.display = "none";
       document.getElementById("home-screen").style.display = "flex";
@@ -3992,6 +4049,7 @@ document.getElementById("today-date").textContent =
     if (event === "SIGNED_OUT") {
       teardownCloudSubscriptions();
       _userId = null;
+      _accessToken = null;
       location.reload();
     }
   });
@@ -4067,6 +4125,37 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && _userId) {
     manualSyncNow();
   }
+});
+
+// ─── Flush pending syncs before page unload ─────────────────────────────────
+
+window.addEventListener("beforeunload", () => {
+  if (!_userId || !_accessToken) return;
+  // Cancel all pending debounce timers
+  Object.values(_syncDebounce).forEach(clearTimeout);
+  _syncDebounce = {};
+  // Fire immediate keepalive syncs so data survives page close
+  const headers = {
+    "apikey": SUPA_KEY,
+    "Authorization": "Bearer " + _accessToken,
+    "Content-Type": "application/json",
+    "Prefer": "resolution=merge-duplicates"
+  };
+  const tables = [
+    { table: "morning_todos", payload: { user_id: _userId, items: ls("mc-morning-todos", []) } },
+    { table: "evening_todos", payload: { user_id: _userId, items: ls("mc-evening-todos", []) } },
+    { table: "financials",    payload: { user_id: _userId, items: S.finSections } },
+    { table: "priorities",    payload: { user_id: _userId, items: S.priorities } },
+    { table: "settings",      payload: { user_id: _userId, data: S.settings } },
+    { table: "debts",         payload: { user_id: _userId, items: S.debts } },
+    { table: "spending",      payload: { user_id: _userId, log: S.spendingLog, accounts: S.spendAccounts } },
+    { table: "brain_dump",    payload: { user_id: _userId, items: S.brainDump } },
+  ];
+  tables.forEach(({ table, payload }) => {
+    fetch(`${SUPA_URL}/rest/v1/${table}`, {
+      method: "POST", headers, body: JSON.stringify(payload), keepalive: true
+    }).catch(() => {});
+  });
 });
 
 </script>

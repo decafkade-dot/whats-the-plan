@@ -85,6 +85,8 @@
   }
   .sync-btn:hover, .home-sync-btn:hover { border-color:var(--lavender); background:#CDB4DB22; }
   .sync-btn:disabled, .home-sync-btn:disabled { opacity:.55; cursor:default; pointer-events:none; }
+  .signout-btn { color:var(--text2); background:transparent; }
+  .signout-btn:hover { border-color:var(--border); background:var(--bg-row); }
 
   .home-grid {
     display:grid; grid-template-columns:repeat(3,1fr); gap:18px;
@@ -210,6 +212,11 @@
   .todo-check svg { width:12px; height:12px; opacity:0; stroke:#2a2240; stroke-width:3; }
   .todo-text { flex:1; font-size:14px; color:var(--text); line-height:1.3; }
   .todo-text.done { text-decoration:line-through; opacity:.5; }
+  .todo-min-badge {
+    min-width:52px; padding:6px 8px; border-radius:999px; background:var(--bg-input);
+    border:1.5px solid var(--border-soft); font-size:11px; text-align:center;
+    color:var(--text2); white-space:nowrap;
+  }
   .todo-del { border:none; background:transparent; cursor:pointer; color:var(--text2); font-size:16px; opacity:.3; padding:4px; line-height:1; }
   .todo-del:hover { opacity:.8; }
   .todo-add-row { display:flex; gap:8px; margin-top:8px; }
@@ -775,12 +782,13 @@ const C = {
 const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
 
 const CATEGORIES = [
-  { label: "Academic", bg: C.lavender,   colorName: "Lavender", description: "Classes, coursework, reading, and study blocks." },
-  { label: "Work",     bg: C.skyBlue,    colorName: "Sky blue", description: "Shifts, meetings, admin tasks, and job-related work." },
-  { label: "Appointments", bg: C.appointment, colorName: "Apricot", description: "Fixed commitments like medical visits, calls, or errands with a set time." },
-  { label: "Other",    bg: C.mint,       colorName: "Mint", description: "Catch-all space for chores, life admin, or anything that does not fit elsewhere." },
-  { label: "Social",   bg: C.yellow,     colorName: "Butter yellow", description: "Time with family, friends, events, and plans with other people." },
-  { label: "Fitness",  bg: C.hotPink,    colorName: "Pink", description: "Workouts, walks, recovery, and movement blocks." },
+  { label: "Academic",     bg: C.lavender,      colorName: "Lavender",     description: "Classes, coursework, reading, and study blocks." },
+  { label: "Work",         bg: C.skyBlue,       colorName: "Sky blue",     description: "Shifts, meetings, admin tasks, and job-related work." },
+  { label: "Appointments", bg: C.appointment,   colorName: "Apricot",      description: "Fixed commitments like medical visits, calls, or errands with a set time." },
+  { label: "Other",        bg: C.mint,          colorName: "Mint",         description: "Catch-all space for chores, life admin, or anything that does not fit elsewhere." },
+  { label: "Social",       bg: C.yellow,        colorName: "Butter yellow",description: "Time with family, friends, events, and plans with other people." },
+  { label: "Fitness",      bg: C.hotPink,       colorName: "Pink",         description: "Workouts, walks, recovery, and movement blocks." },
+  { label: "Routines",     bg: "#B3B3B3",       colorName: "Silver",       description: "Morning and evening routine blocks." },
 ];
 
 const ROW_H      = 20;
@@ -872,7 +880,44 @@ function normalizeDebtItem(item) {
     dueDay,
     monthlyPayment: normalizeAmountInput(item?.monthlyPayment ?? item?.payment ?? 0),
     paymentHistory,
+    updatedAt: Number.isFinite(Number(item?.updatedAt)) ? Number(item.updatedAt) : 0,
   };
+}
+
+function getDebtItemsUpdatedAt(items) {
+  return (items || []).reduce((max, item) => Math.max(max, Number(item?.updatedAt) || 0), 0);
+}
+
+function debtItemsEqual(a, b) {
+  return JSON.stringify((a || []).map(normalizeDebtItem)) === JSON.stringify((b || []).map(normalizeDebtItem));
+}
+
+function mergeDebtItems(localItems, cloudItems) {
+  const local = (Array.isArray(localItems) ? localItems : []).map(normalizeDebtItem);
+  const cloud = (Array.isArray(cloudItems) ? cloudItems : []).map(normalizeDebtItem);
+
+  if (cloud.length === 0) return local;
+  if (local.length === 0) return cloud;
+
+  const localUpdatedAt = getDebtItemsUpdatedAt(local);
+  const cloudUpdatedAt = getDebtItemsUpdatedAt(cloud);
+  if (localUpdatedAt !== cloudUpdatedAt) return localUpdatedAt > cloudUpdatedAt ? local : cloud;
+
+  const mergedById = new Map();
+  cloud.forEach(item => mergedById.set(String(item.id), item));
+  local.forEach(item => {
+    const key = String(item.id);
+    const current = mergedById.get(key);
+    if (!current || (item.updatedAt || 0) >= (current.updatedAt || 0)) mergedById.set(key, item);
+  });
+
+  const order = [];
+  [...local, ...cloud].forEach(item => {
+    const key = String(item.id);
+    if (!order.includes(key)) order.push(key);
+  });
+
+  return order.map(key => mergedById.get(key)).filter(Boolean).map(normalizeDebtItem);
 }
 
 // ─── Supabase sync helpers ────────────────────────────────────────────────────
@@ -882,6 +927,15 @@ let _accessToken = null;
 let _syncDebounce = {};
 let _cloudChannel = null;
 let _manualSyncPromise = null;
+const _dirtyTables = new Set();
+
+function markTableDirty(table) {
+  _dirtyTables.add(table);
+}
+
+function clearTableDirty(table) {
+  _dirtyTables.delete(table);
+}
 
 // Write to Supabase with debounce (300ms) to avoid hammering on rapid edits
 function syncToCloud(table, payload) {
@@ -890,12 +944,21 @@ function syncToCloud(table, payload) {
   _syncDebounce[table] = setTimeout(async () => {
     try {
       await supa.from(table).upsert({ user_id: _userId, ...payload }, { onConflict: "user_id" });
+      clearTableDirty(table);
       showSyncStatus("saved");
     } catch (e) {
       console.warn("[sync] failed:", table, e);
       showSyncStatus("error");
     }
   }, 300);
+}
+
+async function upsertTableNow(table, payload, onConflict = "user_id") {
+  if (!_userId) return;
+  clearTimeout(_syncDebounce[table]);
+  delete _syncDebounce[table];
+  await supa.from(table).upsert({ user_id: _userId, ...payload }, { onConflict });
+  clearTableDirty(table);
 }
 
 function syncBlocksToCloud() {
@@ -987,8 +1050,8 @@ function pushAllToCloud() {
   syncToCloud("debts",        { items: S.debts });
   syncToCloud("spending",     { log: S.spendingLog, accounts: S.spendAccounts });
   syncToCloud("brain_dump",   { items: S.brainDump });
-  syncToCloud("morning_todos",{ items: ls("mc-morning-todos", []) });
-  syncToCloud("evening_todos",{ items: ls("mc-evening-todos", []) });
+  syncToCloud("morning_todos",{ items: getMorningTodos() });
+  syncToCloud("evening_todos",{ items: getEveningTodos() });
 }
 
 // Auto-sync every 60s as a fallback if real-time subscriptions drop
@@ -1009,6 +1072,17 @@ function setSyncButtonsBusy(isBusy) {
   });
 }
 
+async function flushDirtyTables() {
+  if (!_userId || _dirtyTables.size === 0) return;
+
+  const requests = [];
+  if (_dirtyTables.has("debts")) requests.push(upsertTableNow("debts", { items: S.debts }));
+  if (_dirtyTables.has("morning_todos")) requests.push(upsertTableNow("morning_todos", { items: getMorningTodos() }));
+  if (_dirtyTables.has("evening_todos")) requests.push(upsertTableNow("evening_todos", { items: getEveningTodos() }));
+
+  if (requests.length > 0) await Promise.all(requests);
+}
+
 async function manualSyncNow() {
   if (!_userId) {
     showSyncStatus("offline");
@@ -1020,6 +1094,7 @@ async function manualSyncNow() {
   showSyncStatus("saving");
   _manualSyncPromise = (async () => {
     try {
+      await flushDirtyTables();
       await loadCloudData(_userId);
       renderAll();
       updateBrainDumpBadge();
@@ -1076,14 +1151,17 @@ function handleCloudChange(table, row) {
     case "debts":
       S.debts = Array.isArray(row.items) ? row.items.map(normalizeDebtItem) : [];
       lsSave("mc-debts", S.debts);
+      clearTableDirty("debts");
       if (currentPage === "financials") renderFinancialsPage();
       break;
     case "morning_todos":
-      lsSave("mc-morning-todos", Array.isArray(row.items) ? row.items : []);
+      lsSave("mc-morning-todos", normalizeRoutineItems(MORNING_ROUTINE_TEMPLATE, row.items));
+      clearTableDirty("morning_todos");
       if (currentPage === "morning") renderMorningPage();
       break;
     case "evening_todos":
-      lsSave("mc-evening-todos", Array.isArray(row.items) ? row.items : []);
+      lsSave("mc-evening-todos", normalizeRoutineItems(EVENING_ROUTINE_TEMPLATE, row.items));
+      clearTableDirty("evening_todos");
       if (currentPage === "evening") renderEveningPage();
       break;
     case "spending":
@@ -1435,29 +1513,40 @@ async function loadCloudData(userId) {
 
     // Morning tasks
     const morningRow = await firstRow(supa.from("morning_todos").select("items").eq("user_id", userId));
-    if (morningRow?.items) {
-      lsSave("mc-morning-todos", morningRow.items);
+    const localMorning = ls("mc-morning-todos", []);
+    const mergedMorning = mergeRoutineItems(MORNING_ROUTINE_TEMPLATE, localMorning, morningRow?.items);
+    lsSave("mc-morning-todos", mergedMorning);
+    if (!routineItemsEqual(mergedMorning, normalizeRoutineItems(MORNING_ROUTINE_TEMPLATE, morningRow?.items || []))) {
+      markTableDirty("morning_todos");
+      syncToCloud("morning_todos", { items: mergedMorning });
     } else {
-      const localMorning = ls("mc-morning-todos", []);
-      if (localMorning.length > 0) syncToCloud("morning_todos", { items: localMorning });
+      clearTableDirty("morning_todos");
     }
 
     // Evening tasks
     const eveningRow = await firstRow(supa.from("evening_todos").select("items").eq("user_id", userId));
-    if (eveningRow?.items) {
-      lsSave("mc-evening-todos", eveningRow.items);
+    const localEvening = ls("mc-evening-todos", []);
+    const mergedEvening = mergeRoutineItems(EVENING_ROUTINE_TEMPLATE, localEvening, eveningRow?.items);
+    lsSave("mc-evening-todos", mergedEvening);
+    if (!routineItemsEqual(mergedEvening, normalizeRoutineItems(EVENING_ROUTINE_TEMPLATE, eveningRow?.items || []))) {
+      markTableDirty("evening_todos");
+      syncToCloud("evening_todos", { items: mergedEvening });
     } else {
-      const localEvening = ls("mc-evening-todos", []);
-      if (localEvening.length > 0) syncToCloud("evening_todos", { items: localEvening });
+      clearTableDirty("evening_todos");
     }
 
     // Debts
     const debtRow = await firstRow(supa.from("debts").select("items").eq("user_id", userId));
-    if (debtRow && Array.isArray(debtRow.items)) {
-      S.debts = debtRow.items.map(normalizeDebtItem);
-      lsSave("mc-debts", S.debts);
-    } else if (!debtRow && S.debts.length > 0) {
+    const localDebts = ls("mc-debts", []).map(normalizeDebtItem);
+    const cloudDebts = Array.isArray(debtRow?.items) ? debtRow.items.map(normalizeDebtItem) : [];
+    const mergedDebts = mergeDebtItems(localDebts, cloudDebts);
+    S.debts = mergedDebts;
+    lsSave("mc-debts", S.debts);
+    if (!debtItemsEqual(mergedDebts, cloudDebts)) {
+      markTableDirty("debts");
       syncToCloud("debts", { items: S.debts });
+    } else {
+      clearTableDirty("debts");
     }
 
     // Spending
@@ -1497,17 +1586,17 @@ async function loadCloudData(userId) {
 // ─── Add sign-out button to header ───────────────────────────────────────────
 
 function addSignOutButton() {
-  const hdr = document.getElementById("home-screen");
-  if (document.getElementById("signout-btn")) return;
+  const actions = document.querySelector(".home-sync-row");
+  if (!actions || document.getElementById("signout-btn")) return;
   const soBtn = document.createElement("button");
   soBtn.id = "signout-btn";
+  soBtn.className = "home-sync-btn signout-btn";
   soBtn.textContent = "Sign out";
-  soBtn.style.cssText = "position:fixed;top:16px;right:68px;padding:6px 12px;border-radius:20px;border:1.5px solid var(--border-soft);background:var(--bg-card);font-size:11px;cursor:pointer;font-family:inherit;color:var(--text2);z-index:1400;backdrop-filter:blur(8px);";
   soBtn.onclick = async () => {
     await supa.auth.signOut();
     location.reload();
   };
-  document.body.appendChild(soBtn);
+  actions.appendChild(soBtn);
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -3263,8 +3352,10 @@ updateBrainDumpBadge();
 const debtPaymentUi = { openId: null, amount: "" };
 
 function saveDebtState() {
-  S.debts = S.debts.map(normalizeDebtItem);
+  const updatedAt = Date.now();
+  S.debts = S.debts.map(item => normalizeDebtItem({ ...item, updatedAt }));
   lsSave("mc-debts", S.debts);
+  markTableDirty("debts");
   syncDebtsToCloud();
 }
 
@@ -3898,46 +3989,105 @@ function renderFinancialsPage() {
 
 // ═══ MORNING / EVENING ROUTINES ══════════════════════════════════════════════
 
-function getMorningTodos() { return ls("mc-morning-todos", []); }
-function saveMorningTodos(items) { lsSave("mc-morning-todos", items); syncToCloud("morning_todos", { items }); }
-function getEveningTodos() { return ls("mc-evening-todos", []); }
-function saveEveningTodos(items) { lsSave("mc-evening-todos", items); syncToCloud("evening_todos", { items }); }
+const MORNING_ROUTINE_TEMPLATE = [
+  { id: "make-bed", text: "Make the bed", minutes: 5 },
+  { id: "wash-face", text: "Wash your face", minutes: 5 },
+  { id: "brush-teeth", text: "Brush your teeth", minutes: 5 },
+  { id: "stretch", text: "Stretch", minutes: 10 },
+  { id: "eat-breakfast", text: "Eat breakfast", minutes: 15 },
+];
+
+const EVENING_ROUTINE_TEMPLATE = [
+  { id: "take-shower", text: "Take a shower", minutes: 15 },
+  { id: "wash-face", text: "Wash your face", minutes: 5 },
+  { id: "brush-teeth", text: "Brush your teeth", minutes: 5 },
+  { id: "practice-gratitude", text: "Practice gratitude", minutes: 10 },
+];
+
+function getItemsUpdatedAt(items) {
+  return (items || []).reduce((max, item) => Math.max(max, Number(item?.updatedAt) || 0), 0);
+}
+
+function normalizeRoutineItems(template, items) {
+  const savedById = new Map(
+    (Array.isArray(items) ? items : []).map(item => [String(item.id), item])
+  );
+
+  return template.map(baseItem => {
+    const saved = savedById.get(String(baseItem.id));
+    return {
+      id: baseItem.id,
+      text: baseItem.text,
+      minutes: baseItem.minutes,
+      done: !!saved?.done,
+      updatedAt: Number(saved?.updatedAt) || 0,
+    };
+  });
+}
+
+function stampRoutineItems(template, items, updatedAt = Date.now()) {
+  return normalizeRoutineItems(template, items).map(item => ({ ...item, updatedAt }));
+}
+
+function routineItemsEqual(a, b) {
+  return JSON.stringify(a || []) === JSON.stringify(b || []);
+}
+
+function mergeRoutineItems(template, localItems, cloudItems) {
+  const local = normalizeRoutineItems(template, localItems);
+  const cloud = normalizeRoutineItems(template, cloudItems);
+
+  if (!Array.isArray(cloudItems) || cloudItems.length === 0) return local;
+  if (!Array.isArray(localItems) || localItems.length === 0) return cloud;
+
+  const localUpdatedAt = getItemsUpdatedAt(local);
+  const cloudUpdatedAt = getItemsUpdatedAt(cloud);
+  if (localUpdatedAt !== cloudUpdatedAt) return localUpdatedAt > cloudUpdatedAt ? local : cloud;
+
+  return template.map(baseItem => {
+    const localItem = local.find(item => item.id === baseItem.id) || { done: false, updatedAt: 0 };
+    const cloudItem = cloud.find(item => item.id === baseItem.id) || { done: false, updatedAt: 0 };
+    const winner = (localItem.updatedAt || 0) >= (cloudItem.updatedAt || 0) ? localItem : cloudItem;
+    return { ...baseItem, done: !!winner.done, updatedAt: winner.updatedAt || 0 };
+  });
+}
+
+function getMorningTodos() { return normalizeRoutineItems(MORNING_ROUTINE_TEMPLATE, ls("mc-morning-todos", [])); }
+function saveMorningTodos(items) {
+  const next = stampRoutineItems(MORNING_ROUTINE_TEMPLATE, items);
+  lsSave("mc-morning-todos", next);
+  markTableDirty("morning_todos");
+  syncToCloud("morning_todos", { items: next });
+}
+function getEveningTodos() { return normalizeRoutineItems(EVENING_ROUTINE_TEMPLATE, ls("mc-evening-todos", [])); }
+function saveEveningTodos(items) {
+  const next = stampRoutineItems(EVENING_ROUTINE_TEMPLATE, items);
+  lsSave("mc-evening-todos", next);
+  markTableDirty("evening_todos");
+  syncToCloud("evening_todos", { items: next });
+}
 
 function buildTodoList(items, saveFn, accentColor, routineLabel) {
   const container = div();
   const list = div("todo-list");
   items.forEach(item => {
-    if (typeof item.minutes === "undefined") item.minutes = 5; // default 5 min per task
     const row = div("todo-item");
     const check = el("button", "todo-check" + (item.done ? " done" : ""));
     check.innerHTML = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    check.onclick = () => { item.done = !item.done; saveFn(items); renderPage(currentPage); };
+    check.onclick = () => {
+      const next = items.map(entry => entry.id === item.id ? { ...entry, done: !entry.done } : { ...entry });
+      saveFn(next);
+      renderPage(currentPage);
+    };
     const text = span("todo-text" + (item.done ? " done" : ""), item.text);
-    const minInp = el("input", "todo-min-input"); minInp.type = "number"; minInp.min = "1"; minInp.max = "120";
-    minInp.value = item.minutes || 5;
-    minInp.onchange = e => { item.minutes = Math.max(1, parseInt(e.target.value) || 5); saveFn(items); renderPage(currentPage); };
-    const minLbl = span("todo-min-label", "min");
-    const del = el("button", "todo-del"); del.textContent = "\u00d7";
-    del.onclick = () => { saveFn(items.filter(x => x.id !== item.id)); renderPage(currentPage); };
-    row.appendChild(check); row.appendChild(text); row.appendChild(minInp); row.appendChild(minLbl); row.appendChild(del);
+    const minutes = span("todo-min-badge", `${item.minutes || 5} min`);
+    row.appendChild(check);
+    row.appendChild(text);
+    row.appendChild(minutes);
     list.appendChild(row);
   });
-  if (items.length === 0) list.appendChild(div("todo-empty", {}, "No tasks yet. Add one below."));
+  if (items.length === 0) list.appendChild(div("todo-empty", {}, "No tasks in this routine."));
   container.appendChild(list);
-
-  const addRow = div("todo-add-row");
-  const inp = el("input", "todo-input"); inp.type = "text"; inp.placeholder = "Add a task...";
-  const addBtn = el("button", "todo-add-btn"); addBtn.textContent = "+";
-  addBtn.style.background = accentColor; addBtn.style.color = "#2a2240";
-  const doAdd = () => {
-    const text = inp.value.trim(); if (!text) return;
-    items.push({ id: Date.now(), text, done: false, minutes: 5 });
-    saveFn(items); renderPage(currentPage);
-  };
-  addBtn.onclick = doAdd;
-  inp.onkeydown = e => { if (e.key === "Enter") doAdd(); };
-  addRow.appendChild(inp); addRow.appendChild(addBtn);
-  container.appendChild(addRow);
 
   // Time summary + Add to Planner with picker
   if (routineLabel) {
@@ -4008,7 +4158,7 @@ function buildTodoList(items, saveFn, accentColor, routineLabel) {
           alert("That time slot overlaps with an existing block. Try a different start time.");
           return;
         }
-        const block = { id: Date.now(), start: startSlot, end: endSlot, category: "Other", color: accentColor, note: routineLabel };
+        const block = { id: Date.now(), start: startSlot, end: endSlot, category: "Routines", color: "#B3B3B3", note: routineLabel };
         saveCurrentWeekBlocks({ ...weekBlocks, [dayName]: [...dayBlocks, block] });
         // Visual confirmation instead of alert
         planBtn.textContent = "Added!";
@@ -4280,8 +4430,8 @@ window.addEventListener("beforeunload", () => {
     "Prefer": "resolution=merge-duplicates"
   };
   const tables = [
-    { table: "morning_todos", payload: { user_id: _userId, items: ls("mc-morning-todos", []) } },
-    { table: "evening_todos", payload: { user_id: _userId, items: ls("mc-evening-todos", []) } },
+    { table: "morning_todos", payload: { user_id: _userId, items: getMorningTodos() } },
+    { table: "evening_todos", payload: { user_id: _userId, items: getEveningTodos() } },
     { table: "financials",    payload: { user_id: _userId, items: S.finSections } },
     { table: "priorities",    payload: { user_id: _userId, items: S.priorities } },
     { table: "settings",      payload: { user_id: _userId, data: S.settings } },

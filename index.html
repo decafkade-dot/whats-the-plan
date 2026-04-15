@@ -147,7 +147,7 @@
   .back-btn:hover { border-color:var(--lavender); background:#CDB4DB22; }
   .back-btn svg { width:18px; height:18px; stroke:var(--text); }
   .page-title { font-family:'Outfit',sans-serif; font-size:20px; font-weight:700; letter-spacing:-.5px; flex:1; }
-  .page-topbar-actions { display:flex; align-items:center; gap:8px; }
+  .page-topbar-actions { display:flex; align-items:center; gap:8px; margin-right:52px; }
   .page-content { max-width:800px; margin:0 auto; }
 
   /* ══ THEME TOGGLE ══ */
@@ -229,8 +229,12 @@
   .todo-min-label { font-size:10px; color:var(--text2); white-space:nowrap; }
   .todo-time-summary { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; padding:10px 14px; border-radius:12px; background:var(--bg-row); }
   .todo-time-total { font-size:13px; font-weight:600; color:var(--text); }
+  .todo-picker-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .todo-day-sel, .todo-time-sel { padding:6px 10px; border-radius:10px; border:1.5px solid var(--border-soft); background:var(--bg-input); font-size:12px; font-family:inherit; color:var(--text); outline:none; cursor:pointer; }
+  .todo-day-sel:focus, .todo-time-sel:focus { border-color:var(--lavender); }
   .todo-add-planner-btn { padding:8px 16px; border-radius:20px; border:1.5px solid var(--border-soft); background:transparent; cursor:pointer; font-size:11px; font-weight:500; font-family:inherit; color:var(--text); transition:all .15s; }
   .todo-add-planner-btn:hover { border-color:var(--lavender); background:#CDB4DB22; }
+  .todo-add-planner-btn:disabled { opacity:.55; cursor:default; }
 
 
 
@@ -954,21 +958,48 @@ function syncNotesToCloud() {
 function showSyncStatus(status) {
   const el = document.getElementById("sync-status");
   if (!el) return;
+  clearTimeout(el._hideTimer);
   if (status === "saved") {
-    el.textContent = "✓ synced";
+    el.textContent = "synced";
     el.style.color = "#3a7a55";
-    clearTimeout(el._hideTimer);
-    el._hideTimer = setTimeout(() => { el.textContent = ""; }, 2500);
+    el._hideTimer = setTimeout(() => { el.textContent = ""; }, 5000);
   } else if (status === "saving") {
-    el.textContent = "syncing…";
+    el.textContent = "syncing...";
     el.style.color = "#8b7fa8";
   } else if (status === "error") {
-    el.textContent = "⚠ sync error";
+    el.textContent = "sync error";
     el.style.color = "#c0516b";
+    // Don't auto-hide errors — user needs to see them
   } else if (status === "offline") {
-    el.textContent = "offline";
-    el.style.color = "#8b7fa8";
+    el.textContent = "offline — sign in to sync";
+    el.style.color = "#c0516b";
   }
+}
+
+// Push ALL current local state to cloud (ensures cloud is never behind)
+function pushAllToCloud() {
+  if (!_userId) return;
+  syncBlocksToCloud();
+  syncNotesToCloud();
+  syncToCloud("priorities",   { items: S.priorities });
+  syncToCloud("financials",   { items: S.finSections });
+  syncToCloud("settings",     { data: S.settings });
+  syncToCloud("debts",        { items: S.debts });
+  syncToCloud("spending",     { log: S.spendingLog, accounts: S.spendAccounts });
+  syncToCloud("brain_dump",   { items: S.brainDump });
+  syncToCloud("morning_todos",{ items: ls("mc-morning-todos", []) });
+  syncToCloud("evening_todos",{ items: ls("mc-evening-todos", []) });
+}
+
+// Auto-sync every 60s as a fallback if real-time subscriptions drop
+let _autoSyncInterval = null;
+function startAutoSync() {
+  if (_autoSyncInterval) clearInterval(_autoSyncInterval);
+  _autoSyncInterval = setInterval(() => {
+    if (_userId && document.visibilityState === "visible") {
+      manualSyncNow();
+    }
+  }, 60000);
 }
 
 function setSyncButtonsBusy(isBusy) {
@@ -1037,7 +1068,7 @@ function handleCloudChange(table, row) {
       break;
     case "financials":
       if (Array.isArray(row.items)) {
-        S.finSections = row.items;
+        S.finSections = row.items.filter(s => s.id !== "savings");
         lsSave("mc-fin-sections", S.finSections);
         if (currentPage === "financials") renderFinancialsPage();
       }
@@ -1255,9 +1286,10 @@ lsSave("mc-blocksByWeek", S.blocksByWeek);
 S.debts = S.debts.map(normalizeDebtItem);
 lsSave("mc-debts", S.debts);
 
-// Remove cash savings section if present
+// Remove cash savings section from local state on init
 S.finSections = S.finSections.filter(s => s.id !== "savings");
 lsSave("mc-fin-sections", S.finSections);
+// Note: cloud load also filters savings (see loadCloudData)
 
 // ─── Migration: old mc-blocks → blocksByWeek (runs once, local only) ─────────
 
@@ -1367,9 +1399,15 @@ async function loadCloudData(userId) {
       lsSave("mc-notesByWeek", S.notesByWeek);
     }
 
+    // Helper: safely get the first row from a query (handles 0, 1, or duplicate rows)
+    async function firstRow(query) {
+      const { data, error } = await query.limit(1);
+      if (error) console.warn("[sync] query error:", error.message);
+      return data?.[0] ?? null;
+    }
+
     // Priorities
-    const { data: priRow } = await supa.from("priorities")
-      .select("items").eq("user_id", userId).maybeSingle();
+    const priRow = await firstRow(supa.from("priorities").select("items").eq("user_id", userId));
     if (priRow && Array.isArray(priRow.items)) {
       S.priorities = priRow.items;
       lsSave("mc-priorities", S.priorities);
@@ -1378,18 +1416,16 @@ async function loadCloudData(userId) {
     }
 
     // Financials
-    const { data: finRow } = await supa.from("financials")
-      .select("items").eq("user_id", userId).maybeSingle();
+    const finRow = await firstRow(supa.from("financials").select("items").eq("user_id", userId));
     if (finRow && Array.isArray(finRow.items)) {
-      S.finSections = finRow.items;
+      S.finSections = finRow.items.filter(s => s.id !== "savings");
       lsSave("mc-fin-sections", S.finSections);
     } else if (!finRow && S.finSections.length > 0) {
       syncToCloud("financials", { items: S.finSections });
     }
 
     // Settings
-    const { data: setRow } = await supa.from("settings")
-      .select("data").eq("user_id", userId).maybeSingle();
+    const setRow = await firstRow(supa.from("settings").select("data").eq("user_id", userId));
     if (setRow?.data && Object.keys(setRow.data).length > 0) {
       S.settings = { ...S.settings, ...setRow.data };
       lsSave("mc-settings", S.settings);
@@ -1398,8 +1434,7 @@ async function loadCloudData(userId) {
     }
 
     // Morning tasks
-    const { data: morningRow } = await supa.from("morning_todos")
-      .select("items").eq("user_id", userId).maybeSingle();
+    const morningRow = await firstRow(supa.from("morning_todos").select("items").eq("user_id", userId));
     if (morningRow?.items) {
       lsSave("mc-morning-todos", morningRow.items);
     } else {
@@ -1408,8 +1443,7 @@ async function loadCloudData(userId) {
     }
 
     // Evening tasks
-    const { data: eveningRow } = await supa.from("evening_todos")
-      .select("items").eq("user_id", userId).maybeSingle();
+    const eveningRow = await firstRow(supa.from("evening_todos").select("items").eq("user_id", userId));
     if (eveningRow?.items) {
       lsSave("mc-evening-todos", eveningRow.items);
     } else {
@@ -1417,10 +1451,8 @@ async function loadCloudData(userId) {
       if (localEvening.length > 0) syncToCloud("evening_todos", { items: localEvening });
     }
 
-
     // Debts
-    const { data: debtRow } = await supa.from("debts")
-      .select("items").eq("user_id", userId).maybeSingle();
+    const debtRow = await firstRow(supa.from("debts").select("items").eq("user_id", userId));
     if (debtRow && Array.isArray(debtRow.items)) {
       S.debts = debtRow.items.map(normalizeDebtItem);
       lsSave("mc-debts", S.debts);
@@ -1429,8 +1461,7 @@ async function loadCloudData(userId) {
     }
 
     // Spending
-    const { data: spendRow } = await supa.from("spending")
-      .select("log,accounts").eq("user_id", userId).maybeSingle();
+    const spendRow = await firstRow(supa.from("spending").select("log,accounts").eq("user_id", userId));
     if (spendRow) {
       S.spendingLog = Array.isArray(spendRow.log) ? spendRow.log : [];
       lsSave("mc-spending", S.spendingLog);
@@ -1443,8 +1474,7 @@ async function loadCloudData(userId) {
     }
 
     // Brain Dump
-    const { data: bdRow } = await supa.from("brain_dump")
-      .select("items").eq("user_id", userId).maybeSingle();
+    const bdRow = await firstRow(supa.from("brain_dump").select("items").eq("user_id", userId));
     if (bdRow && Array.isArray(bdRow.items)) {
       S.brainDump = bdRow.items;
       lsSave("mc-brainDump", S.brainDump);
@@ -3909,52 +3939,85 @@ function buildTodoList(items, saveFn, accentColor, routineLabel) {
   addRow.appendChild(inp); addRow.appendChild(addBtn);
   container.appendChild(addRow);
 
-  // Time summary + Add to Planner
-  if (items.length > 0 && routineLabel) {
+  // Time summary + Add to Planner with picker
+  if (routineLabel) {
     const totalMin = items.reduce((sum, t) => sum + (t.minutes || 5), 0);
     const hrs = Math.floor(totalMin / 60);
     const mins = totalMin % 60;
     const timeStr = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
 
     const summary = div("todo-time-summary");
+
+    // Total estimate row
     const totalEl = div("todo-time-total");
-    totalEl.textContent = `Est. total: ~${timeStr}`;
+    totalEl.textContent = items.length > 0 ? `Est. total: ~${timeStr}` : "Add tasks to estimate time";
     summary.appendChild(totalEl);
 
-    const planBtn = el("button", "todo-add-planner-btn");
-    planBtn.textContent = "Add to Planner";
-    planBtn.onclick = () => {
+    if (items.length > 0) {
+      // Day picker
       const now = new Date();
-      const dayIdx = (now.getDay() + 6) % 7; // Mon=0
-      const dayName = DAYS[dayIdx];
+      const todayIdx = (now.getDay() + 6) % 7;
+      const daySel = el("select", "todo-day-sel");
+      daySel.title = "Day";
+      DAYS.forEach((d, i) => {
+        const opt = document.createElement("option");
+        opt.value = d; opt.textContent = d;
+        if (i === todayIdx) opt.selected = true;
+        daySel.appendChild(opt);
+      });
+
+      // Time picker — populate with planner slots
       const slots = getSlots();
-      // Round current time up to next slot
+      const timeSel = el("select", "todo-time-sel");
+      timeSel.title = "Start time";
+      // Default: round current time up to next slot
       const curMin = now.getHours() * 60 + now.getMinutes();
       const step = S.settings.stepMinutes;
-      const roundedMin = Math.ceil(curMin / step) * step;
-      const startH = String(Math.floor(roundedMin / 60)).padStart(2, "0");
-      const startM = String(roundedMin % 60).padStart(2, "0");
-      const startSlot = `${startH}:${startM}`;
-      const endMin = roundedMin + totalMin;
-      const endH = String(Math.floor(endMin / 60)).padStart(2, "0");
-      const endM = String(endMin % 60).padStart(2, "0");
-      const endSlot = `${endH}:${endM}`;
-      if (slots.indexOf(startSlot) < 0 || slots.indexOf(endSlot) < 0) {
-        alert("Routine doesn't fit in the current planner time range. Adjust your start/end hours in settings.");
-        return;
-      }
-      const weekBlocks = getCurrentWeekBlocks();
-      const dayBlocks = weekBlocks[dayName] || [];
-      const si = slots.indexOf(startSlot), ei = slots.indexOf(endSlot);
-      if (hasOverlap(dayBlocks, si, ei, slots)) {
-        alert("Time slot overlaps with an existing block. Try adjusting your schedule.");
-        return;
-      }
-      const block = { id: Date.now(), start: startSlot, end: endSlot, category: "Other", color: accentColor, note: routineLabel };
-      saveCurrentWeekBlocks({ ...weekBlocks, [dayName]: [...dayBlocks, block] });
-      alert(`Added "${routineLabel}" to ${dayName} ${formatSlot(startSlot)} - ${formatSlot(endSlot)}`);
-    };
-    summary.appendChild(planBtn);
+      const defaultMin = Math.ceil(curMin / step) * step;
+      const defaultSlot = `${String(Math.floor(defaultMin / 60)).padStart(2,"0")}:${String(defaultMin % 60).padStart(2,"0")}`;
+      slots.forEach(slot => {
+        const opt = document.createElement("option");
+        opt.value = slot; opt.textContent = formatSlot(slot);
+        if (slot === defaultSlot) opt.selected = true;
+        timeSel.appendChild(opt);
+      });
+
+      const pickerRow = div("todo-picker-row");
+      pickerRow.appendChild(daySel);
+      pickerRow.appendChild(timeSel);
+      summary.appendChild(pickerRow);
+
+      // Add to Planner button
+      const planBtn = el("button", "todo-add-planner-btn");
+      planBtn.textContent = "Add to Planner";
+      planBtn.onclick = () => {
+        const dayName  = daySel.value;
+        const startSlot = timeSel.value;
+        const si = slots.indexOf(startSlot);
+        const endMin = (Math.floor(si * step) + totalMin);
+        const endSlotIdx = si + Math.round(totalMin / step);
+        const endSlot = slots[endSlotIdx];
+        if (!endSlot) {
+          alert("Routine runs past the planner's end time. Shorten your tasks or choose an earlier start time.");
+          return;
+        }
+        const weekBlocks = getCurrentWeekBlocks();
+        const dayBlocks  = weekBlocks[dayName] || [];
+        const ei = slots.indexOf(endSlot);
+        if (hasOverlap(dayBlocks, si, ei, slots)) {
+          alert("That time slot overlaps with an existing block. Try a different start time.");
+          return;
+        }
+        const block = { id: Date.now(), start: startSlot, end: endSlot, category: "Other", color: accentColor, note: routineLabel };
+        saveCurrentWeekBlocks({ ...weekBlocks, [dayName]: [...dayBlocks, block] });
+        // Visual confirmation instead of alert
+        planBtn.textContent = "Added!";
+        planBtn.disabled = true;
+        setTimeout(() => { planBtn.textContent = "Add to Planner"; planBtn.disabled = false; }, 2000);
+      };
+      summary.appendChild(planBtn);
+    }
+
     container.appendChild(summary);
   }
 
@@ -4031,8 +4094,10 @@ document.getElementById("today-date").textContent =
     document.getElementById("auth-screen").style.display = "none";
     document.getElementById("home-screen").style.display = "flex";
     await loadCloudData(session.user.id);
+    pushAllToCloud();
     addSignOutButton();
-    renderHomeTiles();
+    renderAll();
+    startAutoSync();
   } else {
     document.getElementById("auth-screen").style.display = "flex";
   }
@@ -4043,8 +4108,10 @@ document.getElementById("today-date").textContent =
       document.getElementById("auth-screen").style.display = "none";
       document.getElementById("home-screen").style.display = "flex";
       await loadCloudData(session.user.id);
+      pushAllToCloud();
       addSignOutButton();
-      renderHomeTiles();
+      renderAll();
+      startAutoSync();
     }
     if (event === "SIGNED_OUT") {
       teardownCloudSubscriptions();
@@ -4058,13 +4125,84 @@ document.getElementById("today-date").textContent =
 // ─── PWA: manifest + service worker ──────────────────────────────────────────
 
 (function initPWA() {
-  // PNG icon — works on iPhone, Android, Mac, iPad home screen
-  const iconUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAEM0lEQVR4nO3cPY4UQRAFYe6Exym4JSbOuvgY7AlWSJwDg0EICS2I/Zmeqs6sel9IYU9n6YU7b9404v7u4cIMq7dWQvWjcx2rtzqE6kfkPlZv+SqqH4v7Wr3tZ6l+HOZYvfW/qH4M5lq9feNnuYZP3p0YQvWh5FMaP+M1fsZr/IzX+B95+fjlkNXffcad1d88U+O/YRgrjiPhxmuNH//RYaw4joQbjygAAWxz4xGjx390GCuOI+HGo8aO/+gwVhxHwo23KIDNx5Fw4y1Gjv/oMFYcR8KNtyqAjceRcOOtxo3/6DBWHEfCjSMUwKbjSLhxhFHjPzqMFceRcOMoBbDhOBJuHKUANhxHwo2jFMCG40i4cZR/xv/u7fvL7h4NoPq7z7iz+psrFcBm40i4caQC2GwcCTeOVACbjSPhxpEKYLNxJNw4UgFsNo6EG0cqgM3GkXDjSAWw2TgSbhxpxPiPDmPFcSTcOFIBbDaOhBtHKoDNxpFw40gFsNk4Em4caUwA5P8UAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMVAKMdHgAwGwEgGgEgGgEgGgEgGgEgGgEgmqEB3N89XEYKzGbkXgWA5RAAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAohEAotkmgNG/PcuX+PTtR5kvvvH3D0tYtRsBCKCFVbsRgABaWLUbAQighVW7EYAAWli1GwEIoIVVuxGAAFpYtRsBCKCFVbsRgABaWLUbAQighVW7EYAAWli1GwEIoIVVuxGAAFpYtRsBCKCFVbsRgABaWLUbAQighVW7EYAAWli1GwEIoIVVuxGAAFpYtRsBCKCFVbsRgABaWLUbAQighVW7EYAAWli1GwEIoIVVuxGAAFpYtRsBCKCFVbsRgABaWLUbAQighVW78ee4WA4BIBoBIBoBIBoBIBoBIBoBIBoBIJp9Avj8lfytABitABitABitABitABitABitABitABitABitABitABitABitABitABhtZADAAQSAaASAaASAaASAaASAaASAaASAaASAaASAaIYG8AsBYCUEgGgEgGgEgGgEgGgEgGgEgGgEgGiGBzAyAmA2w8cvAKyEABCNABDNlABGRQDMZsr4BYBVmBbAiAiA2UwbvwCwAlMDuDUCYDZTxy8AdGd6ALdEAMxm+vhviQCYzSnjFwC6cloARyIAZnPa+I9EAMzm1PFfGwEwm9PHf00EwGxKxv/aCIDZlI3/NREAsykd/0sRALMpH/9zIQCzaTH8pyIAZtNq/I8RAM6g3fD/pfqBsC/V276K6sfCPlRveQjVj4h1OGuTPwFVinRKiCJ30QAAAABJRU5ErkJggg==";
+  // Generate the Planner icon on a canvas so it matches the iPad home screen icon
+  function buildPlannerIcon(size) {
+    const c = document.createElement("canvas");
+    c.width = c.height = size;
+    const ctx = c.getContext("2d");
+    const s = size;
+
+    // Helper: rounded rect path
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.arcTo(x + w, y,     x + w, y + r,     r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h);
+      ctx.arcTo(x,     y + h, x,     y + h - r, r);
+      ctx.lineTo(x,     y + r);
+      ctx.arcTo(x,     y,     x + r, y,         r);
+      ctx.closePath();
+    }
+
+    // Lavender rounded-square background
+    rr(0, 0, s, s, s * 0.22);
+    ctx.fillStyle = "#C4AADF";
+    ctx.fill();
+
+    // White calendar body
+    rr(s*.14, s*.33, s*.72, s*.54, s*.07);
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+
+    // Dark calendar header (top portion of body)
+    rr(s*.14, s*.33, s*.72, s*.24, s*.07);
+    ctx.fillStyle = "#1e1535";
+    ctx.fill();
+    // Fill bottom corners of header (make them square where body meets)
+    ctx.fillRect(s*.14, s*.33 + s*.17, s*.72, s*.07);
+
+    // Pink calendar rings (left + right)
+    rr(s*.345, s*.22, s*.065, s*.165, s*.033);
+    ctx.fillStyle = "#FFAFCC";
+    ctx.fill();
+    rr(s*.59,  s*.22, s*.065, s*.165, s*.033);
+    ctx.fillStyle = "#FFAFCC";
+    ctx.fill();
+
+    // Three coloured items in calendar body
+    const iy = s * .625, iw = s * .18, ir = s * .045;
+
+    // Lavender square
+    rr(s*.19, iy, iw, iw, ir);
+    ctx.fillStyle = "#CDB4DB";
+    ctx.fill();
+
+    // Cornflower blue square
+    rr(s*.415, iy, iw, iw, ir);
+    ctx.fillStyle = "#BDE0FE";
+    ctx.fill();
+
+    // Mint circle
+    ctx.beginPath();
+    ctx.arc(s*.695, iy + iw / 2, iw / 2, 0, Math.PI * 2);
+    ctx.fillStyle = "#CDFAA7";
+    ctx.fill();
+
+    return c.toDataURL("image/png");
+  }
+
+  const iconUrl = buildPlannerIcon(192);
+
+  // Update head link tags with new icon
+  document.querySelectorAll('link[rel="apple-touch-icon"], link[rel="icon"]').forEach(l => { l.href = iconUrl; });
 
   // Inject manifest via blob
   const manifest = {
-    name: "What's the Plan?",
-    short_name: "Plan?",
+    name: "Planner",
+    short_name: "Planner",
     description: "Your weekly mission control — schedule, priorities, finances.",
     start_url: "./",
     display: "standalone",
@@ -4084,7 +4222,7 @@ document.getElementById("today-date").textContent =
   // Register service worker (caches this page for offline use)
   if ("serviceWorker" in navigator) {
     const swCode = `
-const CACHE = "whats-the-plan-v1";
+const CACHE = "planner-v2";
 const FONTS  = "https://fonts.googleapis.com";
 
 self.addEventListener("install", e => {

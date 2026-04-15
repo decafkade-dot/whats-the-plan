@@ -239,8 +239,6 @@
   .week-label-text { font-size:12px; font-weight:500; color:var(--text2); min-width:120px; text-align:center; }
   .cat-hours-row { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:10px; min-height:22px; }
   .cat-hour-pill { display:inline-flex; align-items:center; gap:3px; padding:2px 8px; border-radius:20px; font-size:10px; font-weight:500; border:1px solid; }
-  .export-pdf-btn,.copy-week-btn { padding:5px 12px; border-radius:20px; font-size:11px; font-weight:500; cursor:pointer; font-family:inherit; color:var(--text); transition:all .15s; background:transparent; border:1.5px solid var(--border-soft); min-height:32px; display:inline-flex; align-items:center; }
-  .copy-week-btn:disabled { opacity:.38; cursor:default; pointer-events:none; }
   .sched-scroll { overflow-x:auto; overflow-y:auto; max-height:calc(100vh - 300px); min-height:260px; border-radius:12px; border:1px solid var(--border-soft); position:relative; user-select:none; -webkit-overflow-scrolling:touch; }
   .sched-inner { display:flex; min-width:520px; }
   .time-col { width:var(--time-col); flex-shrink:0; position:sticky; left:0; z-index:4; background:var(--sched-bg); }
@@ -1275,6 +1273,20 @@ lsSave("mc-debts", S.debts);
   }
 })();
 
+// ─── Migration: weekly notes → persistent "pinned" key (runs once) ───────────
+
+(function migrateWeeklyNotesToPinned() {
+  if (S.notesByWeek["pinned"]) return; // already migrated
+  const all = [];
+  Object.entries(S.notesByWeek).forEach(([key, notes]) => {
+    if (Array.isArray(notes)) all.push(...notes);
+  });
+  if (all.length > 0) {
+    S.notesByWeek["pinned"] = all;
+    lsSave("mc-notesByWeek", S.notesByWeek);
+  }
+})();
+
 // ─── Auth helpers ─────────────────────────────────────────────────────────────
 
 let _authMode = "signin"; // "signin" | "signup"
@@ -1879,8 +1891,6 @@ function buildScheduler() {
   stepBtn.textContent = `${S.settings.stepMinutes}m`;
   stepBtn.onclick = () => { S.settings.stepMinutes = S.settings.stepMinutes === 30 ? 15 : 30; saveSettings(); rerenderSchedulerOnly(); };
 
-  const exportBtn = el("button", "export-pdf-btn"); exportBtn.textContent = "Export PDF"; exportBtn.onclick = exportToPDF;
-
   // Import Time Blocks toggle
   const importToggle = el("button", "shift-import-toggle"); importToggle.id = "shift-import-toggle";
   importToggle.innerHTML = "Import Time Blocks";
@@ -1891,20 +1901,9 @@ function buildScheduler() {
     if (open) setTimeout(() => document.getElementById("shift-import-ta")?.focus(), 60);
   };
 
-  // Copy prev week button
-  const prevWeekKey   = getWeekKey(S.weekOffset - 1);
-  const prevHasBlocks = DAYS.some(d => ((S.blocksByWeek[prevWeekKey] || {})[d] || []).length > 0);
-  const copyBtn = el("button", "copy-week-btn");
-  copyBtn.id = "copy-week-btn";
-  copyBtn.textContent = "\u2191 Copy prev week";
-  copyBtn.disabled = !prevHasBlocks;
-  copyBtn.title = prevHasBlocks ? `Copy all blocks from ${getWeekLabel(prevWeekKey)}` : "No blocks in the previous week";
-  copyBtn.onclick = copyFromPrevWeek;
   if (!focusMode) {
     ctrl.appendChild(labelsBtn);
     ctrl.appendChild(stepBtn);
-    ctrl.appendChild(copyBtn);
-    ctrl.appendChild(exportBtn);
     ctrl.appendChild(importToggle);
   }
 
@@ -2193,102 +2192,6 @@ function rerenderSchedulerOnly() {
   setTimeout(initCurrentTimeLine, 0);
 }
 
-// ─── Export to PDF (landscape) ────────────────────────────────────────────────
-
-function exportToPDF() {
-  // Inject a dedicated <style> tag so print rules are guaranteed to exist
-  // before window.print() is called — no class toggling, no timing races.
-  const printCSS = `
-    @media print {
-      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      @page { size: A4 landscape; margin: 8mm 10mm; }
-
-      body { background: white !important; padding: 0 !important; }
-
-      /* Hide everything except the scheduler panel */
-      footer, #block-editor, #print-hint, #app-header,
-      #brain-dump-btn, #brain-dump-overlay, #break-prompt,
-      #sticky-modal-backdrop, #debt-panel { display: none !important; }
-
-      .panel-grid { display: block !important; }
-      .panel:not(.sched-panel) { display: none !important; }
-
-      .sched-panel {
-        box-shadow: none !important; border-radius: 0 !important;
-        padding: 6px 0 0 !important; overflow: visible !important;
-        background: white !important;
-      }
-      .print-title-bar { display: flex !important; }
-
-      .sched-scroll {
-        overflow: visible !important; max-height: none !important;
-        border: none !important;
-      }
-      .sched-inner  { min-width: unset !important; width: 100% !important; }
-      .days-wrap    { flex: 1 !important; }
-      .day-col      { flex: 1 !important; min-width: 0 !important; }
-
-      .time-col, .time-corner, .day-header { position: relative !important; }
-
-      .week-nav-btn, .week-jump-input, .export-pdf-btn, .copy-week-btn,
-      .pill-btn, .legend-item, .shift-import-toggle,
-      .shift-import-panel, .planner-help-dropdown, .current-time-line,
-      .resize-handle, .panel-accent, .sched-header > div:last-child > div:last-child
-        { display: none !important; }
-
-      .sched-header { margin-bottom: 6px !important; }
-
-      /* Restore ghosted days to full opacity for print */
-      .day-col.past               { opacity: 1 !important; }
-      .day-col.past .block-chip   { filter: none !important; }
-    }
-  `;
-
-  const styleEl = document.createElement("style");
-  styleEl.id = "__pdf-print-style";
-  styleEl.textContent = printCSS;
-  document.head.appendChild(styleEl);
-
-  // Use beforeprint / afterprint events for the cleanest possible cleanup
-  function cleanup() {
-    const s = document.getElementById("__pdf-print-style");
-    if (s) s.remove();
-    window.removeEventListener("afterprint", cleanup);
-  }
-  window.addEventListener("afterprint", cleanup);
-
-  // Small delay lets the style tag parse before the dialog opens
-  setTimeout(() => { window.print(); }, 80);
-}
-
-// ─── Copy from Previous Week ──────────────────────────────────────────────────
-
-function copyFromPrevWeek() {
-  const prevKey    = getWeekKey(S.weekOffset - 1);
-  const prevBlocks = S.blocksByWeek[prevKey] || {};
-  if (!DAYS.some(d => (prevBlocks[d] || []).length > 0)) return;
-
-  const currBlocks = getCurrentWeekBlocks();
-  const currHas    = DAYS.some(d => (currBlocks[d] || []).length > 0);
-
-  if (currHas && !confirm(`This week already has blocks.\n\nOK = merge (overlapping blocks skipped)\nCancel = do nothing`)) return;
-
-  const merged = { ...currBlocks };
-  DAYS.forEach(day => {
-    const incoming = (prevBlocks[day] || []).map(b => ({ ...b, id: Date.now() + Math.random() }));
-    if (!incoming.length) return;
-    if (!merged[day] || merged[day].length === 0) { merged[day] = incoming; return; }
-    const slots = getSlots();
-    const kept = incoming.filter(b => {
-      const si = slots.indexOf(b.start), ei = slots.indexOf(b.end);
-      return si >= 0 && ei > si && !hasOverlap(merged[day], si, ei, slots);
-    });
-    merged[day] = [...merged[day], ...kept];
-  });
-
-  saveCurrentWeekBlocks(merged);
-  rerenderSchedulerOnly();
-}
 
 // ─── Drag: Mouse (Create) ─────────────────────────────────────────────────────
 
@@ -2780,7 +2683,7 @@ const STICKY_COLORS = [
 ];
 
 function getCurrentNotes() {
-  return getNotesForWeek(getWeekKey(S.weekOffset));
+  return S.notesByWeek["pinned"] || [];
 }
 
 function getNotesForWeek(weekKey) {
@@ -2788,7 +2691,7 @@ function getNotesForWeek(weekKey) {
 }
 
 function saveCurrentNotes(notes) {
-  S.notesByWeek[getWeekKey(S.weekOffset)] = notes;
+  S.notesByWeek["pinned"] = notes;
   lsSave("mc-notesByWeek", S.notesByWeek);
   syncNotesToCloud();
 }
@@ -2868,10 +2771,10 @@ function buildNotepadPanel() {
   const panel = div("panel panel-full");
   panel.appendChild(div("panel-accent", { background: C.cornflower }));
 
-  const h2 = document.createElement("h2"); h2.textContent = "Weekly Notes";
+  const h2 = document.createElement("h2"); h2.textContent = "Notes";
   panel.appendChild(h2);
   const sub = div("sub");
-  sub.innerHTML = `Jot anything for ${getWeekLabel(getWeekKey(S.weekOffset))} &middot; Pinned notes stay collected below so they stay in view`;
+  sub.innerHTML = `Jot anything &middot; Pinned notes stay until you delete them`;
   panel.appendChild(sub);
 
   // ── Textarea ──
@@ -2921,7 +2824,7 @@ function buildNotepadPanel() {
   const pinnedTitleWrap = div();
   const pinnedTitle = document.createElement("h2"); pinnedTitle.textContent = "Pinned Notes";
   const pinnedSub = div("sub");
-  pinnedSub.textContent = "Scroll down anytime to review and edit everything you pinned for this week.";
+  pinnedSub.textContent = "Scroll down anytime to review and edit your pinned notes.";
   pinnedTitleWrap.appendChild(pinnedTitle);
   pinnedTitleWrap.appendChild(pinnedSub);
   pinnedHead.appendChild(pinnedTitleWrap);
@@ -2932,7 +2835,7 @@ function buildNotepadPanel() {
 
   if (notes.length === 0) {
     const empty = div("sticky-empty");
-    empty.textContent = "No pinned notes this week — type something above and hit Pin note";
+    empty.textContent = "No pinned notes yet — type something above and hit Pin note";
     pinnedPanel.appendChild(empty);
   } else {
     const grid = div("sticky-grid");
@@ -3812,7 +3715,7 @@ const ICONS = {
   financials: `
     <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M24 6v36" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-      <path d="M17 14c0 0 1.5-4 7-4s7.5 3.5 7.5 6c0 3-2.5 5-7.5 6s-7.5 3-7.5 6c0 2.5 1.5 6 7.5 6s7-4 7-4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M17 14c0 0 1.5-4 7-4s7.5 3.5 7.5 6c0 3-2.5 5-7.5 6s-7.5 3-7.5 6c0 2.5 1.5 6 7.5 6s7-4 7-4" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform="translate(48,0) scale(-1,1)"/>
     </svg>
   `
 };
@@ -3861,10 +3764,7 @@ function renderHomePinnedNotes() {
   const titleWrap = div();
   const title = document.createElement("h2");
   title.textContent = "Pinned Notes";
-  const weekText = div("home-preview-week");
-  weekText.textContent = getWeekLabel(getWeekKey(0));
   titleWrap.appendChild(title);
-  titleWrap.appendChild(weekText);
   head.appendChild(titleWrap);
 
   // Quick-add note button
@@ -3872,7 +3772,7 @@ function renderHomePinnedNotes() {
   addNoteBtn.type = "button";
   addNoteBtn.textContent = "+ New Note";
   addNoteBtn.onclick = () => {
-    const notes = getNotesForWeek(getWeekKey(0));
+    const notes = getCurrentNotes();
     const colorIdx = notes.length % STICKY_COLORS.length;
     const newNote = {
       id: Date.now(),
@@ -3880,18 +3780,16 @@ function renderHomePinnedNotes() {
       color: STICKY_COLORS[colorIdx],
       ts: new Date().toLocaleString("en-US", { month:"short", day:"numeric", hour:"2-digit", minute:"2-digit" }),
     };
-    S.notesByWeek[getWeekKey(0)] = [...notes, newNote];
-    lsSave("mc-notesByWeek", S.notesByWeek);
-    syncNotesToCloud();
+    saveCurrentNotes([...notes, newNote]);
     openStickyModal(newNote);
     renderHomePinnedNotes();
   };
   head.appendChild(addNoteBtn);
   panel.appendChild(head);
 
-  const notes = getNotesForWeek(getWeekKey(0));
+  const notes = getCurrentNotes();
   if (notes.length === 0) {
-    panel.appendChild(div("sticky-empty", {}, "No pinned notes for this week yet — tap + New Note to start."));
+    panel.appendChild(div("sticky-empty", {}, "No pinned notes yet — tap + New Note to start."));
   } else {
     const grid = div("sticky-grid");
     notes.slice(0, 4).forEach((note, i) => {
@@ -4163,6 +4061,13 @@ self.addEventListener("fetch", e => {
   }
 })();
 
+// ─── Auto-sync when tab becomes visible (cross-device support) ──────────────
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && _userId) {
+    manualSyncNow();
+  }
+});
 
 </script>
 </body>

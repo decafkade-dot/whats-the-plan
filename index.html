@@ -1066,7 +1066,7 @@ function startAutoSync() {
 }
 
 function setSyncButtonsBusy(isBusy) {
-  document.querySelectorAll(".sync-btn, .home-sync-btn").forEach(btn => {
+  document.querySelectorAll(".sync-btn, #home-sync-btn").forEach(btn => {
     btn.disabled = isBusy;
     btn.textContent = isBusy ? "Syncing..." : "Sync";
   });

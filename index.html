@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f0e8f5">
 <title>What's the Plan?</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Quicksand:wght@400;500;600;700&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -576,11 +576,420 @@
   .bd-note-btn { padding:7px 14px; border-radius:20px; border:none; background:var(--cornflower); color:white; font-size:12px; font-weight:600; cursor:pointer; font-family:inherit; }
   .bd-count-badge { font-size:11px; color:var(--text2); }
 
+  /* ══ DASHBOARD RETRO PASS ══ */
+  body {
+    font-family:'Quicksand',sans-serif;
+    background:
+      radial-gradient(circle at top left,#FFAFCC33 0%,transparent 24%),
+      radial-gradient(circle at bottom right,#BDE0FE33 0%,transparent 22%),
+      linear-gradient(180deg,#f7f1fb 0%,#fdf7ef 100%);
+    background-attachment:fixed;
+  }
+  .home-screen {
+    width:min(1480px,100%);
+    margin:0 auto;
+    align-items:stretch;
+    gap:18px;
+    padding:20px 14px calc(28px + var(--safe-bottom));
+  }
+  .home-header {
+    max-width:none;
+    position:relative;
+    padding:20px 24px;
+    border:3px solid rgba(42,34,64,.92);
+    border-radius:20px;
+    background:
+      linear-gradient(180deg,rgba(255,249,238,.96) 0%,rgba(255,255,255,.92) 100%);
+    box-shadow:8px 8px 0 rgba(42,34,64,.13);
+    overflow:hidden;
+  }
+  .home-header::before {
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(90deg,transparent 0 2%,rgba(205,180,219,.18) 2% 10%,transparent 10% 14%,rgba(189,224,254,.16) 14% 22%,transparent 22% 26%,rgba(253,239,129,.18) 26% 34%,transparent 34% 100%);
+    opacity:.55;
+    pointer-events:none;
+  }
+  .home-header h1,
+  .panel h2,
+  .page-title,
+  .break-prompt-title,
+  .bd-title {
+    font-family:'Silkscreen','Outfit',sans-serif;
+  }
+  .home-header h1 {
+    position:relative;
+    z-index:1;
+    font-size:clamp(24px,3.2vw,34px);
+    letter-spacing:1px;
+    line-height:1.35;
+    text-transform:uppercase;
+  }
+  .home-date,
+  .home-sync-row {
+    position:relative;
+    z-index:1;
+  }
+  .home-date {
+    margin-top:10px;
+    font-size:14px;
+    font-weight:700;
+    letter-spacing:.6px;
+    text-transform:uppercase;
+  }
+  .home-grid { display:none !important; }
+  .home-bottom { width:100%; max-width:none; }
+
+  .panel {
+    border:3px solid rgba(42,34,64,.92);
+    border-radius:20px;
+    background:
+      linear-gradient(180deg,rgba(255,251,244,.96) 0%,rgba(255,255,255,.94) 100%);
+    box-shadow:8px 8px 0 rgba(42,34,64,.13);
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    overflow:hidden;
+  }
+  .panel-accent {
+    height:10px;
+    border-radius:16px 16px 0 0;
+  }
+  .panel h2 {
+    font-size:15px;
+    line-height:1.45;
+    text-transform:uppercase;
+    letter-spacing:1px;
+  }
+  .panel .sub {
+    font-size:12px;
+    color:var(--text2);
+    line-height:1.45;
+  }
+  .panel-kicker {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:14px;
+    padding:7px 12px;
+    border-radius:999px;
+    border:2px solid rgba(42,34,64,.82);
+    background:var(--kicker-bg, rgba(205,180,219,.22));
+  }
+  .panel-kicker-art {
+    width:24px;
+    height:24px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .panel-kicker-art svg {
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .panel-kicker-text {
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:1px;
+    color:var(--text);
+  }
+
+  .dashboard-layout {
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .dashboard-main-grid {
+    display:grid;
+    grid-template-columns:minmax(0,1.02fr) minmax(0,.98fr);
+    gap:18px;
+    align-items:start;
+  }
+  .dashboard-column {
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    min-width:0;
+  }
+
+  .sched-panel,
+  .dashboard-financial-shell,
+  .dashboard-focus-panel,
+  .dashboard-notes-zone .panel {
+    background:
+      linear-gradient(180deg,rgba(255,250,242,.98) 0%,rgba(255,255,255,.95) 100%),
+      linear-gradient(rgba(42,34,64,.045) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(42,34,64,.045) 1px,transparent 1px);
+    background-size:auto, 24px 24px, 24px 24px;
+  }
+
+  .dashboard-dropdown {
+    border:2px solid rgba(42,34,64,.84);
+    border-radius:18px;
+    background:rgba(255,255,255,.74);
+    box-shadow:4px 4px 0 rgba(42,34,64,.1);
+    overflow:hidden;
+    margin-top:12px;
+  }
+  .dashboard-dropdown:first-of-type { margin-top:18px; }
+  .dashboard-dropdown > summary {
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:14px 16px;
+    background:var(--dropdown-bg, rgba(205,180,219,.18));
+  }
+  .dashboard-dropdown > summary::-webkit-details-marker { display:none; }
+  .dashboard-dropdown-copy {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    min-width:0;
+  }
+  .dashboard-dropdown-copy strong {
+    display:block;
+    font-family:'Silkscreen','Outfit',sans-serif;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.8px;
+    line-height:1.4;
+  }
+  .dashboard-dropdown-copy span {
+    display:block;
+    font-size:11px;
+    color:var(--text2);
+    line-height:1.35;
+  }
+  .dashboard-dropdown-arrow {
+    font-family:'Silkscreen','Outfit',sans-serif;
+    font-size:13px;
+    color:var(--text);
+    transition:transform .18s ease;
+    flex-shrink:0;
+  }
+  .dashboard-dropdown[open] .dashboard-dropdown-arrow { transform:rotate(90deg); }
+  .dashboard-dropdown-body {
+    padding:14px 16px 16px;
+    border-top:2px solid rgba(42,34,64,.12);
+    background:rgba(255,255,255,.72);
+  }
+  .dashboard-compact-panel {
+    padding:0;
+    margin:0;
+    border:none;
+    border-radius:0;
+    background:transparent;
+    box-shadow:none;
+  }
+  .dashboard-compact-panel > .panel-accent,
+  .dashboard-compact-panel > h2,
+  .dashboard-compact-panel > .sub,
+  .dashboard-compact-panel > .panel-kicker {
+    display:none;
+  }
+
+  .dashboard-routine-sticky {
+    position:relative;
+    overflow:visible;
+    padding-top:26px;
+    background:
+      linear-gradient(180deg,rgba(255,253,244,.98) 0%,rgba(255,250,238,.94) 100%);
+  }
+  .dashboard-routine-sticky::before {
+    content:"";
+    position:absolute;
+    top:-13px;
+    left:28px;
+    width:92px;
+    height:24px;
+    border:2px dashed rgba(42,34,64,.2);
+    background:rgba(255,255,255,.58);
+    transform:rotate(-5deg);
+    box-shadow:0 2px 4px rgba(42,34,64,.08);
+  }
+  .dashboard-routine-sticky::after {
+    content:"";
+    position:absolute;
+    inset:16px;
+    border-radius:14px;
+    background:
+      linear-gradient(rgba(42,34,64,.065) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(42,34,64,.04) 1px,transparent 1px);
+    background-size:100% 26px, 26px 100%;
+    opacity:.5;
+    pointer-events:none;
+  }
+  .dashboard-routine-sticky > * {
+    position:relative;
+    z-index:1;
+  }
+  .dashboard-routine-sticky.morning { background:linear-gradient(180deg,rgba(253,239,129,.25) 0%,rgba(255,255,250,.98) 100%); }
+  .dashboard-routine-sticky.evening { background:linear-gradient(180deg,rgba(255,175,204,.24) 0%,rgba(255,253,248,.98) 100%); }
+
+  .todo-list { gap:10px; }
+  .todo-item {
+    align-items:center;
+    padding:12px 12px 12px 10px;
+    border:2px solid rgba(42,34,64,.14);
+    border-radius:14px;
+    background:rgba(255,255,255,.82);
+    box-shadow:3px 3px 0 rgba(42,34,64,.08);
+  }
+  .todo-check {
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    border:2px solid rgba(42,34,64,.88);
+    background:linear-gradient(180deg,#fff8e8 0%,#fff 100%);
+    box-shadow:2px 2px 0 rgba(42,34,64,.12);
+    position:relative;
+    overflow:hidden;
+  }
+  .todo-check .todo-check-icon {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width:100%;
+    height:100%;
+  }
+  .todo-check .todo-check-icon svg {
+    width:18px;
+    height:18px;
+    display:block;
+    opacity:1;
+  }
+  .todo-check-mark {
+    position:absolute;
+    right:2px;
+    bottom:0;
+    font-size:12px;
+    font-weight:700;
+    color:#2f7346;
+    opacity:0;
+    transform:translateY(2px);
+    transition:opacity .15s ease, transform .15s ease;
+  }
+  .todo-check.done {
+    background:linear-gradient(180deg,#CDFAA7 0%,#e8ffd4 100%);
+    border-color:#2f7346;
+  }
+  .todo-check.done .todo-check-mark {
+    opacity:1;
+    transform:translateY(0);
+  }
+  .todo-text {
+    font-size:15px;
+    font-weight:600;
+  }
+  .todo-min-badge {
+    min-width:auto;
+    border-radius:999px;
+    border:2px solid rgba(42,34,64,.15);
+    background:#fffaf1;
+    font-weight:700;
+  }
+  .todo-time-summary {
+    margin-top:14px;
+    border:2px solid rgba(42,34,64,.14);
+    background:rgba(255,255,255,.86);
+  }
+  .todo-add-planner-btn,
+  .todo-day-sel,
+  .todo-time-sel {
+    border-width:2px;
+  }
+
+  .priority-item {
+    border:2px solid rgba(42,34,64,.2);
+    box-shadow:3px 3px 0 rgba(42,34,64,.08);
+  }
+  .priority-num {
+    border:2px solid rgba(42,34,64,.16);
+    font-weight:700;
+  }
+
+  .notepad-textarea {
+    border:2px solid rgba(42,34,64,.18);
+    background:
+      linear-gradient(180deg,#fffdf8 0%,#fff 100%),
+      linear-gradient(rgba(42,34,64,.05) 1px,transparent 1px);
+    background-size:auto, 100% 28px;
+    line-height:1.8;
+  }
+  .notepad-pin-btn,
+  .home-bottom-link,
+  .sync-btn,
+  .home-sync-btn,
+  .debt-pay-btn,
+  .shift-import-btn,
+  .spend-add-btn,
+  .priority-add-btn,
+  .todo-add-btn,
+  .break-start-btn,
+  .brain-dump-add-btn,
+  .bd-note-btn {
+    border:2px solid rgba(42,34,64,.82);
+    box-shadow:3px 3px 0 rgba(42,34,64,.12);
+    color:#2a2240;
+  }
+  .sticky-grid { grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); }
+  .sticky-note {
+    border:3px solid rgba(42,34,64,.9);
+    border-radius:12px;
+    box-shadow:6px 6px 0 rgba(42,34,64,.14);
+    padding:18px 16px 22px;
+    background-image:
+      linear-gradient(rgba(42,34,64,.06) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(42,34,64,.04) 1px,transparent 1px);
+    background-size:100% 22px, 22px 100%;
+  }
+  .sticky-note::before {
+    top:-10px;
+    left:16px;
+    width:72px;
+    height:20px;
+    border-radius:4px;
+    background:rgba(255,255,255,.6);
+    clip-path:none;
+    transform:rotate(-4deg);
+    border:2px dashed rgba(42,34,64,.2);
+  }
+  .sticky-ts,
+  .sticky-edit-hint { font-weight:700; }
+
+  .dashboard-focus-panel .focus-ring-wrap { margin-top:10px; }
+
+  [data-theme="dark"] body {
+    background:
+      radial-gradient(circle at top left,#FFAFCC22 0%,transparent 24%),
+      radial-gradient(circle at bottom right,#BDE0FE18 0%,transparent 22%),
+      linear-gradient(180deg,#221b34 0%,#181222 100%);
+  }
+  [data-theme="dark"] .home-header,
+  [data-theme="dark"] .panel,
+  [data-theme="dark"] .dashboard-dropdown,
+  [data-theme="dark"] .todo-item,
+  [data-theme="dark"] .todo-time-summary,
+  [data-theme="dark"] .notepad-textarea {
+    background-color:#2a2240;
+    color:var(--text);
+  }
+
   /* Print */
   .print-title-bar { display:none; justify-content:space-between; align-items:baseline; margin-bottom:8px; padding-bottom:6px; border-bottom:1.5px solid var(--border); }
   .print-title-bar .ptb-title { font-size:16px; font-weight:600; }
   .print-title-bar .ptb-week { font-size:12px; color:var(--text2); }
 
+  @media(max-width:920px) {
+    .dashboard-main-grid { grid-template-columns:1fr; }
+  }
   @media(max-width:480px) {
     .home-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
     .nav-tile { border-radius:20px; gap:6px; }
@@ -589,6 +998,9 @@
     .page-content { padding:0; }
     .panel { padding:18px 14px; }
     .time-import-meta { grid-template-columns:1fr; }
+    .home-header { padding:18px 16px; }
+    .home-header h1 { font-size:22px; }
+    .sticky-grid { grid-template-columns:1fr; }
   }
   @media(max-width:600px) {
     input, textarea, select {
@@ -1129,6 +1541,7 @@ function handleCloudChange(table, row) {
       S.blocksByWeek = pruneOldWeeks(S.blocksByWeek);
       lsSave("mc-blocksByWeek", S.blocksByWeek);
       if (currentPage === "planner") rerenderSchedulerOnly();
+      if (currentPage === "home") renderAll();
       break;
     case "notes_by_week":
       if (!row.week_key) return;
@@ -1139,30 +1552,35 @@ function handleCloudChange(table, row) {
     case "priorities":
       S.priorities = Array.isArray(row.items) ? row.items : [];
       lsSave("mc-priorities", S.priorities);
-      if (currentPage === "priorities" || currentPage === "focus") renderPage(currentPage);
+      if (currentPage === "home") renderAll();
+      else if (currentPage === "priorities" || currentPage === "focus") renderPage(currentPage);
       break;
     case "financials":
       if (Array.isArray(row.items)) {
         S.finSections = row.items.filter(s => s.id !== "savings");
         lsSave("mc-fin-sections", S.finSections);
-        if (currentPage === "financials") renderFinancialsPage();
+        if (currentPage === "home") renderAll();
+        else if (currentPage === "financials") renderFinancialsPage();
       }
       break;
     case "debts":
       S.debts = Array.isArray(row.items) ? row.items.map(normalizeDebtItem) : [];
       lsSave("mc-debts", S.debts);
       clearTableDirty("debts");
-      if (currentPage === "financials") renderFinancialsPage();
+      if (currentPage === "home") renderAll();
+      else if (currentPage === "financials") renderFinancialsPage();
       break;
     case "morning_todos":
       lsSave("mc-morning-todos", normalizeRoutineItems(MORNING_ROUTINE_TEMPLATE, row.items));
       clearTableDirty("morning_todos");
-      if (currentPage === "morning") renderMorningPage();
+      if (currentPage === "home") renderAll();
+      else if (currentPage === "morning") renderMorningPage();
       break;
     case "evening_todos":
       lsSave("mc-evening-todos", normalizeRoutineItems(EVENING_ROUTINE_TEMPLATE, row.items));
       clearTableDirty("evening_todos");
-      if (currentPage === "evening") renderEveningPage();
+      if (currentPage === "home") renderAll();
+      else if (currentPage === "evening") renderEveningPage();
       break;
     case "spending":
       if (Array.isArray(row.log)) {
@@ -1173,7 +1591,8 @@ function handleCloudChange(table, row) {
         S.spendAccounts = row.accounts;
         lsSave("mc-spend-accounts", S.spendAccounts);
       }
-      if (currentPage === "financials") renderFinancialsPage();
+      if (currentPage === "home") renderAll();
+      else if (currentPage === "financials") renderFinancialsPage();
       break;
     case "brain_dump":
       S.brainDump = Array.isArray(row.items) ? row.items : [];
@@ -1185,7 +1604,8 @@ function handleCloudChange(table, row) {
       if (row.data && typeof row.data === "object") {
         S.settings = { ...S.settings, ...row.data };
         lsSave("mc-settings", S.settings);
-        if (currentPage === "planner") renderPlannerPage();
+        if (currentPage === "home") renderAll();
+        else if (currentPage === "planner") renderPlannerPage();
       }
       break;
   }
@@ -1358,6 +1778,12 @@ const S = {
   activeSpendAccount: "discover",
   themeMode: ls("mc-theme", "light"),
 };
+
+const dashboardFinanceSections = { snapshot: true, debts: false, tracking: false, ...ls("mc-dashboard-fin-sections", {}) };
+
+function saveDashboardFinanceSections() {
+  lsSave("mc-dashboard-fin-sections", dashboardFinanceSections);
+}
 
 // Save pruned blocks back immediately
 lsSave("mc-blocksByWeek", S.blocksByWeek);
@@ -1686,6 +2112,19 @@ function el(tag, cls, style, ...children) {
 function div(cls, style, ...children) { return el("div", cls, style, ...children); }
 function span(cls, txt, style)        { const s = el("span", cls, style); s.textContent = txt; return s; }
 function btn(cls, txt, onClick)       { const b = el("button", cls); b.textContent = txt; b.onclick = onClick; return b; }
+
+function addPanelBadge(panel, iconName, label, color) {
+  const badge = div("panel-kicker");
+  badge.style.setProperty("--kicker-bg", (color || C.lavender) + "44");
+  const art = div("panel-kicker-art");
+  art.innerHTML = pixelIcon(iconName);
+  badge.appendChild(art);
+  badge.appendChild(span("panel-kicker-text", label));
+  const title = panel.querySelector("h2");
+  if (title) panel.insertBefore(badge, title);
+  else panel.insertBefore(badge, panel.firstChild || null);
+  return panel;
+}
 
 function getCategoryConfig(label) {
   return CATEGORIES.find(cat => cat.label === label) || CATEGORIES[0];
@@ -2886,14 +3325,15 @@ document.getElementById("sticky-modal-backdrop").addEventListener("click", e => 
 
 function buildNotepadPanel() {
   const wrap = div("notes-page-flow");
+  wrap.classList.add("dashboard-notes-zone");
 
   const panel = div("panel panel-full");
   panel.appendChild(div("panel-accent", { background: C.cornflower }));
 
-  const h2 = document.createElement("h2"); h2.textContent = "Notes";
+  const h2 = document.createElement("h2"); h2.textContent = "Add a Sticky Note";
   panel.appendChild(h2);
   const sub = div("sub");
-  sub.innerHTML = `Jot anything &middot; Pinned notes stay until you delete them`;
+  sub.innerHTML = `Jot anything &middot; New stickies stay parked at the bottom until you delete them`;
   panel.appendChild(sub);
 
   // ── Textarea ──
@@ -2941,7 +3381,7 @@ function buildNotepadPanel() {
   pinnedPanel.appendChild(div("panel-accent", { background: C.appointment }));
   const pinnedHead = div("notes-pinned-head");
   const pinnedTitleWrap = div();
-  const pinnedTitle = document.createElement("h2"); pinnedTitle.textContent = "Pinned Notes";
+  const pinnedTitle = document.createElement("h2"); pinnedTitle.textContent = "Pinned Sticky Notes";
   const pinnedSub = div("sub");
   pinnedSub.textContent = "Scroll down anytime to review and edit your pinned notes.";
   pinnedTitleWrap.appendChild(pinnedTitle);
@@ -3781,6 +4221,137 @@ function buildSpendingPanel() {
   return panel;
 }
 
+function buildFinancialDashboardSection(key, title, description, iconName, color, builder) {
+  const details = document.createElement("details");
+  details.className = "dashboard-dropdown";
+  details.open = !!dashboardFinanceSections[key];
+  details.style.setProperty("--dropdown-bg", color + "33");
+  details.addEventListener("toggle", () => {
+    dashboardFinanceSections[key] = details.open;
+    saveDashboardFinanceSections();
+  });
+
+  const summary = document.createElement("summary");
+  const copy = div("dashboard-dropdown-copy");
+  const art = div("panel-kicker-art");
+  art.innerHTML = pixelIcon(iconName);
+  const text = div();
+  const strong = document.createElement("strong");
+  strong.textContent = title;
+  const spanText = document.createElement("span");
+  spanText.textContent = description;
+  text.appendChild(strong);
+  text.appendChild(spanText);
+  copy.appendChild(art);
+  copy.appendChild(text);
+  summary.appendChild(copy);
+  summary.appendChild(span("dashboard-dropdown-arrow", ">"));
+  details.appendChild(summary);
+
+  const body = div("dashboard-dropdown-body");
+  const content = builder();
+  content.classList.add("dashboard-compact-panel");
+  body.appendChild(content);
+  details.appendChild(body);
+  return details;
+}
+
+function buildFinancialDashboardPanel() {
+  const panel = div("panel dashboard-financial-shell");
+  panel.appendChild(div("panel-accent", { background: C.mint }));
+  const h2 = document.createElement("h2");
+  h2.textContent = "Financial Snapshot";
+  panel.appendChild(h2);
+  const sub = div("sub");
+  sub.textContent = "Keep the month together with dropdowns for your snapshot, debts, and tracking.";
+  panel.appendChild(sub);
+  addPanelBadge(panel, "chest", "Money Zone", C.mint);
+
+  panel.appendChild(buildFinancialDashboardSection(
+    "snapshot",
+    "Snapshot",
+    "Monthly overview and bill sections",
+    "chest",
+    C.mint,
+    buildFinancialPanel
+  ));
+  panel.appendChild(buildFinancialDashboardSection(
+    "debts",
+    "Debts",
+    "Balances, due days, and payment logs",
+    "pickaxe",
+    C.hotPink,
+    buildDebtPanel
+  ));
+  panel.appendChild(buildFinancialDashboardSection(
+    "tracking",
+    "Tracking",
+    "Cards, balances, and quick spending logs",
+    "coin",
+    C.cornflower,
+    buildSpendingPanel
+  ));
+
+  return panel;
+}
+
+function buildHomeDashboard() {
+  const layout = div("dashboard-layout");
+
+  const plannerPanel = buildScheduler();
+  addPanelBadge(plannerPanel, "grass", "Weekly Planner", C.lavender);
+  layout.appendChild(plannerPanel);
+
+  const priorityPanel = buildPriorityPanel();
+  addPanelBadge(priorityPanel, "sword", "Priority Stack", C.hotPink);
+  layout.appendChild(priorityPanel);
+
+  const midGrid = div("dashboard-main-grid");
+  const leftCol = div("dashboard-column");
+  const rightCol = div("dashboard-column");
+
+  leftCol.appendChild(buildFinancialDashboardPanel());
+
+  const focusPanel = buildFocusPanel();
+  focusPanel.classList.add("dashboard-focus-panel");
+  addPanelBadge(focusPanel, "potion", "Pomodoro", C.hotPink);
+  rightCol.appendChild(focusPanel);
+
+  leftCol.appendChild(buildRoutineStickyPanel(
+    "Morning Routine",
+    "Keep the first part of the day simple and visible.",
+    getMorningTodos(),
+    saveMorningTodos,
+    C.yellow,
+    "Morning Routine",
+    "sun",
+    "morning"
+  ));
+
+  rightCol.appendChild(buildRoutineStickyPanel(
+    "Evening Routine",
+    "Wrap the day without making the screen feel busy.",
+    getEveningTodos(),
+    saveEveningTodos,
+    C.hotPink,
+    "Evening Routine",
+    "moon",
+    "evening"
+  ));
+
+  midGrid.appendChild(leftCol);
+  midGrid.appendChild(rightCol);
+  layout.appendChild(midGrid);
+
+  const notesPanel = buildNotepadPanel();
+  const notesPanels = notesPanel.querySelectorAll(".panel");
+  if (notesPanels[0]) addPanelBadge(notesPanels[0], "note", "Quick Sticky", C.cornflower);
+  if (notesPanels[1]) addPanelBadge(notesPanels[1], "grass", "Pinned Board", C.appointment);
+  layout.appendChild(notesPanel);
+
+  return layout;
+}
+
 
 // ═══ SVG ICONS ═══════════════════════════════════════════════════════════════
 
@@ -3840,6 +4411,107 @@ const ICONS = {
     </svg>
   `
 };
+
+const PIXEL_ICONS = {
+  grass: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="3" y="8" width="18" height="4" fill="#8BD46C"/>
+      <rect x="3" y="12" width="18" height="3" fill="#63A952"/>
+      <rect x="3" y="15" width="18" height="6" fill="#B8865A"/>
+      <rect x="6" y="6" width="2" height="2" fill="#D9F7B8"/>
+      <rect x="11" y="5" width="2" height="3" fill="#A3EB81"/>
+      <rect x="16" y="6" width="2" height="2" fill="#D9F7B8"/>
+    </svg>
+  `,
+  sword: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="11" y="3" width="2" height="9" fill="#BDE0FE"/>
+      <rect x="10" y="4" width="4" height="2" fill="#DFF0FF"/>
+      <rect x="9" y="11" width="6" height="2" fill="#CDB4DB"/>
+      <rect x="11" y="13" width="2" height="4" fill="#7D5A50"/>
+      <rect x="10" y="17" width="4" height="2" fill="#F9D66C"/>
+      <rect x="11" y="19" width="2" height="2" fill="#7D5A50"/>
+    </svg>
+  `,
+  pickaxe: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="5" y="5" width="10" height="2" fill="#BDE0FE"/>
+      <rect x="4" y="7" width="6" height="2" fill="#A2D2FF"/>
+      <rect x="13" y="7" width="4" height="2" fill="#A2D2FF"/>
+      <rect x="11" y="7" width="2" height="11" fill="#8B6C52"/>
+      <rect x="10" y="18" width="4" height="2" fill="#C99B6B"/>
+    </svg>
+  `,
+  potion: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="10" y="3" width="4" height="3" fill="#E8E4F0"/>
+      <rect x="9" y="6" width="6" height="2" fill="#CDB4DB"/>
+      <rect x="7" y="8" width="10" height="10" fill="#FFAFCC"/>
+      <rect x="8" y="9" width="8" height="8" fill="#FFC8DD"/>
+      <rect x="9" y="18" width="6" height="2" fill="#BDE0FE"/>
+      <rect x="11" y="11" width="2" height="2" fill="#FFFFFF"/>
+    </svg>
+  `,
+  chest: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="4" y="7" width="16" height="12" fill="#C58C55"/>
+      <rect x="4" y="7" width="16" height="4" fill="#D9A06B"/>
+      <rect x="11" y="7" width="2" height="12" fill="#6B4B33"/>
+      <rect x="10" y="11" width="4" height="4" fill="#FDEF81"/>
+      <rect x="11" y="12" width="2" height="2" fill="#6B4B33"/>
+    </svg>
+  `,
+  sun: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="9" y="4" width="6" height="2" fill="#FDEF81"/>
+      <rect x="5" y="8" width="2" height="2" fill="#FDEF81"/>
+      <rect x="17" y="8" width="2" height="2" fill="#FDEF81"/>
+      <rect x="4" y="12" width="2" height="2" fill="#FDEF81"/>
+      <rect x="18" y="12" width="2" height="2" fill="#FDEF81"/>
+      <rect x="5" y="16" width="2" height="2" fill="#FDEF81"/>
+      <rect x="17" y="16" width="2" height="2" fill="#FDEF81"/>
+      <rect x="9" y="18" width="6" height="2" fill="#FDEF81"/>
+      <rect x="8" y="8" width="8" height="8" fill="#FCC781"/>
+      <rect x="10" y="10" width="4" height="4" fill="#FFF8C8"/>
+    </svg>
+  `,
+  moon: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="8" y="4" width="8" height="2" fill="#CDB4DB"/>
+      <rect x="6" y="6" width="8" height="2" fill="#CDB4DB"/>
+      <rect x="5" y="8" width="8" height="2" fill="#CDB4DB"/>
+      <rect x="5" y="10" width="7" height="2" fill="#CDB4DB"/>
+      <rect x="5" y="12" width="7" height="2" fill="#CDB4DB"/>
+      <rect x="6" y="14" width="8" height="2" fill="#CDB4DB"/>
+      <rect x="8" y="16" width="8" height="2" fill="#CDB4DB"/>
+      <rect x="12" y="6" width="5" height="10" fill="#FFF8EE"/>
+      <rect x="15" y="8" width="2" height="2" fill="#FDEF81"/>
+      <rect x="17" y="11" width="2" height="2" fill="#FDEF81"/>
+    </svg>
+  `,
+  note: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="5" y="4" width="14" height="16" fill="#FFF8EE"/>
+      <rect x="5" y="4" width="14" height="2" fill="#BDE0FE"/>
+      <rect x="8" y="9" width="8" height="2" fill="#CDB4DB"/>
+      <rect x="8" y="13" width="8" height="2" fill="#FFAFCC"/>
+      <rect x="8" y="17" width="6" height="2" fill="#CDFAA7"/>
+      <rect x="16" y="4" width="3" height="3" fill="#E5F2FF"/>
+    </svg>
+  `,
+  coin: `
+    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges">
+      <rect x="6" y="6" width="12" height="4" fill="#FDEF81"/>
+      <rect x="5" y="10" width="12" height="4" fill="#F7D95B"/>
+      <rect x="7" y="14" width="12" height="4" fill="#FDEF81"/>
+      <rect x="10" y="9" width="4" height="6" fill="#FFF4AB"/>
+    </svg>
+  `
+};
+
+function pixelIcon(name) {
+  return PIXEL_ICONS[name] || PIXEL_ICONS.note;
+}
 
 const NAV_TILES = [
   { id:"planner",    icon:ICONS.planner,    label:"Planner",    color:"#CDB4DB", bg:"#CDB4DB22" },
@@ -3939,19 +4611,11 @@ function renderHomePinnedNotes() {
 
 function renderHomeTiles() {
   const grid = document.getElementById("home-grid");
-  grid.innerHTML = "";
-  NAV_TILES.forEach(tile => {
-    const t = div("nav-tile");
-    t.style.setProperty("--tile-border", tile.color);
-    t.style.setProperty("--tile-color", tile.color);
-    t.innerHTML = `<style>.nav-tile:nth-child(${NAV_TILES.indexOf(tile)+1})::before{background:${tile.bg}}</style>`;
-    const iconDiv = div("tile-icon"); iconDiv.innerHTML = tile.icon; iconDiv.style.color = tile.color;
-    const label = div("tile-label"); label.textContent = tile.label;
-    t.appendChild(iconDiv); t.appendChild(label);
-    t.onclick = () => navigateTo(tile.id);
-    grid.appendChild(t);
-  });
-  renderHomePinnedNotes();
+  const bottom = document.getElementById("home-bottom");
+  if (grid) grid.innerHTML = "";
+  if (!bottom) return;
+  bottom.innerHTML = "";
+  bottom.appendChild(buildHomeDashboard());
 }
 
 function renderPage(pageId) {
@@ -4067,17 +4731,23 @@ function saveEveningTodos(items) {
   syncToCloud("evening_todos", { items: next });
 }
 
+function getRoutineChecklistIcon(routineLabel, index) {
+  if (/morning/i.test(routineLabel || "")) return ["sun", "grass", "coin"][index % 3];
+  if (/evening/i.test(routineLabel || "")) return ["moon", "potion", "note"][index % 3];
+  return ["grass", "note", "coin"][index % 3];
+}
+
 function buildTodoList(items, saveFn, accentColor, routineLabel) {
   const container = div();
   const list = div("todo-list");
-  items.forEach(item => {
+  items.forEach((item, index) => {
     const row = div("todo-item");
     const check = el("button", "todo-check" + (item.done ? " done" : ""));
-    check.innerHTML = '<svg viewBox="0 0 16 16" fill="none"><path d="M3 8l3.5 3.5L13 5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    check.innerHTML = `<span class="todo-check-icon">${pixelIcon(getRoutineChecklistIcon(routineLabel, index))}</span><span class="todo-check-mark">✓</span>`;
     check.onclick = () => {
       const next = items.map(entry => entry.id === item.id ? { ...entry, done: !entry.done } : { ...entry });
       saveFn(next);
-      renderPage(currentPage);
+      renderAll();
     };
     const text = span("todo-text" + (item.done ? " done" : ""), item.text);
     const minutes = span("todo-min-badge", `${item.minutes || 5} min`);
@@ -4174,24 +4844,45 @@ function buildTodoList(items, saveFn, accentColor, routineLabel) {
   return container;
 }
 
+function buildRoutineStickyPanel(title, subtitle, items, saveFn, accentColor, routineLabel, iconName, themeClass) {
+  const panel = div(`panel dashboard-routine-sticky ${themeClass || ""}`.trim());
+  panel.appendChild(div("panel-accent", { background: accentColor }));
+  const h2 = document.createElement("h2");
+  h2.textContent = title;
+  panel.appendChild(h2);
+  const sub = div("sub");
+  sub.textContent = subtitle;
+  panel.appendChild(sub);
+  panel.appendChild(buildTodoList(items, saveFn, accentColor, routineLabel));
+  return addPanelBadge(panel, iconName, themeClass === "evening" ? "PM Reset" : "AM Reset", accentColor);
+}
+
 function renderMorningPage() {
   const c = document.getElementById("morning-content"); c.innerHTML = "";
-  const todoPanel = div("panel");
-  todoPanel.appendChild(div("panel-accent", { background: C.yellow }));
-  const h2t = document.createElement("h2"); h2t.textContent = "Morning Checklist"; todoPanel.appendChild(h2t);
-  const subT = div("sub"); subT.textContent = "Start your day with intention"; todoPanel.appendChild(subT);
-  todoPanel.appendChild(buildTodoList(getMorningTodos(), saveMorningTodos, C.yellow, "Morning Routine"));
-  c.appendChild(todoPanel);
+  c.appendChild(buildRoutineStickyPanel(
+    "Morning Routine",
+    "Start the day without friction",
+    getMorningTodos(),
+    saveMorningTodos,
+    C.yellow,
+    "Morning Routine",
+    "sun",
+    "morning"
+  ));
 }
 
 function renderEveningPage() {
   const c = document.getElementById("evening-content"); c.innerHTML = "";
-  const todoPanel = div("panel");
-  todoPanel.appendChild(div("panel-accent", { background: C.hotPink }));
-  const h2t = document.createElement("h2"); h2t.textContent = "Evening Wind-Down"; todoPanel.appendChild(h2t);
-  const subT = div("sub"); subT.textContent = "Reflect and rest"; todoPanel.appendChild(subT);
-  todoPanel.appendChild(buildTodoList(getEveningTodos(), saveEveningTodos, C.hotPink, "Evening Routine"));
-  c.appendChild(todoPanel);
+  c.appendChild(buildRoutineStickyPanel(
+    "Evening Routine",
+    "Power down and reset for tomorrow",
+    getEveningTodos(),
+    saveEveningTodos,
+    C.hotPink,
+    "Evening Routine",
+    "moon",
+    "evening"
+  ));
 }
 
 function renderPrioritiesPage() {

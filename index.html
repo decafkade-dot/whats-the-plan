@@ -1792,6 +1792,14 @@ lsSave("mc-debts", S.debts);
 
 // Remove cash savings section from local state on init
 S.finSections = S.finSections.filter(s => s.id !== "savings");
+if (!Array.isArray(S.finSections)) S.finSections = DEFAULT_FIN_SECTIONS;
+S.finSections = S.finSections.map((section, index) => ({
+  id: section?.id || `section-${index}`,
+  label: section?.label || `SECTION ${index + 1}`,
+  color: section?.color || [C.mint, C.hotPink, C.yellow, C.cornflower][index % 4],
+  collapsed: !!section?.collapsed,
+  items: Array.isArray(section?.items) ? section.items : [],
+}));
 lsSave("mc-fin-sections", S.finSections);
 // Note: cloud load also filters savings (see loadCloudData)
 
@@ -2124,6 +2132,30 @@ function addPanelBadge(panel, iconName, label, color) {
   if (title) panel.insertBefore(badge, title);
   else panel.insertBefore(badge, panel.firstChild || null);
   return panel;
+}
+
+function buildDashboardErrorPanel(title, err, color = C.hotPink) {
+  const panel = div("panel");
+  panel.appendChild(div("panel-accent", { background: color }));
+  const h2 = document.createElement("h2");
+  h2.textContent = title;
+  panel.appendChild(h2);
+  const sub = div("sub");
+  sub.textContent = "This section hit a render issue, but the rest of the dashboard is still loading.";
+  panel.appendChild(sub);
+  const msg = div("priority-full");
+  msg.textContent = err?.message || "Unknown render error";
+  panel.appendChild(msg);
+  return panel;
+}
+
+function safeDashboardPanel(title, color, builder) {
+  try {
+    return builder();
+  } catch (err) {
+    console.error(`[dashboard] ${title} failed`, err);
+    return buildDashboardErrorPanel(title, err, color);
+  }
 }
 
 function getCategoryConfig(label) {
@@ -3084,7 +3116,7 @@ function saveFinSections() {
   syncToCloud("financials", { items: S.finSections });
 }
 
-function finItemTotal(items) {
+function finItemTotal(items = []) {
   return items.reduce((s, f) => s + (parseFloat(String(f.value).replace(/,/g,"")) || 0), 0);
 }
 
@@ -3096,14 +3128,16 @@ function buildFinancialPanel() {
   let totalIncome = 0, totalExpenses = 0;
   let paidExpenses = 0, paidIncome = 0;
 
-  S.finSections.forEach((section) => {
+  const sections = Array.isArray(S.finSections) ? S.finSections : [];
+  sections.forEach((section) => {
+    const items = Array.isArray(section?.items) ? section.items : [];
     const secDiv = div("fin-section");
 
     // Section header (tap to collapse)
     const hdr = div("fin-section-header", { background: section.color + "44", border: `1.5px solid ${section.color}88` });
     const dot = div("fin-section-dot", { background: section.color });
     const title = span("fin-section-title", section.label);
-    const secTotal = finItemTotal(section.items);
+    const secTotal = finItemTotal(items);
     const totalSpan = span("fin-section-total", "$" + secTotal.toLocaleString());
     const chevron = span("fin-section-chevron" + (section.collapsed ? "" : " open"), ">");
     hdr.appendChild(dot); hdr.appendChild(title); hdr.appendChild(totalSpan); hdr.appendChild(chevron);
@@ -3113,7 +3147,7 @@ function buildFinancialPanel() {
     // Section items
     const itemsWrap = div("fin-section-items" + (section.collapsed ? " collapsed" : ""));
 
-    section.items.forEach((f) => {
+    items.forEach((f) => {
       const row = div("fin-row", { background: "#f5f0fa", border: "1.5px solid transparent" });
 
       // Status cycle button
@@ -3167,18 +3201,19 @@ function buildFinancialPanel() {
 
     // Add item button per section
     const addItemBtn = el("button","fin-section-add-btn");
-    addItemBtn.textContent = `+ Add to ${section.label.toLowerCase()}`;
-    addItemBtn.onclick = () => {
-      section.items.push({ id: Date.now(), label: "New item", value: "0", status: "unpaid" });
-      section.collapsed = false;
-      saveFinSections(); renderAll();
-    };
+      addItemBtn.textContent = `+ Add to ${section.label.toLowerCase()}`;
+      addItemBtn.onclick = () => {
+      if (!Array.isArray(section.items)) section.items = [];
+        section.items.push({ id: Date.now(), label: "New item", value: "0", status: "unpaid" });
+        section.collapsed = false;
+        saveFinSections(); renderAll();
+      };
     itemsWrap.appendChild(addItemBtn);
     secDiv.appendChild(itemsWrap);
     panel.appendChild(secDiv);
 
     // Track paid amounts for running balance
-    const paidTotal = section.items
+    const paidTotal = items
       .filter(f => f.status === "paid")
       .reduce((s, f) => s + (parseFloat(String(f.value).replace(/,/g,"")) || 0), 0);
     if (section.id === "income") { totalIncome = secTotal; paidIncome = paidTotal; }
@@ -3240,16 +3275,27 @@ const STICKY_COLORS = [
   { bg: C.blushPink, border: "#f093b0" },  // blush pink
 ];
 
+function normalizeStickyNote(note, index = 0) {
+  return {
+    id: note?.id ?? (Date.now() + index),
+    text: String(note?.text ?? ""),
+    color: note?.color && note.color.bg ? note.color : STICKY_COLORS[index % STICKY_COLORS.length],
+    ts: note?.ts ? String(note.ts) : "",
+  };
+}
+
 function getCurrentNotes() {
-  return S.notesByWeek["pinned"] || [];
+  const notes = Array.isArray(S.notesByWeek["pinned"]) ? S.notesByWeek["pinned"] : [];
+  return notes.map(normalizeStickyNote);
 }
 
 function getNotesForWeek(weekKey) {
-  return S.notesByWeek[weekKey] || [];
+  const notes = Array.isArray(S.notesByWeek[weekKey]) ? S.notesByWeek[weekKey] : [];
+  return notes.map(normalizeStickyNote);
 }
 
 function saveCurrentNotes(notes) {
-  S.notesByWeek["pinned"] = notes;
+  S.notesByWeek["pinned"] = (Array.isArray(notes) ? notes : []).map(normalizeStickyNote);
   lsSave("mc-notesByWeek", S.notesByWeek);
   syncNotesToCloud();
 }
@@ -4298,11 +4344,11 @@ function buildFinancialDashboardPanel() {
 function buildHomeDashboard() {
   const layout = div("dashboard-layout");
 
-  const plannerPanel = buildScheduler();
+  const plannerPanel = safeDashboardPanel("Weekly Planner", C.lavender, () => buildScheduler());
   addPanelBadge(plannerPanel, "grass", "Weekly Planner", C.lavender);
   layout.appendChild(plannerPanel);
 
-  const priorityPanel = buildPriorityPanel();
+  const priorityPanel = safeDashboardPanel("Priority Stack", C.hotPink, () => buildPriorityPanel());
   addPanelBadge(priorityPanel, "sword", "Priority Stack", C.hotPink);
   layout.appendChild(priorityPanel);
 
@@ -4310,14 +4356,14 @@ function buildHomeDashboard() {
   const leftCol = div("dashboard-column");
   const rightCol = div("dashboard-column");
 
-  leftCol.appendChild(buildFinancialDashboardPanel());
+  leftCol.appendChild(safeDashboardPanel("Financial Snapshot", C.mint, () => buildFinancialDashboardPanel()));
 
-  const focusPanel = buildFocusPanel();
+  const focusPanel = safeDashboardPanel("Pomodoro", C.hotPink, () => buildFocusPanel());
   focusPanel.classList.add("dashboard-focus-panel");
   addPanelBadge(focusPanel, "potion", "Pomodoro", C.hotPink);
   rightCol.appendChild(focusPanel);
 
-  leftCol.appendChild(buildRoutineStickyPanel(
+  leftCol.appendChild(safeDashboardPanel("Morning Routine", C.yellow, () => buildRoutineStickyPanel(
     "Morning Routine",
     "Keep the first part of the day simple and visible.",
     getMorningTodos(),
@@ -4326,9 +4372,9 @@ function buildHomeDashboard() {
     "Morning Routine",
     "sun",
     "morning"
-  ));
+  )));
 
-  rightCol.appendChild(buildRoutineStickyPanel(
+  rightCol.appendChild(safeDashboardPanel("Evening Routine", C.hotPink, () => buildRoutineStickyPanel(
     "Evening Routine",
     "Wrap the day without making the screen feel busy.",
     getEveningTodos(),
@@ -4337,14 +4383,14 @@ function buildHomeDashboard() {
     "Evening Routine",
     "moon",
     "evening"
-  ));
+  )));
 
   midGrid.appendChild(leftCol);
   midGrid.appendChild(rightCol);
   layout.appendChild(midGrid);
 
-  const notesPanel = buildNotepadPanel();
-  const notesPanels = notesPanel.querySelectorAll(".panel");
+  const notesPanel = safeDashboardPanel("Sticky Notes", C.cornflower, () => buildNotepadPanel());
+  const notesPanels = notesPanel.querySelectorAll ? notesPanel.querySelectorAll(".panel") : [];
   if (notesPanels[0]) addPanelBadge(notesPanels[0], "note", "Quick Sticky", C.cornflower);
   if (notesPanels[1]) addPanelBadge(notesPanels[1], "grass", "Pinned Board", C.appointment);
   layout.appendChild(notesPanel);
@@ -4615,7 +4661,12 @@ function renderHomeTiles() {
   if (grid) grid.innerHTML = "";
   if (!bottom) return;
   bottom.innerHTML = "";
-  bottom.appendChild(buildHomeDashboard());
+  try {
+    bottom.appendChild(buildHomeDashboard());
+  } catch (err) {
+    console.error("[dashboard] home render failed", err);
+    bottom.appendChild(buildDashboardErrorPanel("Dashboard", err, C.hotPink));
+  }
 }
 
 function renderPage(pageId) {

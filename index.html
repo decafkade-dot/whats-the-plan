@@ -1791,15 +1791,16 @@ S.debts = S.debts.map(normalizeDebtItem);
 lsSave("mc-debts", S.debts);
 
 // Remove cash savings section from local state on init
-S.finSections = S.finSections.filter(s => s.id !== "savings");
-if (!Array.isArray(S.finSections)) S.finSections = DEFAULT_FIN_SECTIONS;
-S.finSections = S.finSections.map((section, index) => ({
+const initialFinSections = Array.isArray(S.finSections) ? S.finSections : DEFAULT_FIN_SECTIONS;
+S.finSections = initialFinSections
+  .filter(section => section?.id !== "savings")
+  .map((section, index) => ({
   id: section?.id || `section-${index}`,
   label: section?.label || `SECTION ${index + 1}`,
   color: section?.color || [C.mint, C.hotPink, C.yellow, C.cornflower][index % 4],
   collapsed: !!section?.collapsed,
   items: Array.isArray(section?.items) ? section.items : [],
-}));
+  }));
 lsSave("mc-fin-sections", S.finSections);
 // Note: cloud load also filters savings (see loadCloudData)
 
@@ -2129,7 +2130,7 @@ function addPanelBadge(panel, iconName, label, color) {
   badge.appendChild(art);
   badge.appendChild(span("panel-kicker-text", label));
   const title = panel.querySelector("h2");
-  if (title) panel.insertBefore(badge, title);
+  if (title?.parentNode) title.parentNode.insertBefore(badge, title);
   else panel.insertBefore(badge, panel.firstChild || null);
   return panel;
 }
